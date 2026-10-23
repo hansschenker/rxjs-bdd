@@ -1,0 +1,2557 @@
+{
+  "version": "0.1.0",
+  "operators": [
+    {
+      "operator": "audit",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "duration active",
+          "when": "a source value arrives",
+          "then": [
+            "replace the pending value using the new source value"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the corresponding pending state exists",
+          "when": "duration ends",
+          "then": [
+            "emit the pending latest value and return to idle"
+          ]
+        }
+      ],
+      "note": "The first source value starts the duration."
+    },
+    {
+      "operator": "auditTime",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "fixed audit interval active",
+          "when": "a source value arrives",
+          "then": [
+            "replace the pending value using the new source value"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the corresponding pending state exists",
+          "when": "interval ends",
+          "then": [
+            "emit the pending latest value and return to idle"
+          ]
+        }
+      ],
+      "note": "Time-based specialization of `audit`."
+    },
+    {
+      "operator": "buffer",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "buffer open",
+          "when": "a source value arrives",
+          "then": [
+            "append the source value to the current array"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the corresponding pending state exists",
+          "when": "closing notifier emits",
+          "then": [
+            "emit the current array and start a fresh buffer"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "bufferCount",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "buffer(s) open",
+          "when": "a source value arrives",
+          "then": [
+            "append source values and track size/start positions"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active",
+          "when": "a buffer reaches its configured size",
+          "then": [
+            "emit that buffer; open later buffers according to `startBufferEvery`"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "bufferTime",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "time-span buffer(s) open",
+          "when": "a source value arrives",
+          "then": [
+            "append source values to every active buffer"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active",
+          "when": "a buffer times out or reaches `maxBufferSize`",
+          "then": [
+            "emit it and open replacements according to configuration"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "bufferToggle",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "one or more buffers open",
+          "when": "a source value arrives",
+          "then": [
+            "route the source value into every active buffer"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active",
+          "when": "an opening arrives",
+          "then": [
+            "open a buffer; its closing notifier fires: emit and close that buffer"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "bufferWhen",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "current buffer open",
+          "when": "a source value arrives",
+          "then": [
+            "append the source value"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the corresponding pending state exists",
+          "when": "closing selector's notifier emits",
+          "then": [
+            "emit current buffer and immediately open the next buffer"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "catchError",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source active normally",
+          "when": "the next relevant source event occurs",
+          "then": [
+            "forward values without recovery state"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active",
+          "when": "source errors",
+          "then": [
+            "invoke selector and subscribe to the replacement Observable instead of forwarding the error"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "combineAll",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "outer active",
+          "when": "an inner event arrives",
+          "then": [
+            "collect inner Observables until the outer completes"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active and completion has not yet been forwarded",
+          "when": "outer completes",
+          "then": [
+            "subscribe/combine inners and emit whenever all have values and any inner updates"
+          ]
+        }
+      ],
+      "note": "Deprecated alias behavior built on `combineLatestAll`."
+    },
+    {
+      "operator": "combineLatest",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source plus supplied inputs active",
+          "when": "the next relevant source event occurs",
+          "then": [
+            "retain the latest value from each input and a readiness mask"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active",
+          "when": "every input has emitted at least once and any input emits",
+          "then": [
+            "emit the tuple/projected latest combination"
+          ]
+        }
+      ],
+      "note": "Deprecated pipeable form."
+    },
+    {
+      "operator": "combineLatestAll",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "combined inners active",
+          "when": "the next relevant source event occurs",
+          "then": [
+            "retain each inner's latest value and readiness"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the relevant inner state exists",
+          "when": "all active inners are ready and any inner emits",
+          "then": [
+            "emit the latest-value tuple"
+          ]
+        }
+      ],
+      "note": "Starts combining after the higher-order source supplies/collects inners per implementation."
+    },
+    {
+      "operator": "combineLatestWith",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "inputs active",
+          "when": "the next relevant source event occurs",
+          "then": [
+            "retain the latest value from source and each supplied Observable"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active",
+          "when": "all inputs have emitted and any input emits",
+          "then": [
+            "emit the latest-value tuple"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "concat",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "current input Observable active",
+          "when": "the next relevant operator event occurs",
+          "then": [
+            "keep later supplied Observables pending"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active and completion has not yet been forwarded",
+          "when": "current input completes",
+          "then": [
+            "subscribe to the next; forward values from only the current input"
+          ]
+        }
+      ],
+      "note": "Deprecated pipeable form."
+    },
+    {
+      "operator": "concatAll",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "one inner active",
+          "when": "an inner event arrives",
+          "then": [
+            "queue later inner Observables"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active and completion has not yet been forwarded",
+          "when": "current inner completes",
+          "then": [
+            "subscribe to the next queued inner; forward inner values in order"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "concatMap",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "one projected inner active",
+          "when": "an outer value arrives",
+          "then": [
+            "queue the outer value"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active and completion has not yet been forwarded",
+          "when": "current inner completes",
+          "then": [
+            "project and subscribe to the next queued outer value"
+          ]
+        }
+      ],
+      "note": "Concurrency policy: queue."
+    },
+    {
+      "operator": "concatMapTo",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "one fixed inner active",
+          "when": "an outer value arrives",
+          "then": [
+            "queue the outer value"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active and completion has not yet been forwarded",
+          "when": "current inner completes",
+          "then": [
+            "subscribe to another instance of the configured inner for the next queued outer value"
+          ]
+        }
+      ],
+      "note": "Deprecated specialization."
+    },
+    {
+      "operator": "concatWith",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "current Observable active",
+          "when": "the next relevant operator event occurs",
+          "then": [
+            "keep following Observables pending"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active and completion has not yet been forwarded",
+          "when": "current Observable completes",
+          "then": [
+            "subscribe to the next and continue forwarding"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "connect",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "shared connector active inside the selector scope",
+          "when": "the next relevant operator event occurs",
+          "then": [
+            "multicast one source execution"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active",
+          "when": "selector output is subscribed",
+          "then": [
+            "connect the shared source and route it through the selector result"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "count",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source active",
+          "when": "the next relevant source event occurs",
+          "then": [
+            "increment count for the value satisfying the predicate (or every value without one)"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active and completion has not yet been forwarded",
+          "when": "source completes",
+          "then": [
+            "emit the final count and complete"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "debounce",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "duration active for pending value",
+          "when": "a source value arrives",
+          "then": [
+            "replace pending value and cancel/restart its duration for the source value"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active and completion has not yet been forwarded",
+          "when": "current duration emits/completes before another source value",
+          "then": [
+            "emit the pending latest value"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "debounceTime",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "silence timer active",
+          "when": "a source value arrives",
+          "then": [
+            "replace pending value and restart the timer for the source value"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the corresponding pending state exists",
+          "when": "configured silence interval elapses",
+          "then": [
+            "emit the pending latest value"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "defaultIfEmpty",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source active",
+          "when": "the next relevant source event occurs",
+          "then": [
+            "remember whether any value has been seen"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active and completion has not yet been forwarded",
+          "when": "source completes with no value seen",
+          "then": [
+            "emit the default value, then complete"
+          ]
+        }
+      ],
+      "note": "If values were seen, they were forwarded normally."
+    },
+    {
+      "operator": "delay",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "notifications pending",
+          "when": "the next relevant operator event occurs",
+          "then": [
+            "schedule each source notification for later delivery"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active",
+          "when": "its scheduled due time arrives",
+          "then": [
+            "forward that notification"
+          ]
+        }
+      ],
+      "note": "Implemented via `delayWhen`/timer semantics in RxJS 7.x."
+    },
+    {
+      "operator": "delayWhen",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source values pending",
+          "when": "the relevant scheduled event occurs",
+          "then": [
+            "associate each value with a duration Observable"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the corresponding pending state exists",
+          "when": "that value's duration emits",
+          "then": [
+            "release/emit the corresponding source value"
+          ]
+        }
+      ],
+      "note": "Subscription delay may also defer source subscription."
+    },
+    {
+      "operator": "dematerialize",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source active",
+          "when": "the next relevant operator event occurs",
+          "then": [
+            "treat each incoming `Notification` object as protocol data"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active",
+          "when": "a notification object arrives",
+          "then": [
+            "execute it as next/error/complete on the destination"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "distinct",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source active",
+          "when": "the next relevant operator event occurs",
+          "then": [
+            "keep a set of previously seen keys"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active",
+          "when": "a value's key has not been seen",
+          "then": [
+            "remember the key and emit the value; otherwise emit nothing"
+          ]
+        }
+      ],
+      "note": "Optional flush Observable clears remembered keys."
+    },
+    {
+      "operator": "distinctUntilChanged",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source active after first value",
+          "when": "the next relevant source event occurs",
+          "then": [
+            "remember the last emitted value/key"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is subscribed and ready to process input",
+          "when": "first value arrives or comparator says current differs from previous",
+          "then": [
+            "emit and replace remembered value/key"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "distinctUntilKeyChanged",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source active after first value",
+          "when": "the next relevant source event occurs",
+          "then": [
+            "remember the selected key of the last emitted object"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is subscribed and ready to process input",
+          "when": "first value arrives or selected key differs",
+          "then": [
+            "emit the object and replace remembered key"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "elementAt",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source active",
+          "when": "the next relevant source event occurs",
+          "then": [
+            "count source positions"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active",
+          "when": "configured index arrives",
+          "then": [
+            "emit that value and complete; source completes too early: emit default or error"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "endWith",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source active",
+          "when": "a source value arrives",
+          "then": [
+            "forward source values"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active and completion has not yet been forwarded",
+          "when": "source completes",
+          "then": [
+            "emit configured trailing values in order, then complete"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "every",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source active",
+          "when": "the next relevant operator event occurs",
+          "then": [
+            "remain in 'all passed' state while predicate is true"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active",
+          "when": "a value fails predicate",
+          "then": [
+            "emit false and complete; source completes without failure: emit true"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "exhaust",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "one inner active",
+          "when": "an inner event arrives",
+          "then": [
+            "ignore newly arriving inner Observables"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active and completion has not yet been forwarded",
+          "when": "current inner completes",
+          "then": [
+            "become idle and allow the next outer inner Observable to be subscribed"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "exhaustAll",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "one inner active",
+          "when": "an inner event arrives",
+          "then": [
+            "ignore newly arriving inner Observables"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active and completion has not yet been forwarded",
+          "when": "current inner completes",
+          "then": [
+            "become idle and allow the next inner"
+          ]
+        }
+      ],
+      "note": "Alias-style specialization of exhaust semantics."
+    },
+    {
+      "operator": "exhaustMap",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "one projected inner active",
+          "when": "an outer value arrives",
+          "then": [
+            "ignore the outer value"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active and completion has not yet been forwarded",
+          "when": "current inner completes",
+          "then": [
+            "become idle; next outer value may start a new inner"
+          ]
+        }
+      ],
+      "note": "Concurrency policy: ignore while busy."
+    },
+    {
+      "operator": "expand",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "expansion active",
+          "when": "the next relevant operator event occurs",
+          "then": [
+            "feed emitted values back through the projection while respecting concurrency"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active",
+          "when": "a value is accepted for expansion",
+          "then": [
+            "emit it and subscribe to its projected Observable recursively"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "filter",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source active",
+          "when": "the next relevant operator event occurs",
+          "then": [
+            "keep no operator-specific state except index"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is subscribed and ready to process input",
+          "when": "a source value arrives",
+          "then": [
+            "emit it only if predicate(value, index) is true"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "finalize",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "subscription active",
+          "when": "the next relevant source event occurs",
+          "then": [
+            "retain the finalizer for teardown"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active",
+          "when": "source terminates or subscriber explicitly unsubscribes",
+          "then": [
+            "invoke the finalizer exactly as teardown requires"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "find",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source active",
+          "when": "the next relevant source event occurs",
+          "then": [
+            "scan values until predicate matches"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is subscribed and ready to process input",
+          "when": "first matching value arrives",
+          "then": [
+            "emit it and complete; source completes without match: emit `undefined`"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "findIndex",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source active",
+          "when": "the next relevant source event occurs",
+          "then": [
+            "track index while scanning for first predicate match"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active",
+          "when": "first match arrives",
+          "then": [
+            "emit its index and complete; source completes without match: emit `-1`"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "first",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source active",
+          "when": "the next relevant operator event occurs",
+          "then": [
+            "wait for first value satisfying predicate (or simply first value)"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is subscribed and ready to process input",
+          "when": "first qualifying value arrives",
+          "then": [
+            "emit and complete; source completes first: emit default or error"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "flatMap",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "projected inners active",
+          "when": "the next relevant operator event occurs",
+          "then": [
+            "use merge-style concurrency"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is subscribed and ready to process input",
+          "when": "outer value arrives",
+          "then": [
+            "project and subscribe according to `mergeMap` concurrency policy"
+          ]
+        }
+      ],
+      "note": "Deprecated alias of `mergeMap`."
+    },
+    {
+      "operator": "groupBy",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source active",
+          "when": "the relevant input event occurs",
+          "then": [
+            "maintain a map from keys to live grouped Subjects"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is subscribed and ready to process input",
+          "when": "a value arrives",
+          "then": [
+            "create group if needed and emit value into its group; emit each new group once to downstream"
+          ]
+        }
+      ],
+      "note": "Duration/connector options can close or customize groups."
+    },
+    {
+      "operator": "ignoreElements",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source active",
+          "when": "the next relevant operator event occurs",
+          "then": [
+            "maintain no value state"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active",
+          "when": "source next arrives",
+          "then": [
+            "emit nothing; source error/complete arrives: forward the terminal notification"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "isEmpty",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source active before first value",
+          "when": "the next relevant operator event occurs",
+          "then": [
+            "remain 'possibly empty'"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is subscribed and ready to process input",
+          "when": "first value arrives",
+          "then": [
+            "emit false and complete; source completes first: emit true"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "joinAllInternals",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "inner collection/combine operation active",
+          "when": "the next relevant operator event occurs",
+          "then": [
+            "delegate state to chosen join strategy"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the relevant inner state exists",
+          "when": "join strategy has enough inner values",
+          "then": [
+            "emit projected joined result"
+          ]
+        }
+      ],
+      "note": "Internal helper used by higher-order join operators."
+    },
+    {
+      "operator": "last",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source active",
+          "when": "the next relevant source event occurs",
+          "then": [
+            "retain latest value satisfying predicate (or latest value)"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active and completion has not yet been forwarded",
+          "when": "source completes",
+          "then": [
+            "emit retained last value; if none, emit default or error"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "map",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source active",
+          "when": "the next relevant operator event occurs",
+          "then": [
+            "keep no operator-specific value state except index"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is subscribed and ready to process input",
+          "when": "source value arrives",
+          "then": [
+            "emit project(value, index)"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "mapTo",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source active",
+          "when": "the next relevant operator event occurs",
+          "then": [
+            "keep no operator-specific value state"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is subscribed and ready to process input",
+          "when": "source value arrives",
+          "then": [
+            "emit the configured constant"
+          ]
+        }
+      ],
+      "note": "Deprecated specialization of `map`."
+    },
+    {
+      "operator": "materialize",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source active",
+          "when": "the next relevant operator event occurs",
+          "then": [
+            "convert protocol events into `Notification` values"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active and completion has not yet been forwarded",
+          "when": "next/error/complete occurs",
+          "then": [
+            "emit the corresponding notification object; after terminal notification value, complete normally"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "max",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source active",
+          "when": "the next relevant source event occurs",
+          "then": [
+            "retain the greatest value seen according to comparer"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active and completion has not yet been forwarded",
+          "when": "source completes",
+          "then": [
+            "emit retained maximum (or follow empty-reduction behavior)"
+          ]
+        }
+      ],
+      "note": "Implemented via reduction."
+    },
+    {
+      "operator": "merge",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "multiple inputs active",
+          "when": "a subscription lifecycle event occurs",
+          "then": [
+            "allow concurrent subscriptions up to configured concurrency"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active",
+          "when": "any active input emits",
+          "then": [
+            "forward immediately; an input completes: admit pending input if capacity exists"
+          ]
+        }
+      ],
+      "note": "Deprecated pipeable form."
+    },
+    {
+      "operator": "mergeAll",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "inners active",
+          "when": "the relevant input event occurs",
+          "then": [
+            "track active count and queue excess inners beyond concurrency limit"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the relevant inner state exists",
+          "when": "an inner emits",
+          "then": [
+            "forward immediately; capacity opens: subscribe to queued inner"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "mergeInternals",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "inners active",
+          "when": "the relevant input event occurs",
+          "then": [
+            "track active count, queue, completion state, and optional expansion"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the relevant inner state exists",
+          "when": "outer/inner events occur",
+          "then": [
+            "apply merge concurrency admission, forwarding, drain, and completion policy"
+          ]
+        }
+      ],
+      "note": "Internal engine behind several flattening operators."
+    },
+    {
+      "operator": "mergeMap",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "projected inners active",
+          "when": "an outer value arrives",
+          "then": [
+            "allow overlap up to concurrency limit and queue excess outer values"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is subscribed and ready to process input",
+          "when": "outer value arrives with capacity",
+          "then": [
+            "start projected inner; inner emits: forward immediately"
+          ]
+        }
+      ],
+      "note": "Concurrency policy: allow overlap."
+    },
+    {
+      "operator": "mergeMapTo",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "fixed inners active",
+          "when": "the next relevant operator event occurs",
+          "then": [
+            "allow overlap up to concurrency limit"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is subscribed and ready to process input",
+          "when": "outer value arrives with capacity",
+          "then": [
+            "subscribe to configured inner and forward its values"
+          ]
+        }
+      ],
+      "note": "Deprecated specialization."
+    },
+    {
+      "operator": "mergeScan",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "projected accumulator inners active",
+          "when": "the next relevant source event occurs",
+          "then": [
+            "retain accumulator and merge-style concurrency state"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is subscribed and ready to process input",
+          "when": "outer value arrives",
+          "then": [
+            "project `(acc, value)` to inner; inner emits: replace accumulator and emit it"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "mergeWith",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source and supplied Observables are active",
+          "when": "a subscription lifecycle event occurs",
+          "then": [
+            "retain their concurrent subscriptions"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active",
+          "when": "any input emits",
+          "then": [
+            "forward immediately; complete after all inputs complete"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "min",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source active",
+          "when": "the next relevant source event occurs",
+          "then": [
+            "retain the least value seen according to comparer"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active and completion has not yet been forwarded",
+          "when": "source completes",
+          "then": [
+            "emit retained minimum (or follow empty-reduction behavior)"
+          ]
+        }
+      ],
+      "note": "Implemented via reduction."
+    },
+    {
+      "operator": "multicast",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "connectable state active",
+          "when": "the next relevant operator event occurs",
+          "then": [
+            "route source through a Subject/Subject factory"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active",
+          "when": "connection is established",
+          "then": [
+            "subscribe subject to source; subscribers observe the shared subject"
+          ]
+        }
+      ],
+      "note": "Deprecated multicasting API."
+    },
+    {
+      "operator": "observeOn",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "notifications pending on a scheduler",
+          "when": "the relevant scheduled event occurs",
+          "then": [
+            "retain scheduled delivery tasks"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active",
+          "when": "scheduled action executes",
+          "then": [
+            "deliver the corresponding next/error/complete downstream"
+          ]
+        }
+      ],
+      "note": "Changes notification delivery context, not source production."
+    },
+    {
+      "operator": "onErrorResumeNextWith",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "current Observable active",
+          "when": "the next relevant operator event occurs",
+          "then": [
+            "keep fallback Observables pending"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active and completion has not yet been forwarded",
+          "when": "current source errors or completes",
+          "then": [
+            "suppress the distinction and subscribe to the next fallback; complete after all finish"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "pairwise",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source active after first value",
+          "when": "a source value arrives",
+          "then": [
+            "remember previous source value"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is subscribed and ready to process input",
+          "when": "next value arrives and previous exists",
+          "then": [
+            "emit `[previous, current]`, then remember current"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "partition",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "each partition subscription active",
+          "when": "the next relevant operator event occurs",
+          "then": [
+            "apply complementary predicates independently"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is subscribed and ready to process input",
+          "when": "source value arrives",
+          "then": [
+            "one output forwards if predicate true, the other if false"
+          ]
+        }
+      ],
+      "note": "Deprecated pipeable partition form."
+    },
+    {
+      "operator": "pluck",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source active",
+          "when": "the next relevant operator event occurs",
+          "then": [
+            "keep no evolving operator state"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is subscribed and ready to process input",
+          "when": "source value arrives",
+          "then": [
+            "read configured property path and emit the result"
+          ]
+        }
+      ],
+      "note": "Deprecated; equivalent to `map` property access."
+    },
+    {
+      "operator": "publish",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "connectable state active",
+          "when": "the next relevant operator event occurs",
+          "then": [
+            "multicast through a plain Subject"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active",
+          "when": "connection starts",
+          "then": [
+            "subscribe Subject to source and share that execution"
+          ]
+        }
+      ],
+      "note": "Deprecated wrapper around connectable/multicast semantics."
+    },
+    {
+      "operator": "publishBehavior",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "connectable state active",
+          "when": "the next relevant source event occurs",
+          "then": [
+            "multicast through BehaviorSubject retaining current value"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active",
+          "when": "subscriber arrives",
+          "then": [
+            "receive current retained value; connection forwards source into shared BehaviorSubject"
+          ]
+        }
+      ],
+      "note": "Deprecated."
+    },
+    {
+      "operator": "publishLast",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "connectable state active",
+          "when": "the next relevant source event occurs",
+          "then": [
+            "multicast through AsyncSubject retaining only final value"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active and completion has not yet been forwarded",
+          "when": "source completes",
+          "then": [
+            "emit retained last value to subscribers and complete"
+          ]
+        }
+      ],
+      "note": "Deprecated."
+    },
+    {
+      "operator": "publishReplay",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "connectable state active",
+          "when": "the relevant input event occurs",
+          "then": [
+            "retain configured replay buffer/window in ReplaySubject"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active",
+          "when": "subscriber arrives",
+          "then": [
+            "replay retained notifications then receive live shared values"
+          ]
+        }
+      ],
+      "note": "Deprecated."
+    },
+    {
+      "operator": "race",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "competitors pending before winner",
+          "when": "the next relevant operator event occurs",
+          "then": [
+            "subscribe to competing Observables"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active",
+          "when": "first competitor emits",
+          "then": [
+            "choose it as winner, unsubscribe losers, and forward only winner thereafter"
+          ]
+        }
+      ],
+      "note": "Deprecated pipeable form."
+    },
+    {
+      "operator": "raceWith",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "competitors pending before winner",
+          "when": "the next relevant operator event occurs",
+          "then": [
+            "subscribe to source and supplied Observables"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active",
+          "when": "first competitor emits",
+          "then": [
+            "choose it, unsubscribe losers, forward winner only"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "reduce",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source active",
+          "when": "the next relevant source event occurs",
+          "then": [
+            "retain accumulator and whether accumulation has begun"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active and completion has not yet been forwarded",
+          "when": "source completes",
+          "then": [
+            "emit the final accumulator exactly once, then complete"
+          ]
+        }
+      ],
+      "note": "Unlike `scan`, no intermediate accumulator emissions."
+    },
+    {
+      "operator": "refCount",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "shared connectable subscriber count > 0",
+          "when": "the next relevant source event occurs",
+          "then": [
+            "retain count and active connection"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active",
+          "when": "first subscriber arrives",
+          "then": [
+            "connect; last subscriber leaves: disconnect shared connection"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "repeat",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source execution active",
+          "when": "the next relevant source event occurs",
+          "then": [
+            "track repeat count/delay state"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active and completion has not yet been forwarded",
+          "when": "source completes and repeats remain",
+          "then": [
+            "resubscribe; otherwise forward completion"
+          ]
+        }
+      ],
+      "note": "Does not repeat on error."
+    },
+    {
+      "operator": "repeatWhen",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source execution active",
+          "when": "the relevant notifier event occurs",
+          "then": [
+            "route completion signals to notifier workflow"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the corresponding pending state exists",
+          "when": "notifier emits after a source completion",
+          "then": [
+            "resubscribe to source; notifier completes/errors: terminate accordingly"
+          ]
+        }
+      ],
+      "note": "Deprecated-style notifier API."
+    },
+    {
+      "operator": "retry",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source execution active",
+          "when": "the next relevant source event occurs",
+          "then": [
+            "track retry count/delay/reset configuration"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active",
+          "when": "source errors and retry policy permits",
+          "then": [
+            "resubscribe; otherwise forward final error"
+          ]
+        }
+      ],
+      "note": "Does not retry on normal completion."
+    },
+    {
+      "operator": "retryWhen",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source execution active",
+          "when": "the relevant notifier event occurs",
+          "then": [
+            "route error signals to notifier workflow"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active",
+          "when": "notifier emits after an error",
+          "then": [
+            "resubscribe; notifier completes/errors: terminate accordingly"
+          ]
+        }
+      ],
+      "note": "Deprecated-style notifier API."
+    },
+    {
+      "operator": "sample",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source active",
+          "when": "a source value arrives",
+          "then": [
+            "remember latest source value and whether a new value exists since last sample"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active",
+          "when": "sampler emits",
+          "then": [
+            "emit remembered latest value if one is pending, then clear pending flag"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "sampleTime",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source active",
+          "when": "a source value arrives",
+          "then": [
+            "remember latest source value and pending flag between periodic sample ticks"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the corresponding pending state exists",
+          "when": "sampling interval ticks",
+          "then": [
+            "emit remembered latest value if one is pending"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "scan",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source active",
+          "when": "the next relevant source event occurs",
+          "then": [
+            "retain accumulator"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is subscribed and ready to process input",
+          "when": "source value arrives",
+          "then": [
+            "update accumulator with reducer and emit the updated accumulator"
+          ]
+        }
+      ],
+      "note": "State is emitted on every reduction step."
+    },
+    {
+      "operator": "scanInternals",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source active",
+          "when": "the next relevant source event occurs",
+          "then": [
+            "retain accumulator, index, and seed-state flag"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is subscribed and ready to process input",
+          "when": "source value arrives",
+          "then": [
+            "initialize/update accumulator and optionally emit according to helper configuration"
+          ]
+        }
+      ],
+      "note": "Internal helper behind `scan`/`reduce`."
+    },
+    {
+      "operator": "sequenceEqual",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "two sequences active",
+          "when": "the relevant input event occurs",
+          "then": [
+            "queue unmatched values from each side and compare in order"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active",
+          "when": "both sides provide the next pair",
+          "then": [
+            "compare them; mismatch emits false and completes; matched completion emits true"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "share",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "shared subscription state active",
+          "when": "a subscription lifecycle event occurs",
+          "then": [
+            "retain connector, subscriber count, and reset state"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active",
+          "when": "first subscriber needs source",
+          "then": [
+            "connect; reset conditions occur: reset connector/connection according to configuration"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "shareReplay",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "shared replay state active",
+          "when": "the relevant input event occurs",
+          "then": [
+            "retain ReplaySubject buffer and shared connection state"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active",
+          "when": "subscriber arrives",
+          "then": [
+            "replay buffered values then receive live values; connection/reset follows `refCount` and terminal policy"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "single",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source active",
+          "when": "the next relevant source event occurs",
+          "then": [
+            "retain whether one matching value has been found and that value"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is subscribed and ready to process input",
+          "when": "a second matching value arrives",
+          "then": [
+            "error; source completes with exactly one match: emit it; otherwise empty/not-found error semantics apply"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "skip",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source active",
+          "when": "the next relevant source event occurs",
+          "then": [
+            "count seen values"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is subscribed and ready to process input",
+          "when": "a value arrives after the first `count` values",
+          "then": [
+            "emit it; earlier values emit nothing"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "skipLast",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source active",
+          "when": "the relevant input event occurs",
+          "then": [
+            "maintain a queue/ring of the last `count` values"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active",
+          "when": "a new value makes the buffer exceed `count`",
+          "then": [
+            "emit the oldest buffered value"
+          ]
+        }
+      ],
+      "note": "Trailing `count` values are discarded on completion."
+    },
+    {
+      "operator": "skipUntil",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "gate closed",
+          "when": "a source value arrives",
+          "then": [
+            "ignore source values while waiting for notifier"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the corresponding pending state exists",
+          "when": "notifier emits",
+          "then": [
+            "open gate permanently; subsequent source values are forwarded"
+          ]
+        }
+      ],
+      "note": "Notifier completion alone does not open the gate."
+    },
+    {
+      "operator": "skipWhile",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "skipping state active",
+          "when": "a source value arrives",
+          "then": [
+            "evaluate predicate for the source value"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active",
+          "when": "predicate first becomes false",
+          "then": [
+            "stop skipping permanently and emit that value plus all subsequent values"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "startWith",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "subscription begins",
+          "when": "the next relevant operator event occurs",
+          "then": [
+            "configured prefix values are pending before source"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active",
+          "when": "output is subscribed",
+          "then": [
+            "emit prefix values first, then subscribe/forward source"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "subscribeOn",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source subscription is pending on a scheduler",
+          "when": "a subscription lifecycle event occurs",
+          "then": [
+            "keep the source subscription deferred"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active",
+          "when": "scheduled subscription action executes",
+          "then": [
+            "subscribe to the source"
+          ]
+        }
+      ],
+      "note": "Moves subscription side effect in time/context."
+    },
+    {
+      "operator": "switchAll",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "one current inner active",
+          "when": "a subscription lifecycle event occurs",
+          "then": [
+            "remember only the latest inner subscription"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the relevant inner state exists",
+          "when": "new inner Observable arrives",
+          "then": [
+            "cancel previous inner and subscribe to the new one; forward only current inner"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "switchMap",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "one projected inner active",
+          "when": "a subscription lifecycle event occurs",
+          "then": [
+            "remember only the latest inner subscription"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is subscribed and ready to process input",
+          "when": "new outer value arrives",
+          "then": [
+            "cancel current inner, project, and subscribe to the new inner"
+          ]
+        }
+      ],
+      "note": "Concurrency policy: only latest."
+    },
+    {
+      "operator": "switchMapTo",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "one fixed inner active",
+          "when": "a subscription lifecycle event occurs",
+          "then": [
+            "remember only latest inner subscription instance"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is subscribed and ready to process input",
+          "when": "new outer value arrives",
+          "then": [
+            "cancel current inner and subscribe to the configured inner again"
+          ]
+        }
+      ],
+      "note": "Deprecated specialization."
+    },
+    {
+      "operator": "switchScan",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "one projected accumulator inner active",
+          "when": "the next relevant source event occurs",
+          "then": [
+            "retain accumulator and current inner"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is subscribed and ready to process input",
+          "when": "new outer value arrives",
+          "then": [
+            "cancel current inner and start projection from current accumulator; inner emissions replace and emit accumulator"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "take",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source active",
+          "when": "the next relevant source event occurs",
+          "then": [
+            "count forwarded values up to limit"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is subscribed and ready to process input",
+          "when": "a value arrives within limit",
+          "then": [
+            "emit it; configured count is reached: complete and unsubscribe upstream"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "takeLast",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source active",
+          "when": "the relevant input event occurs",
+          "then": [
+            "retain a bounded buffer of the last `count` values"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active and completion has not yet been forwarded",
+          "when": "source completes",
+          "then": [
+            "emit buffered trailing values in order, then complete"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "takeUntil",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source active",
+          "when": "the relevant notifier event occurs",
+          "then": [
+            "forward values while notifier has not emitted"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the corresponding pending state exists",
+          "when": "notifier emits",
+          "then": [
+            "complete output immediately and unsubscribe source"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "takeWhile",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "taking state active",
+          "when": "the next relevant operator event occurs",
+          "then": [
+            "evaluate predicate for each value"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active",
+          "when": "predicate becomes false",
+          "then": [
+            "optionally emit boundary value if `inclusive`, then complete; otherwise emit qualifying values"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "tap",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source active",
+          "when": "a source value arrives",
+          "then": [
+            "preserve source values while invoking side-effect observers"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active and completion has not yet been forwarded",
+          "when": "next/error/complete/subscription/finalize events occur",
+          "then": [
+            "invoke configured side effect and otherwise mirror source protocol"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "throttle",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "duration active",
+          "when": "a source value arrives",
+          "then": [
+            "suppress new source values, optionally retaining a trailing value depending on config"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the corresponding pending state exists",
+          "when": "leading/trailing boundary occurs",
+          "then": [
+            "emit according to `{leading, trailing}` policy and manage the duration"
+          ]
+        }
+      ],
+      "note": "Default is leading `true`, trailing `false`."
+    },
+    {
+      "operator": "throttleTime",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "fixed throttle interval active",
+          "when": "a source value arrives",
+          "then": [
+            "suppress new source values, optionally retain trailing value"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the corresponding pending state exists",
+          "when": "interval boundary occurs",
+          "then": [
+            "emit according to leading/trailing configuration and reopen as required"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "throwIfEmpty",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source active",
+          "when": "the next relevant source event occurs",
+          "then": [
+            "remember whether any value has been seen"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active and completion has not yet been forwarded",
+          "when": "source completes empty",
+          "then": [
+            "error using configured error factory; otherwise complete normally after forwarding values"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "timeInterval",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source active",
+          "when": "a subscription lifecycle event occurs",
+          "then": [
+            "remember scheduler timestamp of previous emission/subscription baseline"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is subscribed and ready to process input",
+          "when": "source value arrives",
+          "then": [
+            "emit `{value, interval}` using elapsed scheduler time and update timestamp"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "timeout",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "waiting state active",
+          "when": "the relevant scheduled event occurs",
+          "then": [
+            "track deadline for first/each value using scheduler"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the corresponding pending state exists",
+          "when": "deadline expires before required source emission",
+          "then": [
+            "unsubscribe source and switch to configured fallback or throw TimeoutError"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "timeoutWith",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "waiting state active",
+          "when": "the relevant scheduled event occurs",
+          "then": [
+            "track timeout deadline"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the corresponding pending state exists",
+          "when": "deadline expires",
+          "then": [
+            "unsubscribe source and subscribe to configured fallback Observable"
+          ]
+        }
+      ],
+      "note": "Deprecated wrapper around `timeout`."
+    },
+    {
+      "operator": "timestamp",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source active",
+          "when": "the relevant scheduled event occurs",
+          "then": [
+            "keep no evolving value state beyond scheduler access"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is subscribed and ready to process input",
+          "when": "source value arrives",
+          "then": [
+            "emit `{value, timestamp: scheduler.now()}`"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "toArray",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source active",
+          "when": "a source value arrives",
+          "then": [
+            "append every source value to one array"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active and completion has not yet been forwarded",
+          "when": "source completes",
+          "then": [
+            "emit the accumulated array once, then complete"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "window",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "current window open",
+          "when": "a source value arrives",
+          "then": [
+            "forward the source value into current window Subject"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the corresponding pending state exists",
+          "when": "boundary Observable emits",
+          "then": [
+            "close current window, emit/open a new window"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "windowCount",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "one or more count-based windows open",
+          "when": "a source value arrives",
+          "then": [
+            "route source values into active windows and track counts"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the corresponding pending state exists",
+          "when": "start/size boundary is reached",
+          "then": [
+            "open or close windows according to `windowSize` and `startWindowEvery`"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "windowTime",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "time-based windows open",
+          "when": "the relevant input event occurs",
+          "then": [
+            "route values into all active windows and track age/count"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the corresponding pending state exists",
+          "when": "time span, creation interval, or max size boundary occurs",
+          "then": [
+            "close/open windows according to configuration"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "windowToggle",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "one or more windows open",
+          "when": "a source value arrives",
+          "then": [
+            "route the source value into all active windows"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active",
+          "when": "opening emits",
+          "then": [
+            "create/emit a new window; its closing notifier fires: close that window"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "windowWhen",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "current window open",
+          "when": "a source value arrives",
+          "then": [
+            "route source values into it"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the corresponding pending state exists",
+          "when": "closing notifier fires",
+          "then": [
+            "close current window and immediately create/emit the next window"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "withLatestFrom",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source active",
+          "when": "the next relevant source event occurs",
+          "then": [
+            "retain latest values/readiness from all secondary Observables"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active",
+          "when": "source emits and every secondary has emitted at least once",
+          "then": [
+            "emit source value combined with latest secondary values"
+          ]
+        }
+      ],
+      "note": "Only the source triggers output."
+    },
+    {
+      "operator": "zip",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "inputs active",
+          "when": "the relevant input event occurs",
+          "then": [
+            "maintain one FIFO queue per input"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active",
+          "when": "every queue has at least one value",
+          "then": [
+            "dequeue one from each and emit the tuple/projected result"
+          ]
+        }
+      ],
+      "note": "Deprecated pipeable form."
+    },
+    {
+      "operator": "zipAll",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "collected inner inputs active",
+          "when": "the relevant input event occurs",
+          "then": [
+            "maintain one FIFO queue per inner"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the relevant inner state exists",
+          "when": "every inner queue has a value",
+          "then": [
+            "dequeue one from each and emit tuple; terminate when further full tuples become impossible"
+          ]
+        }
+      ],
+      "note": null
+    },
+    {
+      "operator": "zipWith",
+      "rules": [
+        {
+          "kind": "state",
+          "given": "source and supplied inputs active",
+          "when": "the relevant input event occurs",
+          "then": [
+            "maintain one FIFO queue per input"
+          ]
+        },
+        {
+          "kind": "event",
+          "given": "the operator is active",
+          "when": "every queue has at least one value",
+          "then": [
+            "dequeue one from each and emit the tuple"
+          ]
+        }
+      ],
+      "note": null
+    }
+  ]
+}
