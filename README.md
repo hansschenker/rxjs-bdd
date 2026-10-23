@@ -103,6 +103,30 @@ G : S × Σ -> O
 RxJS implementation and tests
 ```
 
+## Full RxJS 7.x operator catalog
+
+The complete source catalog has now been converted to Given / When / Then form:
+
+- **116 / 116 operator modules converted**
+- see [docs/operators.md](docs/operators.md)
+- source baseline: [rxjs-operators-state-and-policy-patterns](https://github.com/hansschenker/rxjs-operators-state-and-policy-patterns)
+
+The catalog keeps two kinds of rules separate:
+
+```text
+State-conditioned rule
+Given <state predicate>
+When  <event relevant while that state holds>
+Then  <state transition / maintenance>
+
+Event-triggered rule
+Given <required state>
+When  <boundary / lifecycle / source / inner event>
+Then  <Action Policy>
+```
+
+This separation is important: a persistent state condition and the event that exits that state must not accidentally be collapsed into one invalid transition.
+
 ## Canonical example: debounceTime
 
 Behavioral summary:
