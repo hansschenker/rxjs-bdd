@@ -239,3 +239,33 @@ See [CONTRIBUTORS.md](CONTRIBUTORS.md).
 ## Attribution
 
 RxJS is maintained by the ReactiveX/RxJS project. This repository is an independent behavioral-analysis and teaching project and is not an official RxJS repository.
+
+
+## Machine-readable specification
+
+The complete 116-operator catalog is also available as structured data:
+
+- `spec/operators.json` — machine-readable Given / When / Then rules.
+- `spec/operator-catalog.schema.json` — JSON Schema for structural validation.
+- `docs/machine-readable-spec.md` — semantics and validation invariants.
+
+## From specification to testing
+
+The repository now includes a direct testing bridge:
+
+- `docs/testing.md` — maps Given / When / Then rules to RxJS TestScheduler and model-based tests.
+- `docs/transition-coverage-matrix.md` — defines the transition categories that a state-complete operator test suite should consider.
+
+The intended progression is:
+
+```text
+operator behavior
+      ↓
+Given / When / Then rules
+      ↓
+machine-readable specification
+      ↓
+transition coverage matrix
+      ↓
+RxJS conformance tests
+```
