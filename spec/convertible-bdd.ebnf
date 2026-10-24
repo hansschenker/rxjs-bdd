@@ -1,0 +1,83 @@
+(* rxjs-bdd Convertible BDD grammar
+   Start symbol: Document
+   EBNF meta-notation: {x}=zero-or-more, [x]=optional, (x)=grouping.
+*)
+
+Document        = FeatureDecl ;
+
+FeatureDecl     = "Feature", ":", Identifier, Newline,
+                  { BlankLine | ScenarioDecl } ;
+
+ScenarioDecl    = "Scenario", ":", Identifier, Newline,
+                  Indent, GivenClause, Newline,
+                  Indent, WhenClause, Newline,
+                  Indent, ThenClause, Newline,
+                  { Indent, ThenContinuation, Newline },
+                  [ BlankLine ] ;
+
+GivenClause     = "Given", Space, Predicate,
+                  { Newline, Indent, "And", Space, Predicate } ;
+
+WhenClause      = "When", Space, Event ;
+
+ThenClause      = "Then", Space, Effect ;
+ThenContinuation= "And", Space, Effect ;
+
+Effect          = Assignment
+                | EmitEffect
+                | ActionCall
+                | "complete"
+                | "error", Space, Expression
+                | "nothing" ;
+
+EmitEffect      = "emit", Space, ( "nothing" | Event | Expression ) ;
+
+Assignment      = StatePath, Space?, "=", Space?, Expression ;
+
+Predicate       = Expression, Space?, CompareOp, Space?, Expression
+                | "not", Space, Predicate
+                | "(", Predicate, ")"
+                | Predicate, Space, "and", Space, Predicate
+                | Predicate, Space, "or", Space, Predicate ;
+
+CompareOp       = "==" | "!=" | ">=" | "<=" | ">" | "<" ;
+
+Event           = QualifiedIdentifier, "(", [ ArgumentList ], ")" ;
+ActionCall      = QualifiedIdentifier, "(", [ ArgumentList ], ")" ;
+
+ArgumentList    = Expression, { ",", Space?, Expression } ;
+
+Expression      = Primary,
+                  { Space?, BinaryOp, Space?, Primary } ;
+
+Primary         = Literal
+                | Identifier
+                | StatePath
+                | Event
+                | "(", Expression, ")" ;
+
+BinaryOp        = "+" | "-" | "*" | "/" | "%" ;
+
+StatePath       = Identifier, { ".", Identifier } ;
+QualifiedIdentifier
+                = Identifier, { ".", Identifier } ;
+
+Literal         = Number | String | Boolean | "null" ;
+Boolean         = "true" | "false" ;
+
+Identifier      = Letter, { Letter | Digit | "_" } ;
+Number          = [ "-" ], Digit, { Digit }, [ ".", Digit, { Digit } ] ;
+String          = '"', { StringChar }, '"' ;
+
+Letter          = "A"…"Z" | "a"…"z" ;
+Digit           = "0"…"9" ;
+StringChar      = ? any Unicode scalar except unescaped '"' and newline ? ;
+
+Indent          = "  " | "    " | "	" ;
+Space           = " " ;
+Space?          = [ Space ] ;
+Newline         = "\n" | "\r\n" ;
+BlankLine       = Newline ;
+
+(* Lexical comments are intentionally absent from Convertible BDD.
+   The source is meant to remain close to readable BDD. *)
