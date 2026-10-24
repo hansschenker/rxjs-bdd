@@ -1,0 +1,99 @@
+(* rxjs-bdd Mealy DSL grammar
+   Start symbol: Machine
+*)
+
+Machine         = "machine", Space, Identifier, Space?, "{", Newline,
+                  { Declaration | Transition | BlankLine },
+                  "}", Newline? ;
+
+Declaration     = StateDecl | InitialDecl | InputDecl | OutputDecl | ActionDecl ;
+
+StateDecl       = Indent, "state", Space?, "{", Newline,
+                  { Indent, Indent, StateField, Newline },
+                  Indent, "}", Newline ;
+
+InitialDecl     = Indent, "initial", Space?, "{", Newline,
+                  { Indent, Indent, Assignment, ";", Newline },
+                  Indent, "}", Newline ;
+
+InputDecl       = Indent, "input", Space?, "{", Newline,
+                  { Indent, Indent, Signature, ";", Newline },
+                  Indent, "}", Newline ;
+
+OutputDecl      = Indent, "output", Space?, "{", Newline,
+                  { Indent, Indent, Signature, ";", Newline },
+                  Indent, "}", Newline ;
+
+ActionDecl      = Indent, "action", Space?, "{", Newline,
+                  { Indent, Indent, Signature, ";", Newline },
+                  Indent, "}", Newline ;
+
+StateField      = StatePath, ":", Space?, TypeRef, ";" ;
+Signature       = QualifiedIdentifier, "(",
+                  [ ParameterList ], ")" ;
+
+ParameterList   = Parameter, { ",", Space?, Parameter } ;
+Parameter       = Identifier, ":", Space?, TypeRef ;
+TypeRef         = QualifiedIdentifier, [ "<", TypeRef, { ",", Space?, TypeRef }, ">" ] ;
+
+Transition      = Indent, "transition", Space, Identifier, Space?, "{", Newline,
+                  Indent, Indent, "given", Space, Predicate, ";", Newline,
+                  Indent, Indent, "when", Space, Event, ";", Newline,
+                  { Indent, Indent, ThenStmt, Newline },
+                  { Indent, Indent, EmitStmt, Newline },
+                  { Indent, Indent, ActionStmt, Newline },
+                  Indent, "}", Newline ;
+
+ThenStmt        = "then", Space, Assignment, ";" ;
+EmitStmt        = "emit", Space, ( Event | Expression | "nothing" ), ";"
+                | "complete", ";"
+                | "error", Space, Expression, ";" ;
+
+ActionStmt      = "do", Space, ActionCall, ";" ;
+
+Assignment      = StatePath, Space?, "=", Space?, Expression ;
+
+Predicate       = Expression, Space?, CompareOp, Space?, Expression
+                | "not", Space, Predicate
+                | "(", Predicate, ")"
+                | Predicate, Space, "and", Space, Predicate
+                | Predicate, Space, "or", Space, Predicate ;
+
+CompareOp       = "==" | "!=" | ">=" | "<=" | ">" | "<" ;
+
+Event           = QualifiedIdentifier, "(", [ ArgumentList ], ")" ;
+ActionCall      = QualifiedIdentifier, "(", [ ArgumentList ], ")" ;
+ArgumentList    = Expression, { ",", Space?, Expression } ;
+
+Expression      = Primary,
+                  { Space?, BinaryOp, Space?, Primary } ;
+
+Primary         = Literal
+                | Identifier
+                | StatePath
+                | Event
+                | "(", Expression, ")" ;
+
+BinaryOp        = "+" | "-" | "*" | "/" | "%" ;
+
+StatePath       = Identifier, { ".", Identifier } ;
+QualifiedIdentifier
+                = Identifier, { ".", Identifier } ;
+
+Literal         = Number | String | Boolean | "null" ;
+Boolean         = "true" | "false" ;
+
+Identifier      = Letter, { Letter | Digit | "_" } ;
+Number          = [ "-" ], Digit, { Digit }, [ ".", Digit, { Digit } ] ;
+String          = '"', { StringChar }, '"' ;
+
+Letter          = "A"…"Z" | "a"…"z" ;
+Digit           = "0"…"9" ;
+StringChar      = ? any Unicode scalar except unescaped '"' and newline ? ;
+
+Indent          = "  " | "    " | "	" ;
+Space           = " " ;
+Space?          = [ Space ] ;
+Newline         = "\n" | "\r\n" ;
+Newline?        = [ Newline ] ;
+BlankLine       = Newline ;
