@@ -1,5 +1,7 @@
 # rxjs-bdd
 
+[![validate](https://github.com/hansschenker/rxjs-bdd/actions/workflows/validate.yml/badge.svg)](https://github.com/hansschenker/rxjs-bdd/actions/workflows/validate.yml)
+
 A readable behavioral specification for RxJS operators using **Given / When / Then** rules grounded in explicit state-machine semantics.
 
 This project extends the ideas developed in [rxjs-operators-state-and-policy-patterns](https://github.com/hansschenker/rxjs-operators-state-and-policy-patterns).
@@ -355,7 +357,7 @@ npm install
 npm run validate
 ```
 
-`scripts/validate.mjs` checks `spec/operators.json` against the JSON Schema, enforces the catalog invariants (unique alphabetical operators, every lifecycle rule kind present, rule kinds in lifecycle order), and confirms that `docs/operators.md` is an exact mirror of the JSON.
+`scripts/validate.mjs` checks `spec/operators.json` against the JSON Schema, enforces the catalog invariants (unique alphabetical operators, every lifecycle rule kind present, rule kinds in lifecycle order), and confirms that `docs/operators.md` is an exact mirror of the JSON. The same check runs in GitHub Actions on every push (`.github/workflows/validate.yml`).
 
 ## From specification to testing
 

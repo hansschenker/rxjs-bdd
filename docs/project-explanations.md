@@ -118,6 +118,7 @@ RxJS implementation and tests
 | `spec/machine-semantic-model.schema.json` | JSON Schema for the syntax-independent **Machine Semantic Model** that both grammars map onto. |
 | `scripts/validate.mjs` | Validator run by `npm run validate`: checks `operators.json` against its schema, enforces the catalog invariants, and confirms `operators.md` mirrors the JSON. |
 | `package.json` | Declares the `validate` script and its single dev dependency, Ajv. |
+| `.github/workflows/validate.yml` | GitHub Actions workflow that runs `npm ci` and `npm run validate` on every push and pull request. |
 
 The only code is the validation script. There is no parser, generator, or test suite yet;
 the specification itself is Markdown, EBNF, and JSON.
@@ -522,8 +523,6 @@ model. Things worth knowing when working on it:
 - **Catalog rules are Readable BDD, not Convertible BDD.** The `given` / `when` / `then`
   strings in `operators.json` are free prose. Converting them to the strict grammar would
   be the next step toward the formal pipeline.
-- **Validation is local only.** `npm run validate` checks the schema, the catalog invariants,
-  and the Markdown mirror, but no CI step runs it on push.
 - **Some entries are generic placeholders.** 66 rules use the guard "the operator is
   active" and 12 use the event "the relevant input event occurs". These carry little
   operator-specific information and would need refinement before they are useful as test
