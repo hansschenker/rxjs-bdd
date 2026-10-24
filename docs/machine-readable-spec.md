@@ -42,3 +42,42 @@ A valid rule must have:
 6. a rule kind of `state` or `event`.
 
 This structural validation does not by itself prove semantic completeness. Semantic review still asks whether all meaningful source, timer, notifier, inner, completion, error, and teardown transitions are represented.
+
+
+## Formal syntax and semantic model
+
+The original operator catalog remains the human-readable behavioral corpus. Deterministic conversion uses the stricter language layer:
+
+```text
+spec/convertible-bdd.ebnf
+        ↓ parse
+BDD AST
+        ↓ analyze
+spec/machine-semantic-model.schema.json
+        ↓ generate
+spec/mealy.ebnf
+```
+
+The grammar validates syntactic form. The semantic analyzer must separately enforce declaration, typing, lifecycle, transition, and ambiguity constraints described in `docs/formal-language.md`.
+
+This separation is intentional: JSON Schema and EBNF can prove structural validity, but they do not by themselves prove that a transition is behaviorally complete or semantically correct.
+
+### LLM contract
+
+When an LLM participates in conversion, it should produce or transform structures that are subsequently checked by the grammar and semantic validator. Free-form model output is not itself the source of truth.
+
+Preferred flow:
+
+```text
+prose
+  ↓ LLM normalization
+Convertible BDD
+  ↓ deterministic parser
+AST
+  ↓ semantic checks
+Machine Model
+  ↓ deterministic generator
+Mealy DSL / RxJS
+```
+
+A model may suggest missing transitions or classifications, but ambiguity must be surfaced as an error or review item rather than silently resolved.
