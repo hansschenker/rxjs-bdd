@@ -11,13 +11,17 @@
 //      lifecycle order.
 //   3. docs/operators.md is an exact mirror of the JSON: same operators, same rules in the same
 //      order, same notes, and a matching operator count in its footer.
+//   4. Every spec/convertible/<operator>.feature parses under spec/convertible-bdd.ebnf, passes the
+//      declaration-free semantic checks, and spec/convertible/trace.json maps every scenario to
+//      catalog rules such that every rule of every operator is realised by at least one scenario.
 //
 // Exit code 0 when everything passes, 1 otherwise.
 
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import Ajv2020 from "ajv/dist/2020.js";
+import { parseFeature, checkFeature, vocabulary } from "./convertible-bdd.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const read = (relativePath) => readFileSync(resolve(root, relativePath), "utf8");
@@ -227,6 +231,70 @@ if (footerCount === null) fail(`markdown: no operator count found in the ${MARKD
 else if (footerCount !== operators.length) fail(`markdown: footer says ${footerCount} operators, JSON has ${operators.length}`);
 
 // ---------------------------------------------------------------------------
+// 4. Convertible BDD features and trace
+// ---------------------------------------------------------------------------
+const CONVERTIBLE_DIR = "spec/convertible";
+const TRACE_PATH = `${CONVERTIBLE_DIR}/trace.json`;
+
+const featureFiles = readdirSync(resolve(root, CONVERTIBLE_DIR))
+  .filter((file) => file.endsWith(".feature"))
+  .map((file) => file.slice(0, -".feature".length))
+  .sort();
+const trace = readJson(TRACE_PATH);
+const traceOperators = trace.operators ?? {};
+
+if (trace.version !== catalog.version) fail(`convertible: trace.json is for catalog ${trace.version}, catalog is ${catalog.version}`);
+
+const missingFeatures = names.filter((name) => !featureFiles.includes(name));
+const extraFeatures = featureFiles.filter((name) => !names.includes(name));
+if (missingFeatures.length) fail(`convertible: no feature file for ${missingFeatures.join(", ")}`);
+if (extraFeatures.length) fail(`convertible: feature file without catalog operator: ${extraFeatures.join(", ")}`);
+for (const name of names) if (!traceOperators[name]) fail(`convertible: ${name} missing from ${TRACE_PATH}`);
+for (const name of Object.keys(traceOperators)) if (!names.includes(name)) fail(`convertible: ${TRACE_PATH} lists unknown operator ${name}`);
+
+let scenarioTotal = 0;
+const inputSymbols = new Set();
+const actionSymbols = new Set();
+for (const operator of operators) {
+  if (!featureFiles.includes(operator.operator)) continue;
+  const path = `${CONVERTIBLE_DIR}/${operator.operator}.feature`;
+  let feature;
+  try {
+    feature = parseFeature(read(path));
+  } catch (error) {
+    fail(`convertible: ${path}: ${error.message}`);
+    continue;
+  }
+  if (feature.name !== operator.operator) fail(`convertible: ${path} declares Feature ${feature.name}`);
+  for (const problem of checkFeature(feature)) fail(`convertible: ${problem}`);
+  scenarioTotal += feature.scenarios.length;
+  const words = vocabulary(feature);
+  for (const name of words.inputs.keys()) inputSymbols.add(name);
+  for (const name of words.actions.keys()) actionSymbols.add(name);
+
+  const traced = traceOperators[operator.operator] ?? {};
+  const scenarioNames = new Set(feature.scenarios.map((scenario) => scenario.name));
+  const covered = new Set();
+  for (const [scenarioName, indices] of Object.entries(traced)) {
+    if (!scenarioNames.has(scenarioName)) fail(`convertible: trace for ${operator.operator} names unknown scenario ${scenarioName}`);
+    if (!Array.isArray(indices) || indices.length === 0) fail(`convertible: ${operator.operator}/${scenarioName} traces no catalog rule`);
+    for (const index of indices ?? []) {
+      if (!Number.isInteger(index) || index < 1 || index > operator.rules.length) {
+        fail(`convertible: ${operator.operator}/${scenarioName} traces rule ${index}, catalog has ${operator.rules.length}`);
+      } else {
+        covered.add(index);
+      }
+    }
+  }
+  for (const scenarioName of scenarioNames) {
+    if (!traced[scenarioName]) fail(`convertible: ${operator.operator}/${scenarioName} has no trace entry`);
+  }
+  for (let index = 1; index <= operator.rules.length; index++) {
+    if (!covered.has(index)) fail(`convertible: ${operator.operator} rule ${index} [${operator.rules[index - 1].kind}] is not realised by any scenario`);
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Report
 // ---------------------------------------------------------------------------
 const counts = {};
@@ -237,10 +305,11 @@ console.log(`${CATALOG_PATH} v${catalog.version}: ${operators.length} operators,
 for (const kind of KIND_ORDER) {
   if (counts[kind]) console.log(`  ${kind.padEnd(14)} ${String(counts[kind]).padStart(4)}`);
 }
+console.log(`${CONVERTIBLE_DIR}: ${featureFiles.length} features, ${scenarioTotal} scenarios, ${inputSymbols.size} input symbols, ${actionSymbols.size} action symbols`);
 
 if (problems.length) {
   console.error(`\n${problems.length} problem${problems.length === 1 ? "" : "s"}:`);
   for (const problem of problems) console.error(`- ${problem}`);
   process.exit(1);
 }
-console.log("\nOK: schema, catalog invariants, and Markdown mirror all pass.");
+console.log("\nOK: schema, catalog invariants, Markdown mirror, and Convertible BDD features all pass.");

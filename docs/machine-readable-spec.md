@@ -69,6 +69,8 @@ spec/machine-semantic-model.schema.json
 spec/mealy.ebnf
 ```
 
+The conversion has been carried out for all 116 operators: see `spec/convertible/` and `docs/convertible-catalog.md`.
+
 The grammar validates syntactic form. The semantic analyzer must separately enforce declaration, typing, lifecycle, transition, and ambiguity constraints described in `docs/formal-language.md`.
 
 This separation is intentional: JSON Schema and EBNF can prove structural validity, but they do not by themselves prove that a transition is behaviorally complete or semantically correct.

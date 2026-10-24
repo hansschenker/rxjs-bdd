@@ -14,9 +14,9 @@ readable **Given / When / Then** rule. The repository contains the human-readabl
 of those rules for all 116 operator modules, a machine-readable JSON mirror of the same
 catalog, two formal EBNF grammars (a strict BDD syntax and a Mealy-machine DSL), a shared
 JSON Schema for the semantic machine model that both grammars map onto, and documents
-that explain how to turn the rules into state-complete RxJS tests. It is a specification
-and teaching project: there is no runtime library, parser, or test suite in the repository
-yet.
+that explain how to turn the rules into state-complete RxJS tests. The catalog has also been
+converted into the strict Convertible BDD grammar, with a parser and validator. There is no
+runtime library or test suite yet.
 
 ---
 
@@ -116,12 +116,17 @@ RxJS implementation and tests
 | `spec/convertible-bdd.ebnf` | EBNF grammar for **Convertible BDD**, the strict, parser-friendly Given / When / Then syntax. |
 | `spec/mealy.ebnf` | EBNF grammar for the **Mealy DSL**, the machine-oriented target language. |
 | `spec/machine-semantic-model.schema.json` | JSON Schema for the syntax-independent **Machine Semantic Model** that both grammars map onto. |
+| `spec/convertible/<operator>.feature` | The catalog converted to **Convertible BDD**: one feature per operator, each scenario a deterministic transition (116 files). |
+| `spec/convertible/trace.json` | Maps every scenario to the catalog rules it realises. |
+| `docs/convertible-catalog.md` | Vocabulary conventions, scenario naming, trace format, semantic checks, and limitations of the converted catalog. |
+| `scripts/convertible-bdd.mjs` | Recursive-descent parser for `convertible-bdd.ebnf` plus the declaration-free semantic checks. |
 | `scripts/validate.mjs` | Validator run by `npm run validate`: checks `operators.json` against its schema, enforces the catalog invariants, and confirms `operators.md` mirrors the JSON. |
 | `package.json` | Declares the `validate` script and its single dev dependency, Ajv. |
 | `.github/workflows/validate.yml` | GitHub Actions workflow that runs `npm ci` and `npm run validate` on every push and pull request. |
 
-The only code is the validation script. There is no parser, generator, or test suite yet;
-the specification itself is Markdown, EBNF, and JSON.
+The only code is the validation script and the Convertible BDD parser it uses. There is no
+machine-model generator or test suite yet; the specification itself is Markdown, EBNF, JSON,
+and Convertible BDD feature files.
 
 ---
 
@@ -432,6 +437,34 @@ syntax, the semantic checker validates symbols and machine invariants, and the L
 for normalization, candidate generation, missing-case analysis, and explanation inside
 those constraints. Free-form model output must always be re-validated.
 
+### 5.8 The converted catalog
+
+The readable catalog has been rewritten in Convertible BDD: `spec/convertible/<operator>.feature`
+holds one feature per operator, 116 in all, with 1047 scenarios. Each scenario is one
+deterministic transition, so the conversion is not one scenario per catalog rule. The eleven rule
+kinds are coverage views of the same transitions; for `take` the state, event, and cancellation
+rules all describe the same `(state, source value)` step and become one scenario:
+
+```text
+Scenario: TakeFinalValue
+  Given subscription.active == true
+  And taken + 1 == count
+  When source.next(value)
+  Then taken = taken + 1
+  And emit value
+  And complete
+  And source.unsubscribe()
+```
+
+`spec/convertible/trace.json` records that this scenario realises catalog rules 3, 4, and 8, and
+the validator proves that every rule of every operator is realised by at least one scenario.
+`scripts/convertible-bdd.mjs` parses the grammar and enforces the declaration-free semantic
+constraints: unique scenario names, consistent event and action arity, no assignment to event
+inputs, no emission after a terminal effect, and no two scenarios with the same event and guard.
+The vocabulary conventions (`source.next(value)`, `inner.complete()`, `timer.fire()`,
+`pending.exists == true`, `emit nothing`, `output.emitEach(buffer)`) are documented in
+`docs/convertible-catalog.md`.
+
 ---
 
 ## 6. From specification to testing
@@ -520,9 +553,10 @@ model. Things worth knowing when working on it:
   `count`, `toArray`, `last`, and `endWith` already had an event rule whose trigger is
   source completion. Those were left untouched; the dedicated `completion` rule restates the
   behaviour and splits it by state where the outcome differs.
-- **Catalog rules are Readable BDD, not Convertible BDD.** The `given` / `when` / `then`
-  strings in `operators.json` are free prose. Converting them to the strict grammar would
-  be the next step toward the formal pipeline.
+- **The Convertible BDD layer has no declarations.** The grammar has no place to declare
+  state, inputs, outputs, or actions, so the parser checks structure, arity, determinism,
+  and lifecycle ordering but not symbol resolution or typing. Generating the Machine Semantic
+  Model from the features would close that gap.
 - **Some entries are generic placeholders.** 66 rules use the guard "the operator is
   active" and 12 use the event "the relevant input event occurs". These carry little
   operator-specific information and would need refinement before they are useful as test
@@ -541,9 +575,9 @@ model. Things worth knowing when working on it:
  docs/operators.md ◄──────────────► spec/operators.json ── validated by ── spec/operator-catalog.schema.json
  (Readable BDD, 116 operators)      (same content as data)
                     │
-                    │  normalization (future, LLM-assisted, re-validated)
+                    │  conversion (done): spec/convertible/*.feature + trace.json
                     ▼
- spec/convertible-bdd.ebnf  ── parse ──► BDD AST ── analyze ──► spec/machine-semantic-model.schema.json
+ spec/convertible-bdd.ebnf ── parse (scripts/convertible-bdd.mjs) ──► BDD AST ── analyze (future) ──► spec/machine-semantic-model.schema.json
                                                                         │
                                                                         │  generate
                                                                         ▼
@@ -564,6 +598,7 @@ model. Things worth knowing when working on it:
 | **Event-triggered rule** (`kind: event`) | A rule describing the action taken on a discrete boundary or lifecycle event. |
 | **Readable BDD** | Unrestricted Given / When / Then prose for people. |
 | **Convertible BDD** | The strict, context-free Given / When / Then language defined in `spec/convertible-bdd.ebnf`. |
+| **Convertible BDD catalog** | `spec/convertible/*.feature`: the readable catalog rewritten as deterministic transitions in the strict grammar, traced back to catalog rules by `trace.json`. |
 | **Mealy DSL** | The machine-oriented language defined in `spec/mealy.ebnf`. |
 | **Machine Semantic Model** | The syntax-independent machine representation (`spec/machine-semantic-model.schema.json`) shared by both languages. |
 | **Mealy machine** | `M = (S, S₀, Σ, Γ, T, G)`: states, initial state, input alphabet, output alphabet, transition function, output function. |

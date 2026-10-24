@@ -5,10 +5,10 @@
 
 Document        = FeatureDecl ;
 
-FeatureDecl     = "Feature", ":", Identifier, Newline,
+FeatureDecl     = "Feature", ":", Space?, Identifier, Newline,
                   { BlankLine | ScenarioDecl } ;
 
-ScenarioDecl    = "Scenario", ":", Identifier, Newline,
+ScenarioDecl    = "Scenario", ":", Space?, Identifier, Newline,
                   Indent, GivenClause, Newline,
                   Indent, WhenClause, Newline,
                   Indent, ThenClause, Newline,

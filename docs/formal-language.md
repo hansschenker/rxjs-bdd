@@ -31,7 +31,9 @@ The concrete grammars are written in EBNF:
 - `spec/convertible-bdd.ebnf`
 - `spec/mealy.ebnf`
 
-Both are intended to remain context-free. Context-sensitive constraints belong to semantic analysis, not to the grammar.
+Both are intended to remain context-free. Context-sensitive constraints belong to semantic analysis, not to the grammar. `Feature:` and `Scenario:` may be followed by a single space before the identifier, as in the examples below.
+
+The complete operator catalog has been converted into Convertible BDD: `spec/convertible/<operator>.feature`, with `spec/convertible/trace.json` linking every scenario to the readable rules it realises. `scripts/convertible-bdd.mjs` parses the language and applies the declaration-free subset of the semantic constraints listed below. The vocabulary conventions are documented in `docs/convertible-catalog.md`.
 
 ## Formal pipeline
 

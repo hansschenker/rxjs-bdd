@@ -277,7 +277,9 @@ The two concrete languages are defined as context-free EBNF grammars:
 - `spec/convertible-bdd.ebnf` — strict, parser-friendly Given / When / Then syntax;
 - `spec/mealy.ebnf` — machine-oriented Mealy DSL;
 - `spec/machine-semantic-model.schema.json` — syntax-independent semantic model shared by both languages;
-- `docs/formal-language.md` — grammar model, semantic constraints, BDD-to-Mealy mapping, LLM guidance, and round-trip goals.
+- `docs/formal-language.md` — grammar model, semantic constraints, BDD-to-Mealy mapping, LLM guidance, and round-trip goals;
+- `spec/convertible/` — the complete catalog converted to Convertible BDD: one `.feature` per operator plus `trace.json` mapping every scenario back to the catalog rules it realises (see `docs/convertible-catalog.md`);
+- `scripts/convertible-bdd.mjs` — parser and semantic checker for the grammar, run by `npm run validate`.
 
 Formally:
 
@@ -345,6 +347,7 @@ The complete 116-operator catalog is also available as structured data:
 - `spec/operators.json` — machine-readable Given / When / Then rules.
 - `spec/operator-catalog.schema.json` — JSON Schema for structural validation.
 - `spec/convertible-bdd.ebnf` — formal Convertible BDD grammar.
+- `spec/convertible/*.feature` — the catalog in Convertible BDD, with `spec/convertible/trace.json`.
 - `spec/mealy.ebnf` — formal Mealy DSL grammar.
 - `spec/machine-semantic-model.schema.json` — shared syntax-independent machine model.
 - `docs/machine-readable-spec.md` — semantics and validation invariants.
@@ -357,7 +360,7 @@ npm install
 npm run validate
 ```
 
-`scripts/validate.mjs` checks `spec/operators.json` against the JSON Schema, enforces the catalog invariants (unique alphabetical operators, every lifecycle rule kind present, rule kinds in lifecycle order), and confirms that `docs/operators.md` is an exact mirror of the JSON. The same check runs in GitHub Actions on every push (`.github/workflows/validate.yml`).
+`scripts/validate.mjs` checks `spec/operators.json` against the JSON Schema, enforces the catalog invariants (unique alphabetical operators, every lifecycle rule kind present, rule kinds in lifecycle order), and confirms that `docs/operators.md` is an exact mirror of the JSON. It also parses every `spec/convertible/*.feature` file with `scripts/convertible-bdd.mjs`, applies the declaration-free semantic checks, and confirms that `trace.json` realises every catalog rule. The same check runs in GitHub Actions on every push (`.github/workflows/validate.yml`).
 
 ## From specification to testing
 

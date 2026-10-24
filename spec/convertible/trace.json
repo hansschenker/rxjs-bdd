@@ -1,0 +1,3870 @@
+{
+  "version": "0.6.0",
+  "operators": {
+    "audit": {
+      "SubscribeSource": [
+        1
+      ],
+      "StartDuration": [
+        7
+      ],
+      "ReplacePendingValue": [
+        2,
+        6,
+        12
+      ],
+      "DurationFiresSourceActive": [
+        3,
+        4,
+        13
+      ],
+      "DurationFiresAfterSourceCompleted": [
+        4,
+        9,
+        13
+      ],
+      "DurationCompletesSilentlySourceActive": [
+        5
+      ],
+      "DurationCompletesSilentlyAfterSourceCompleted": [
+        5
+      ],
+      "CompleteWithoutPendingWork": [
+        8
+      ],
+      "CompleteDeferred": [
+        9
+      ],
+      "ErrorSource": [
+        10
+      ],
+      "ErrorDuration": [
+        10
+      ],
+      "Unsubscribe": [
+        11
+      ]
+    },
+    "auditTime": {
+      "SubscribeSource": [
+        1
+      ],
+      "StartInterval": [
+        6
+      ],
+      "ReplacePendingValue": [
+        2,
+        5,
+        11
+      ],
+      "TimerFiresSourceActive": [
+        3,
+        4
+      ],
+      "TimerFiresAfterSourceCompleted": [
+        4,
+        8
+      ],
+      "CompleteWithoutPendingWork": [
+        7
+      ],
+      "CompleteDeferred": [
+        8
+      ],
+      "ErrorSource": [
+        9
+      ],
+      "Unsubscribe": [
+        10
+      ]
+    },
+    "buffer": {
+      "SubscribeSource": [
+        1
+      ],
+      "AppendValue": [
+        2
+      ],
+      "ClosingEmits": [
+        3,
+        4,
+        5
+      ],
+      "ClosingCompletes": [
+        7
+      ],
+      "CompleteSource": [
+        6,
+        10
+      ],
+      "ErrorSource": [
+        8,
+        10
+      ],
+      "ErrorClosing": [
+        8
+      ],
+      "Unsubscribe": [
+        9
+      ]
+    },
+    "bufferCount": {
+      "SubscribeSource": [
+        1
+      ],
+      "OpenBufferAndAppend": [
+        2,
+        4
+      ],
+      "AppendValue": [
+        2,
+        10
+      ],
+      "AppendAndEmitFullBuffer": [
+        3,
+        5
+      ],
+      "OpenAppendAndEmitFullBuffer": [
+        3,
+        4,
+        5
+      ],
+      "CompleteWithOpenBuffers": [
+        6
+      ],
+      "CompleteWithoutBuffers": [
+        7
+      ],
+      "ErrorSource": [
+        8
+      ],
+      "Unsubscribe": [
+        9
+      ]
+    },
+    "bufferTime": {
+      "SubscribeWithCreationInterval": [
+        1
+      ],
+      "SubscribeWithoutCreationInterval": [
+        1
+      ],
+      "AppendValue": [
+        2
+      ],
+      "AppendAndEmitAtMaxSizeThenReopen": [
+        3,
+        7,
+        11
+      ],
+      "AppendAndEmitAtMaxSize": [
+        3,
+        11
+      ],
+      "CloseTimerFiresThenReopen": [
+        3,
+        4,
+        7
+      ],
+      "CloseTimerFires": [
+        3,
+        4
+      ],
+      "CreationIntervalTicks": [
+        5,
+        6
+      ],
+      "CompleteSource": [
+        8
+      ],
+      "ErrorSource": [
+        9
+      ],
+      "Unsubscribe": [
+        10
+      ]
+    },
+    "bufferToggle": {
+      "SubscribeSource": [
+        1
+      ],
+      "RouteValue": [
+        2
+      ],
+      "OpeningEmits": [
+        3,
+        4,
+        6
+      ],
+      "ClosingEmits": [
+        3,
+        5,
+        12
+      ],
+      "ClosingCompletesSilently": [
+        9
+      ],
+      "OpeningsComplete": [
+        8
+      ],
+      "CompleteSource": [
+        7
+      ],
+      "ErrorSource": [
+        10
+      ],
+      "ErrorOpenings": [
+        10
+      ],
+      "ErrorClosing": [
+        10
+      ],
+      "Unsubscribe": [
+        11
+      ]
+    },
+    "bufferWhen": {
+      "SubscribeSource": [
+        1
+      ],
+      "AppendValue": [
+        2
+      ],
+      "ClosingEmits": [
+        3,
+        4,
+        5,
+        10
+      ],
+      "ClosingCompletesSilently": [
+        7
+      ],
+      "CompleteSource": [
+        6
+      ],
+      "ErrorSource": [
+        8
+      ],
+      "ErrorClosing": [
+        8
+      ],
+      "Unsubscribe": [
+        9
+      ]
+    },
+    "catchError": {
+      "SubscribeSource": [
+        1
+      ],
+      "ForwardValue": [
+        2
+      ],
+      "CompleteSource": [
+        5
+      ],
+      "CatchSourceError": [
+        3,
+        7,
+        10
+      ],
+      "SelectorThrows": [
+        7,
+        10
+      ],
+      "ForwardReplacementValue": [
+        4
+      ],
+      "CompleteReplacement": [
+        6
+      ],
+      "ErrorReplacement": [
+        8
+      ],
+      "UnsubscribeSource": [
+        9
+      ],
+      "UnsubscribeReplacement": [
+        9
+      ]
+    },
+    "combineAll": {
+      "SubscribeSource": [
+        1
+      ],
+      "CollectInner": [
+        2
+      ],
+      "OuterCompletesWithoutInners": [
+        6
+      ],
+      "OuterCompletesWithInners": [
+        3,
+        6
+      ],
+      "InnerFirstValueNotAllReady": [
+        4
+      ],
+      "InnerFirstValueAllReady": [
+        3,
+        4
+      ],
+      "InnerLaterValue": [
+        3,
+        4,
+        5,
+        10
+      ],
+      "InnerCompletesOthersActive": [
+        7
+      ],
+      "LastInnerCompletes": [
+        7
+      ],
+      "ErrorOuter": [
+        8
+      ],
+      "ErrorInner": [
+        8
+      ],
+      "UnsubscribeWhileCollecting": [
+        9
+      ],
+      "UnsubscribeWhileCombining": [
+        9
+      ]
+    },
+    "combineLatest": {
+      "SubscribeSource": [
+        1
+      ],
+      "InputFirstValueNotAllReady": [
+        2,
+        4
+      ],
+      "InputFirstValueAllReady": [
+        3,
+        4
+      ],
+      "InputLaterValue": [
+        2,
+        3,
+        4,
+        5,
+        10
+      ],
+      "InputCompletesOthersActive": [
+        6
+      ],
+      "LastInputCompletes": [
+        7
+      ],
+      "ErrorInput": [
+        8
+      ],
+      "Unsubscribe": [
+        9
+      ]
+    },
+    "combineLatestAll": {
+      "SubscribeSource": [
+        1
+      ],
+      "CollectInner": [
+        2
+      ],
+      "OuterCompletesWithoutInners": [
+        6
+      ],
+      "OuterCompletesWithInners": [
+        3,
+        6
+      ],
+      "InnerFirstValueNotAllReady": [
+        4
+      ],
+      "InnerFirstValueAllReady": [
+        3,
+        4
+      ],
+      "InnerLaterValue": [
+        3,
+        4,
+        5,
+        10
+      ],
+      "InnerCompletesOthersActive": [
+        7
+      ],
+      "LastInnerCompletes": [
+        7
+      ],
+      "ErrorOuter": [
+        8
+      ],
+      "ErrorInner": [
+        8
+      ],
+      "UnsubscribeWhileCollecting": [
+        9
+      ],
+      "UnsubscribeWhileCombining": [
+        9
+      ]
+    },
+    "combineLatestWith": {
+      "SubscribeSource": [
+        1
+      ],
+      "InputFirstValueNotAllReady": [
+        2,
+        4
+      ],
+      "InputFirstValueAllReady": [
+        3,
+        4
+      ],
+      "InputLaterValue": [
+        2,
+        3,
+        4,
+        5,
+        10
+      ],
+      "InputCompletesOthersActive": [
+        6
+      ],
+      "LastInputCompletes": [
+        7
+      ],
+      "ErrorInput": [
+        8
+      ],
+      "Unsubscribe": [
+        9
+      ]
+    },
+    "concat": {
+      "SubscribeSource": [
+        1
+      ],
+      "ForwardInputValue": [
+        2,
+        4,
+        5,
+        10
+      ],
+      "InputCompletesMoreRemain": [
+        3,
+        6
+      ],
+      "LastInputCompletes": [
+        7
+      ],
+      "ErrorInput": [
+        8
+      ],
+      "Unsubscribe": [
+        9
+      ]
+    },
+    "concatAll": {
+      "SubscribeSource": [
+        1
+      ],
+      "AdmitValue": [
+        5
+      ],
+      "QueueValue": [
+        2,
+        6,
+        11
+      ],
+      "ForwardInnerValue": [
+        4
+      ],
+      "InnerCompletesWithQueue": [
+        3,
+        8
+      ],
+      "InnerCompletesIdle": [
+        3
+      ],
+      "InnerCompletesAfterSourceCompleted": [
+        8
+      ],
+      "CompleteSourceIdle": [
+        7
+      ],
+      "CompleteSourceBusy": [
+        8
+      ],
+      "ErrorSource": [
+        9
+      ],
+      "ErrorInner": [
+        9
+      ],
+      "Unsubscribe": [
+        10
+      ]
+    },
+    "concatMap": {
+      "SubscribeSource": [
+        1
+      ],
+      "AdmitValue": [
+        5
+      ],
+      "QueueValue": [
+        2,
+        6,
+        11
+      ],
+      "ForwardInnerValue": [
+        4
+      ],
+      "InnerCompletesWithQueue": [
+        3,
+        8
+      ],
+      "InnerCompletesIdle": [
+        3
+      ],
+      "InnerCompletesAfterSourceCompleted": [
+        8
+      ],
+      "CompleteSourceIdle": [
+        7
+      ],
+      "CompleteSourceBusy": [
+        8
+      ],
+      "ErrorSource": [
+        9
+      ],
+      "ErrorInner": [
+        9
+      ],
+      "Unsubscribe": [
+        10
+      ]
+    },
+    "concatMapTo": {
+      "SubscribeSource": [
+        1
+      ],
+      "AdmitValue": [
+        5
+      ],
+      "QueueValue": [
+        2,
+        6,
+        11
+      ],
+      "ForwardInnerValue": [
+        4
+      ],
+      "InnerCompletesWithQueue": [
+        3,
+        8
+      ],
+      "InnerCompletesIdle": [
+        3
+      ],
+      "InnerCompletesAfterSourceCompleted": [
+        8
+      ],
+      "CompleteSourceIdle": [
+        7
+      ],
+      "CompleteSourceBusy": [
+        8
+      ],
+      "ErrorSource": [
+        9
+      ],
+      "ErrorInner": [
+        9
+      ],
+      "Unsubscribe": [
+        10
+      ]
+    },
+    "concatWith": {
+      "SubscribeSource": [
+        1
+      ],
+      "ForwardInputValue": [
+        2,
+        4,
+        5,
+        10
+      ],
+      "InputCompletesMoreRemain": [
+        3,
+        6
+      ],
+      "LastInputCompletes": [
+        7
+      ],
+      "ErrorInput": [
+        8
+      ],
+      "Unsubscribe": [
+        9
+      ]
+    },
+    "connect": {
+      "SubscribeSource": [
+        1,
+        2,
+        3
+      ],
+      "ForwardSourceValueToSubject": [
+        2,
+        7
+      ],
+      "ForwardSelectorOutputValue": [
+        3
+      ],
+      "CompleteSource": [
+        4
+      ],
+      "CompleteSelectorOutput": [
+        4
+      ],
+      "ErrorSource": [
+        5
+      ],
+      "ErrorSelectorOutput": [
+        5
+      ],
+      "Unsubscribe": [
+        6
+      ]
+    },
+    "count": {
+      "SubscribeSource": [
+        1
+      ],
+      "CountMatchingValue": [
+        2,
+        7
+      ],
+      "SkipNonMatchingValue": [
+        2
+      ],
+      "CompleteSource": [
+        3,
+        4
+      ],
+      "ErrorSource": [
+        5
+      ],
+      "Unsubscribe": [
+        6
+      ]
+    },
+    "debounce": {
+      "SubscribeSource": [
+        1
+      ],
+      "StartDuration": [
+        2
+      ],
+      "RestartDuration": [
+        2,
+        6,
+        11
+      ],
+      "DurationEmits": [
+        3,
+        4,
+        12
+      ],
+      "DurationCompletesSilently": [
+        5
+      ],
+      "CompleteWithPending": [
+        7
+      ],
+      "CompleteWithoutPending": [
+        8
+      ],
+      "ErrorSource": [
+        9
+      ],
+      "ErrorDuration": [
+        9
+      ],
+      "Unsubscribe": [
+        10
+      ]
+    },
+    "debounceTime": {
+      "SubscribeSource": [
+        1
+      ],
+      "ScheduleTask": [
+        2
+      ],
+      "RecordLaterValue": [
+        2,
+        5,
+        10
+      ],
+      "TaskFiresBeforeDeadline": [
+        4
+      ],
+      "TaskFiresAtDeadline": [
+        3,
+        4
+      ],
+      "CompleteWithPending": [
+        6
+      ],
+      "CompleteWithoutPending": [
+        7
+      ],
+      "ErrorSource": [
+        8
+      ],
+      "Unsubscribe": [
+        9
+      ]
+    },
+    "defaultIfEmpty": {
+      "SubscribeSource": [
+        1
+      ],
+      "ForwardValue": [
+        2,
+        8
+      ],
+      "CompleteEmpty": [
+        3,
+        4
+      ],
+      "CompleteNonEmpty": [
+        5
+      ],
+      "ErrorSource": [
+        6
+      ],
+      "Unsubscribe": [
+        7
+      ]
+    },
+    "delay": {
+      "SubscribeSource": [
+        1
+      ],
+      "ScheduleValue": [
+        2,
+        5,
+        10
+      ],
+      "TimerFiresMorePending": [
+        3,
+        4
+      ],
+      "TimerFiresLastPendingSourceActive": [
+        3,
+        4
+      ],
+      "TimerFiresLastPendingAfterSourceCompleted": [
+        4,
+        6
+      ],
+      "CompleteWithPending": [
+        6
+      ],
+      "CompleteWithoutPending": [
+        7
+      ],
+      "ErrorSource": [
+        8
+      ],
+      "Unsubscribe": [
+        9
+      ]
+    },
+    "delayWhen": {
+      "SubscribeWithoutSubscriptionDelay": [
+        1
+      ],
+      "SubscribeWithSubscriptionDelay": [
+        2
+      ],
+      "SubscriptionDelayEmits": [
+        7,
+        15
+      ],
+      "SubscriptionDelayCompletes": [
+        7
+      ],
+      "StartDuration": [
+        3,
+        8
+      ],
+      "DurationEmitsMorePending": [
+        4,
+        5,
+        14
+      ],
+      "DurationEmitsLastPendingSourceActive": [
+        4,
+        5,
+        14
+      ],
+      "DurationEmitsLastPendingAfterSourceCompleted": [
+        5,
+        9,
+        14
+      ],
+      "DurationCompletesSilentlyMorePending": [
+        6,
+        11
+      ],
+      "DurationCompletesSilentlyLastPendingSourceActive": [
+        6,
+        11
+      ],
+      "DurationCompletesSilentlyLastPendingAfterSourceCompleted": [
+        6,
+        9,
+        11
+      ],
+      "CompleteWithPending": [
+        9
+      ],
+      "CompleteWithoutPending": [
+        10
+      ],
+      "ErrorSource": [
+        12
+      ],
+      "ErrorDuration": [
+        12
+      ],
+      "Unsubscribe": [
+        13
+      ]
+    },
+    "dematerialize": {
+      "SubscribeSource": [
+        1
+      ],
+      "NextNotification": [
+        2,
+        3
+      ],
+      "CompleteNotification": [
+        3,
+        4,
+        9
+      ],
+      "ErrorNotification": [
+        3,
+        6,
+        9
+      ],
+      "CompleteSource": [
+        5
+      ],
+      "ErrorSource": [
+        7
+      ],
+      "Unsubscribe": [
+        8
+      ]
+    },
+    "distinct": {
+      "SubscribeWithFlushes": [
+        1
+      ],
+      "SubscribeWithoutFlushes": [
+        1
+      ],
+      "NewKey": [
+        2,
+        3
+      ],
+      "SeenKey": [
+        2,
+        3
+      ],
+      "FlushesEmits": [
+        4
+      ],
+      "FlushesCompletes": [
+        6
+      ],
+      "CompleteSource": [
+        5,
+        9
+      ],
+      "ErrorSource": [
+        7,
+        9
+      ],
+      "ErrorFlushes": [
+        7
+      ],
+      "Unsubscribe": [
+        8
+      ]
+    },
+    "distinctUntilChanged": {
+      "SubscribeSource": [
+        1
+      ],
+      "FirstValue": [
+        3
+      ],
+      "ChangedValue": [
+        2,
+        3,
+        7
+      ],
+      "UnchangedValue": [
+        2
+      ],
+      "CompleteSource": [
+        4
+      ],
+      "ErrorSource": [
+        5
+      ],
+      "Unsubscribe": [
+        6
+      ]
+    },
+    "distinctUntilKeyChanged": {
+      "SubscribeSource": [
+        1
+      ],
+      "FirstValue": [
+        3
+      ],
+      "ChangedValue": [
+        2,
+        3,
+        7
+      ],
+      "UnchangedValue": [
+        2
+      ],
+      "CompleteSource": [
+        4
+      ],
+      "ErrorSource": [
+        5
+      ],
+      "Unsubscribe": [
+        6
+      ]
+    },
+    "elementAt": {
+      "SubscribeSource": [
+        1
+      ],
+      "SkipBeforeIndex": [
+        2
+      ],
+      "EmitAtIndex": [
+        3,
+        8
+      ],
+      "CompleteTooEarlyWithoutDefault": [
+        3,
+        4
+      ],
+      "CompleteTooEarlyWithDefault": [
+        3,
+        5
+      ],
+      "ErrorSource": [
+        6
+      ],
+      "Unsubscribe": [
+        7
+      ]
+    },
+    "endWith": {
+      "SubscribeSource": [
+        1
+      ],
+      "ForwardValue": [
+        2,
+        7
+      ],
+      "CompleteSource": [
+        3,
+        4
+      ],
+      "ErrorSource": [
+        5
+      ],
+      "Unsubscribe": [
+        6
+      ]
+    },
+    "every": {
+      "SubscribeSource": [
+        1
+      ],
+      "PassingValue": [
+        2
+      ],
+      "FailingValue": [
+        3,
+        7
+      ],
+      "CompleteAllPassed": [
+        3,
+        4
+      ],
+      "ErrorSource": [
+        5
+      ],
+      "Unsubscribe": [
+        6
+      ]
+    },
+    "exhaust": {
+      "SubscribeSource": [
+        1
+      ],
+      "AdmitValue": [
+        6
+      ],
+      "IgnoreWhileBusy": [
+        2,
+        5,
+        11
+      ],
+      "ForwardInnerValue": [
+        4
+      ],
+      "InnerCompletesSourceActive": [
+        3
+      ],
+      "InnerCompletesAfterSourceCompleted": [
+        3,
+        8
+      ],
+      "CompleteSourceIdle": [
+        7
+      ],
+      "CompleteSourceBusy": [
+        8
+      ],
+      "ErrorSource": [
+        9
+      ],
+      "ErrorInner": [
+        9
+      ],
+      "Unsubscribe": [
+        10
+      ]
+    },
+    "exhaustAll": {
+      "SubscribeSource": [
+        1
+      ],
+      "AdmitValue": [
+        6
+      ],
+      "IgnoreWhileBusy": [
+        2,
+        5,
+        11
+      ],
+      "ForwardInnerValue": [
+        4
+      ],
+      "InnerCompletesSourceActive": [
+        3
+      ],
+      "InnerCompletesAfterSourceCompleted": [
+        3,
+        8
+      ],
+      "CompleteSourceIdle": [
+        7
+      ],
+      "CompleteSourceBusy": [
+        8
+      ],
+      "ErrorSource": [
+        9
+      ],
+      "ErrorInner": [
+        9
+      ],
+      "Unsubscribe": [
+        10
+      ]
+    },
+    "exhaustMap": {
+      "SubscribeSource": [
+        1
+      ],
+      "AdmitValue": [
+        6
+      ],
+      "IgnoreWhileBusy": [
+        2,
+        5,
+        11
+      ],
+      "ForwardInnerValue": [
+        4
+      ],
+      "InnerCompletesSourceActive": [
+        3
+      ],
+      "InnerCompletesAfterSourceCompleted": [
+        3,
+        8
+      ],
+      "CompleteSourceIdle": [
+        7
+      ],
+      "CompleteSourceBusy": [
+        8
+      ],
+      "ErrorSource": [
+        9
+      ],
+      "ErrorInner": [
+        9
+      ],
+      "Unsubscribe": [
+        10
+      ]
+    },
+    "expand": {
+      "SubscribeSource": [
+        1
+      ],
+      "ExpandSourceValue": [
+        2,
+        3,
+        5
+      ],
+      "BufferSourceValue": [
+        6
+      ],
+      "ExpandInnerValue": [
+        4,
+        5,
+        11
+      ],
+      "BufferInnerValue": [
+        4,
+        6
+      ],
+      "InnerCompletesWithBuffer": [
+        6,
+        8
+      ],
+      "InnerCompletesOthersActive": [
+        8
+      ],
+      "LastInnerCompletesSourceActive": [
+        2
+      ],
+      "LastInnerCompletesAfterSourceCompleted": [
+        8
+      ],
+      "CompleteSourceIdle": [
+        7
+      ],
+      "CompleteSourceBusy": [
+        8
+      ],
+      "ErrorSource": [
+        9
+      ],
+      "ErrorInner": [
+        9
+      ],
+      "Unsubscribe": [
+        10
+      ]
+    },
+    "filter": {
+      "SubscribeSource": [
+        1
+      ],
+      "PassValue": [
+        2,
+        3,
+        7
+      ],
+      "DropValue": [
+        2,
+        3
+      ],
+      "CompleteSource": [
+        4
+      ],
+      "ErrorSource": [
+        5
+      ],
+      "Unsubscribe": [
+        6
+      ]
+    },
+    "finalize": {
+      "SubscribeSource": [
+        1
+      ],
+      "ForwardValue": [
+        2,
+        7
+      ],
+      "CompleteSource": [
+        3,
+        4
+      ],
+      "ErrorSource": [
+        3,
+        5
+      ],
+      "Unsubscribe": [
+        3,
+        6
+      ]
+    },
+    "find": {
+      "SubscribeSource": [
+        1
+      ],
+      "NonMatchingValue": [
+        2
+      ],
+      "MatchingValue": [
+        3,
+        7
+      ],
+      "CompleteWithoutMatch": [
+        3,
+        4
+      ],
+      "ErrorSource": [
+        5
+      ],
+      "Unsubscribe": [
+        6
+      ]
+    },
+    "findIndex": {
+      "SubscribeSource": [
+        1
+      ],
+      "NonMatchingValue": [
+        2
+      ],
+      "MatchingValue": [
+        3,
+        7
+      ],
+      "CompleteWithoutMatch": [
+        3,
+        4
+      ],
+      "ErrorSource": [
+        5
+      ],
+      "Unsubscribe": [
+        6
+      ]
+    },
+    "first": {
+      "SubscribeSource": [
+        1
+      ],
+      "NonMatchingValue": [
+        2
+      ],
+      "MatchingValue": [
+        3,
+        8
+      ],
+      "CompleteWithoutMatchNoDefault": [
+        3,
+        4
+      ],
+      "CompleteWithoutMatchWithDefault": [
+        3,
+        5
+      ],
+      "ErrorSource": [
+        6
+      ],
+      "Unsubscribe": [
+        7
+      ]
+    },
+    "flatMap": {
+      "SubscribeSource": [
+        1
+      ],
+      "AdmitValue": [
+        2,
+        3,
+        5
+      ],
+      "QueueValue": [
+        2,
+        6,
+        11
+      ],
+      "ForwardInnerValue": [
+        3,
+        4
+      ],
+      "InnerCompletesWithQueue": [
+        6,
+        8
+      ],
+      "InnerCompletesOthersActive": [
+        8
+      ],
+      "LastInnerCompletesSourceActive": [
+        2
+      ],
+      "LastInnerCompletesAfterSourceCompleted": [
+        8
+      ],
+      "CompleteSourceIdle": [
+        7
+      ],
+      "CompleteSourceBusy": [
+        8
+      ],
+      "ErrorSource": [
+        9
+      ],
+      "ErrorInner": [
+        9
+      ],
+      "Unsubscribe": [
+        10
+      ]
+    },
+    "groupBy": {
+      "SubscribeSource": [
+        1
+      ],
+      "ValueWithNewKey": [
+        3,
+        5
+      ],
+      "ValueWithNewKeyAndDuration": [
+        3,
+        4,
+        5
+      ],
+      "ValueWithExistingKey": [
+        2,
+        3,
+        6
+      ],
+      "GroupSubscribed": [
+        2
+      ],
+      "DurationEmits": [
+        4,
+        11
+      ],
+      "CompleteSource": [
+        7
+      ],
+      "ErrorSource": [
+        8
+      ],
+      "ErrorDuration": [
+        8
+      ],
+      "OuterUnsubscribesWithActiveGroups": [
+        9
+      ],
+      "OuterUnsubscribesWithoutActiveGroups": [
+        9,
+        10
+      ],
+      "GroupUnsubscribesOthersRemain": [
+        9
+      ],
+      "LastGroupUnsubscribesOuterGone": [
+        10
+      ],
+      "LastGroupUnsubscribesOuterActive": [
+        9
+      ]
+    },
+    "ignoreElements": {
+      "SubscribeSource": [
+        1
+      ],
+      "DropValue": [
+        2,
+        3,
+        7
+      ],
+      "CompleteSource": [
+        3,
+        4
+      ],
+      "ErrorSource": [
+        3,
+        5
+      ],
+      "Unsubscribe": [
+        6
+      ]
+    },
+    "isEmpty": {
+      "SubscribeSource": [
+        1
+      ],
+      "FirstValue": [
+        2,
+        3,
+        7
+      ],
+      "CompleteEmpty": [
+        2,
+        3,
+        4
+      ],
+      "ErrorSource": [
+        5
+      ],
+      "Unsubscribe": [
+        6
+      ]
+    },
+    "joinAllInternals": {
+      "SubscribeSource": [
+        1
+      ],
+      "CollectInner": [
+        2,
+        5,
+        9
+      ],
+      "OuterCompletes": [
+        6
+      ],
+      "JoinedEmits": [
+        3,
+        4
+      ],
+      "JoinedCompletes": [
+        6
+      ],
+      "ErrorOuter": [
+        7
+      ],
+      "ErrorJoined": [
+        7
+      ],
+      "UnsubscribeWhileCollecting": [
+        8
+      ],
+      "UnsubscribeWhileJoined": [
+        8
+      ]
+    },
+    "last": {
+      "SubscribeSource": [
+        1
+      ],
+      "MatchingValue": [
+        2,
+        9
+      ],
+      "NonMatchingValue": [
+        2
+      ],
+      "CompleteWithRetained": [
+        3,
+        4
+      ],
+      "CompleteWithoutMatchNoDefault": [
+        3,
+        5
+      ],
+      "CompleteWithoutMatchWithDefault": [
+        3,
+        6
+      ],
+      "ErrorSource": [
+        7
+      ],
+      "Unsubscribe": [
+        8
+      ]
+    },
+    "map": {
+      "SubscribeSource": [
+        1
+      ],
+      "ProjectValue": [
+        2,
+        3,
+        7
+      ],
+      "CompleteSource": [
+        4
+      ],
+      "ErrorSource": [
+        5
+      ],
+      "Unsubscribe": [
+        6
+      ]
+    },
+    "mapTo": {
+      "SubscribeSource": [
+        1
+      ],
+      "EmitConstant": [
+        2,
+        3,
+        7
+      ],
+      "CompleteSource": [
+        4
+      ],
+      "ErrorSource": [
+        5
+      ],
+      "Unsubscribe": [
+        6
+      ]
+    },
+    "materialize": {
+      "SubscribeSource": [
+        1
+      ],
+      "WrapValue": [
+        2,
+        3,
+        7
+      ],
+      "CompleteSource": [
+        3,
+        4
+      ],
+      "WrapError": [
+        3,
+        5
+      ],
+      "Unsubscribe": [
+        6
+      ]
+    },
+    "max": {
+      "SubscribeSource": [
+        1
+      ],
+      "FirstValue": [
+        2
+      ],
+      "GreaterValue": [
+        2,
+        8
+      ],
+      "RetainedValueKept": [
+        2
+      ],
+      "CompleteWithRetained": [
+        3,
+        4
+      ],
+      "CompleteEmpty": [
+        3,
+        5
+      ],
+      "ErrorSource": [
+        6
+      ],
+      "Unsubscribe": [
+        7
+      ]
+    },
+    "merge": {
+      "SubscribeSource": [
+        1,
+        5,
+        6
+      ],
+      "ForwardInputValue": [
+        2,
+        3,
+        4,
+        11
+      ],
+      "InputCompletesWithPending": [
+        3,
+        5,
+        7
+      ],
+      "InputCompletesOthersActive": [
+        7
+      ],
+      "LastInputCompletes": [
+        8
+      ],
+      "ErrorInput": [
+        9
+      ],
+      "Unsubscribe": [
+        10
+      ]
+    },
+    "mergeAll": {
+      "SubscribeSource": [
+        1
+      ],
+      "AdmitValue": [
+        2,
+        3,
+        5
+      ],
+      "QueueValue": [
+        2,
+        6,
+        11
+      ],
+      "ForwardInnerValue": [
+        3,
+        4
+      ],
+      "InnerCompletesWithQueue": [
+        6,
+        8
+      ],
+      "InnerCompletesOthersActive": [
+        8
+      ],
+      "LastInnerCompletesSourceActive": [
+        2
+      ],
+      "LastInnerCompletesAfterSourceCompleted": [
+        8
+      ],
+      "CompleteSourceIdle": [
+        7
+      ],
+      "CompleteSourceBusy": [
+        8
+      ],
+      "ErrorSource": [
+        9
+      ],
+      "ErrorInner": [
+        9
+      ],
+      "Unsubscribe": [
+        10
+      ]
+    },
+    "mergeInternals": {
+      "SubscribeSource": [
+        1
+      ],
+      "AdmitValue": [
+        2,
+        3,
+        5
+      ],
+      "QueueValue": [
+        2,
+        6,
+        11
+      ],
+      "ForwardInnerValue": [
+        3,
+        4
+      ],
+      "InnerCompletesWithQueue": [
+        6,
+        8
+      ],
+      "InnerCompletesOthersActive": [
+        8
+      ],
+      "LastInnerCompletesSourceActive": [
+        2
+      ],
+      "LastInnerCompletesAfterSourceCompleted": [
+        8
+      ],
+      "CompleteSourceIdle": [
+        7
+      ],
+      "CompleteSourceBusy": [
+        8
+      ],
+      "ErrorSource": [
+        9
+      ],
+      "ErrorInner": [
+        9
+      ],
+      "Unsubscribe": [
+        10
+      ]
+    },
+    "mergeMap": {
+      "SubscribeSource": [
+        1
+      ],
+      "AdmitValue": [
+        2,
+        3,
+        5
+      ],
+      "QueueValue": [
+        2,
+        6,
+        11
+      ],
+      "ForwardInnerValue": [
+        3,
+        4
+      ],
+      "InnerCompletesWithQueue": [
+        6,
+        8
+      ],
+      "InnerCompletesOthersActive": [
+        8
+      ],
+      "LastInnerCompletesSourceActive": [
+        2
+      ],
+      "LastInnerCompletesAfterSourceCompleted": [
+        8
+      ],
+      "CompleteSourceIdle": [
+        7
+      ],
+      "CompleteSourceBusy": [
+        8
+      ],
+      "ErrorSource": [
+        9
+      ],
+      "ErrorInner": [
+        9
+      ],
+      "Unsubscribe": [
+        10
+      ]
+    },
+    "mergeMapTo": {
+      "SubscribeSource": [
+        1
+      ],
+      "AdmitValue": [
+        2,
+        3,
+        5
+      ],
+      "QueueValue": [
+        2,
+        6,
+        11
+      ],
+      "ForwardInnerValue": [
+        3,
+        4
+      ],
+      "InnerCompletesWithQueue": [
+        6,
+        8
+      ],
+      "InnerCompletesOthersActive": [
+        8
+      ],
+      "LastInnerCompletesSourceActive": [
+        2
+      ],
+      "LastInnerCompletesAfterSourceCompleted": [
+        8
+      ],
+      "CompleteSourceIdle": [
+        7
+      ],
+      "CompleteSourceBusy": [
+        8
+      ],
+      "ErrorSource": [
+        9
+      ],
+      "ErrorInner": [
+        9
+      ],
+      "Unsubscribe": [
+        10
+      ]
+    },
+    "mergeScan": {
+      "SubscribeSource": [
+        1
+      ],
+      "AdmitValue": [
+        2,
+        3,
+        5
+      ],
+      "QueueValue": [
+        2,
+        6,
+        11
+      ],
+      "ForwardInnerValue": [
+        3,
+        4
+      ],
+      "InnerCompletesWithQueue": [
+        6,
+        8
+      ],
+      "InnerCompletesOthersActive": [
+        8
+      ],
+      "LastInnerCompletesSourceActive": [
+        2
+      ],
+      "LastInnerCompletesAfterSourceCompleted": [
+        8
+      ],
+      "CompleteSourceIdle": [
+        7
+      ],
+      "CompleteSourceBusy": [
+        8
+      ],
+      "ErrorSource": [
+        9
+      ],
+      "ErrorInner": [
+        9
+      ],
+      "Unsubscribe": [
+        10
+      ]
+    },
+    "mergeWith": {
+      "SubscribeSource": [
+        1,
+        5
+      ],
+      "ForwardInputValue": [
+        2,
+        3,
+        4,
+        10
+      ],
+      "InputCompletesOthersActive": [
+        6
+      ],
+      "LastInputCompletes": [
+        3,
+        7
+      ],
+      "ErrorInput": [
+        8
+      ],
+      "Unsubscribe": [
+        9
+      ]
+    },
+    "min": {
+      "SubscribeSource": [
+        1
+      ],
+      "FirstValue": [
+        2
+      ],
+      "SmallerValue": [
+        2,
+        8
+      ],
+      "RetainedValueKept": [
+        2
+      ],
+      "CompleteWithRetained": [
+        3,
+        4
+      ],
+      "CompleteEmpty": [
+        3,
+        5
+      ],
+      "ErrorSource": [
+        6
+      ],
+      "Unsubscribe": [
+        7
+      ]
+    },
+    "multicast": {
+      "SubscriberAttaches": [
+        1,
+        3
+      ],
+      "SubscribeWithSelector": [
+        2,
+        3
+      ],
+      "Connect": [
+        4
+      ],
+      "ForwardSourceValue": [
+        3,
+        8
+      ],
+      "ForwardSelectorOutputValue": [
+        3
+      ],
+      "CompleteSource": [
+        5
+      ],
+      "CompleteSelectorOutput": [
+        5
+      ],
+      "ErrorSource": [
+        6
+      ],
+      "ErrorSelectorOutput": [
+        6
+      ],
+      "SubscriberDetaches": [
+        7
+      ],
+      "UnsubscribeSelectorOutput": [
+        7
+      ]
+    },
+    "observeOn": {
+      "SubscribeSource": [
+        1
+      ],
+      "ScheduleNext": [
+        2,
+        5,
+        9
+      ],
+      "ScheduleComplete": [
+        6
+      ],
+      "ScheduleError": [
+        7
+      ],
+      "DeliverNext": [
+        3,
+        4
+      ],
+      "DeliverComplete": [
+        3,
+        4
+      ],
+      "DeliverError": [
+        3,
+        4
+      ],
+      "Unsubscribe": [
+        8
+      ]
+    },
+    "onErrorResumeNextWith": {
+      "SubscribeSource": [
+        1
+      ],
+      "ForwardValue": [
+        2,
+        4,
+        11
+      ],
+      "InputCompletesMoreRemain": [
+        3,
+        5,
+        6
+      ],
+      "LastInputCompletes": [
+        3,
+        7
+      ],
+      "InputErrorsMoreRemain": [
+        3,
+        5,
+        8
+      ],
+      "LastInputErrors": [
+        3,
+        9
+      ],
+      "Unsubscribe": [
+        10
+      ]
+    },
+    "pairwise": {
+      "SubscribeSource": [
+        1
+      ],
+      "FirstValue": [
+        2
+      ],
+      "LaterValue": [
+        2,
+        3,
+        7
+      ],
+      "CompleteSource": [
+        4
+      ],
+      "ErrorSource": [
+        5
+      ],
+      "Unsubscribe": [
+        6
+      ]
+    },
+    "partition": {
+      "SubscribeOutput": [
+        1
+      ],
+      "ForwardSelectedValue": [
+        2,
+        3,
+        7
+      ],
+      "DropUnselectedValue": [
+        2,
+        3
+      ],
+      "CompleteSource": [
+        4
+      ],
+      "ErrorSource": [
+        5
+      ],
+      "Unsubscribe": [
+        6
+      ]
+    },
+    "pluck": {
+      "SubscribeSource": [
+        1
+      ],
+      "PluckValue": [
+        2,
+        3,
+        7
+      ],
+      "CompleteSource": [
+        4
+      ],
+      "ErrorSource": [
+        5
+      ],
+      "Unsubscribe": [
+        6
+      ]
+    },
+    "publish": {
+      "SubscriberAttaches": [
+        1,
+        4
+      ],
+      "SubscribeWithSelector": [
+        2,
+        4
+      ],
+      "Connect": [
+        4
+      ],
+      "ForwardSourceValue": [
+        3,
+        8
+      ],
+      "ForwardSelectorOutputValue": [
+        3
+      ],
+      "CompleteSource": [
+        5
+      ],
+      "CompleteSelectorOutput": [
+        5
+      ],
+      "LateSubscriberAfterCompletion": [
+        5
+      ],
+      "ErrorSource": [
+        6
+      ],
+      "ErrorSelectorOutput": [
+        6
+      ],
+      "LateSubscriberAfterError": [
+        6
+      ],
+      "SubscriberDetaches": [
+        7
+      ],
+      "UnsubscribeSelectorOutput": [
+        7
+      ]
+    },
+    "publishBehavior": {
+      "SubscriberAttaches": [
+        1,
+        3
+      ],
+      "Connect": [
+        3
+      ],
+      "ForwardSourceValue": [
+        2,
+        7
+      ],
+      "CompleteSource": [
+        4
+      ],
+      "LateSubscriberAfterCompletion": [
+        4
+      ],
+      "ErrorSource": [
+        5
+      ],
+      "LateSubscriberAfterError": [
+        5
+      ],
+      "SubscriberDetaches": [
+        6
+      ]
+    },
+    "publishLast": {
+      "SubscriberAttaches": [
+        1
+      ],
+      "Connect": [
+        2
+      ],
+      "ForwardSourceValue": [
+        2,
+        7
+      ],
+      "CompleteWithLastValue": [
+        3,
+        4
+      ],
+      "CompleteWithoutValue": [
+        4
+      ],
+      "LateSubscriberAfterCompletion": [
+        4
+      ],
+      "LateSubscriberAfterCompletionWithoutValue": [
+        4
+      ],
+      "ErrorSource": [
+        5
+      ],
+      "LateSubscriberAfterError": [
+        5
+      ],
+      "SubscriberDetaches": [
+        6
+      ]
+    },
+    "publishReplay": {
+      "SubscriberAttaches": [
+        1,
+        4
+      ],
+      "SubscribeWithSelector": [
+        2,
+        4
+      ],
+      "Connect": [
+        4
+      ],
+      "ForwardSourceValue": [
+        3,
+        8
+      ],
+      "ForwardSelectorOutputValue": [
+        3
+      ],
+      "CompleteSource": [
+        5
+      ],
+      "CompleteSelectorOutput": [
+        5
+      ],
+      "LateSubscriberAfterCompletion": [
+        5
+      ],
+      "ErrorSource": [
+        6
+      ],
+      "ErrorSelectorOutput": [
+        6
+      ],
+      "LateSubscriberAfterError": [
+        6
+      ],
+      "SubscriberDetaches": [
+        7
+      ],
+      "UnsubscribeSelectorOutput": [
+        7
+      ]
+    },
+    "race": {
+      "SubscribeSource": [
+        1,
+        2,
+        6
+      ],
+      "FirstEmissionSelectsWinner": [
+        3,
+        4,
+        12
+      ],
+      "WinnerEmits": [
+        5
+      ],
+      "CompetitorCompletesBeforeWinner": [
+        7
+      ],
+      "WinnerCompletes": [
+        8
+      ],
+      "CompetitorErrorsBeforeWinner": [
+        9
+      ],
+      "WinnerErrors": [
+        10
+      ],
+      "Unsubscribe": [
+        11
+      ]
+    },
+    "raceWith": {
+      "SubscribeSource": [
+        1,
+        2,
+        6
+      ],
+      "FirstEmissionSelectsWinner": [
+        3,
+        4,
+        12
+      ],
+      "WinnerEmits": [
+        5
+      ],
+      "CompetitorCompletesBeforeWinner": [
+        7
+      ],
+      "WinnerCompletes": [
+        8
+      ],
+      "CompetitorErrorsBeforeWinner": [
+        9
+      ],
+      "WinnerErrors": [
+        10
+      ],
+      "Unsubscribe": [
+        11
+      ]
+    },
+    "reduce": {
+      "SubscribeWithSeed": [
+        1
+      ],
+      "SubscribeWithoutSeed": [
+        1
+      ],
+      "FirstValueBecomesAccumulator": [
+        2
+      ],
+      "AccumulateValue": [
+        2,
+        8
+      ],
+      "CompleteWithAccumulator": [
+        3,
+        4
+      ],
+      "CompleteEmpty": [
+        3,
+        5
+      ],
+      "ErrorSource": [
+        6
+      ],
+      "Unsubscribe": [
+        7
+      ]
+    },
+    "refCount": {
+      "FirstSubscriberConnects": [
+        1,
+        4
+      ],
+      "LaterSubscriberAttaches": [
+        2,
+        3
+      ],
+      "ForwardSourceValue": [
+        3
+      ],
+      "CompleteSource": [
+        5
+      ],
+      "ErrorSource": [
+        6
+      ],
+      "SubscriberLeavesOthersRemain": [
+        7
+      ],
+      "LastSubscriberLeaves": [
+        4,
+        8,
+        9
+      ]
+    },
+    "repeat": {
+      "SubscribePositiveCount": [
+        1
+      ],
+      "SubscribeNonPositiveCount": [
+        2
+      ],
+      "ForwardValue": [
+        3
+      ],
+      "ErrorSource": [
+        11
+      ],
+      "CompleteWithRemainingNoDelay": [
+        4,
+        8,
+        9,
+        13
+      ],
+      "CompleteWithRemainingNumericDelay": [
+        4,
+        9,
+        13
+      ],
+      "CompleteWithRemainingNotifierDelay": [
+        4,
+        9,
+        13
+      ],
+      "CompleteExhausted": [
+        4,
+        10
+      ],
+      "DelayTimerFires": [
+        5,
+        14
+      ],
+      "DelayNotifierEmits": [
+        6,
+        14
+      ],
+      "DelayNotifierCompletes": [
+        7
+      ],
+      "UnsubscribeExecution": [
+        12
+      ],
+      "UnsubscribeWhileDelayPending": [
+        12
+      ]
+    },
+    "repeatWhen": {
+      "SubscribeSource": [
+        1
+      ],
+      "ForwardValue": [
+        2,
+        12
+      ],
+      "SourceCompletesFirstTime": [
+        2,
+        5,
+        6
+      ],
+      "SourceCompletesAgain": [
+        5,
+        6
+      ],
+      "SourceCompletesAfterNotifierCompleted": [
+        8
+      ],
+      "NotifierEmits": [
+        3,
+        4
+      ],
+      "NotifierCompletesWhileWaiting": [
+        3,
+        7
+      ],
+      "NotifierCompletesWhileExecuting": [
+        7
+      ],
+      "ErrorSource": [
+        9
+      ],
+      "ErrorNotifier": [
+        3,
+        10
+      ],
+      "Unsubscribe": [
+        11
+      ]
+    },
+    "retry": {
+      "SubscribePositiveCount": [
+        1
+      ],
+      "SubscribeNonPositiveCount": [
+        2
+      ],
+      "ForwardValueResettingAttempts": [
+        3,
+        10
+      ],
+      "ForwardValue": [
+        3
+      ],
+      "CompleteSource": [
+        9
+      ],
+      "ErrorWithRemainingNoDelay": [
+        4,
+        8,
+        10,
+        13
+      ],
+      "ErrorWithRemainingNumericDelay": [
+        4,
+        10,
+        13
+      ],
+      "ErrorWithRemainingNotifierDelay": [
+        4,
+        10,
+        13
+      ],
+      "ErrorExhausted": [
+        4,
+        11
+      ],
+      "DelayTimerFires": [
+        5,
+        14
+      ],
+      "DelayNotifierEmits": [
+        6,
+        14
+      ],
+      "DelayNotifierCompletes": [
+        7
+      ],
+      "UnsubscribeAttempt": [
+        12
+      ],
+      "UnsubscribeWhileDelayPending": [
+        12
+      ]
+    },
+    "retryWhen": {
+      "SubscribeSource": [
+        1
+      ],
+      "ForwardValue": [
+        2,
+        11
+      ],
+      "CompleteSource": [
+        6
+      ],
+      "SourceErrorsFirstTime": [
+        2,
+        5,
+        8
+      ],
+      "SourceErrorsAgain": [
+        5,
+        8
+      ],
+      "NotifierEmits": [
+        3,
+        4
+      ],
+      "NotifierCompletesWhileWaiting": [
+        3,
+        7
+      ],
+      "NotifierCompletesWhileExecuting": [
+        7
+      ],
+      "ErrorNotifier": [
+        3,
+        9
+      ],
+      "Unsubscribe": [
+        10
+      ]
+    },
+    "sample": {
+      "SubscribeSource": [
+        1
+      ],
+      "StoreLatestValue": [
+        2,
+        6
+      ],
+      "NotifierEmitsWithPending": [
+        3,
+        4
+      ],
+      "NotifierEmitsWithoutPending": [
+        3,
+        5
+      ],
+      "NotifierCompletes": [
+        8
+      ],
+      "CompleteSource": [
+        7,
+        11
+      ],
+      "ErrorSource": [
+        9,
+        11
+      ],
+      "ErrorNotifier": [
+        9
+      ],
+      "Unsubscribe": [
+        10
+      ]
+    },
+    "sampleTime": {
+      "SubscribeSource": [
+        1
+      ],
+      "StoreLatestValue": [
+        2,
+        6
+      ],
+      "IntervalTicksWithPending": [
+        3,
+        4
+      ],
+      "IntervalTicksWithoutPending": [
+        3,
+        5
+      ],
+      "CompleteSource": [
+        7,
+        10
+      ],
+      "ErrorSource": [
+        8,
+        10
+      ],
+      "Unsubscribe": [
+        9
+      ]
+    },
+    "scan": {
+      "SubscribeWithSeed": [
+        1
+      ],
+      "SubscribeWithoutSeed": [
+        1
+      ],
+      "FirstValueBecomesAccumulator": [
+        3
+      ],
+      "AccumulateValue": [
+        2,
+        3,
+        7
+      ],
+      "CompleteSource": [
+        4
+      ],
+      "ErrorSource": [
+        5
+      ],
+      "Unsubscribe": [
+        6
+      ]
+    },
+    "scanInternals": {
+      "SubscribeWithSeed": [
+        1
+      ],
+      "SubscribeWithoutSeed": [
+        1
+      ],
+      "FirstValueEmitting": [
+        3
+      ],
+      "FirstValueSilent": [
+        3
+      ],
+      "AccumulateEmitting": [
+        2,
+        3,
+        8
+      ],
+      "AccumulateSilent": [
+        2,
+        3
+      ],
+      "CompleteEmittingAccumulator": [
+        4
+      ],
+      "CompleteSilent": [
+        5
+      ],
+      "ErrorSource": [
+        6
+      ],
+      "Unsubscribe": [
+        7
+      ]
+    },
+    "sequenceEqual": {
+      "SubscribeSource": [
+        1
+      ],
+      "SourceValueQueued": [
+        2,
+        5
+      ],
+      "SourceValueAfterCompareToDrained": [
+        3,
+        6
+      ],
+      "SourceValueMatches": [
+        3
+      ],
+      "SourceValueMismatch": [
+        3,
+        10
+      ],
+      "CompareToValueQueued": [
+        4,
+        5
+      ],
+      "CompareToValueAfterSourceDrained": [
+        4,
+        6
+      ],
+      "CompareToValueMatches": [
+        3,
+        4
+      ],
+      "CompareToValueMismatch": [
+        3,
+        4,
+        10
+      ],
+      "SourceCompletesCompareToActive": [
+        6
+      ],
+      "SourceCompletesBothDrained": [
+        7
+      ],
+      "SourceCompletesWithLeftovers": [
+        7
+      ],
+      "CompareToCompletesSourceActive": [
+        6
+      ],
+      "CompareToCompletesBothDrained": [
+        7
+      ],
+      "CompareToCompletesWithLeftovers": [
+        7
+      ],
+      "ErrorSource": [
+        8
+      ],
+      "ErrorCompareTo": [
+        8
+      ],
+      "Unsubscribe": [
+        9
+      ]
+    },
+    "share": {
+      "FirstSubscriberConnects": [
+        1,
+        4
+      ],
+      "LaterSubscriberAttaches": [
+        2
+      ],
+      "LaterSubscriberCancelsPendingReset": [
+        2,
+        10
+      ],
+      "ForwardSourceValue": [
+        3
+      ],
+      "CompleteSourceWithReset": [
+        6
+      ],
+      "CompleteSourceWithNotifierReset": [
+        5,
+        6
+      ],
+      "CompleteSourceWithoutReset": [
+        6
+      ],
+      "ErrorSourceWithReset": [
+        7
+      ],
+      "ErrorSourceWithNotifierReset": [
+        5,
+        7
+      ],
+      "ErrorSourceWithoutReset": [
+        7
+      ],
+      "ResetNotifierEmits": [
+        5
+      ],
+      "SubscriberLeavesOthersRemain": [
+        8
+      ],
+      "LastSubscriberLeavesImmediateReset": [
+        9
+      ],
+      "LastSubscriberLeavesNotifierReset": [
+        5,
+        9
+      ],
+      "LastSubscriberLeavesNoReset": [
+        9
+      ]
+    },
+    "shareReplay": {
+      "FirstSubscriberConnects": [
+        1,
+        4
+      ],
+      "LaterSubscriberAttaches": [
+        2,
+        4
+      ],
+      "LateSubscriberAfterCompletion": [
+        2,
+        5
+      ],
+      "ForwardSourceValue": [
+        3,
+        9
+      ],
+      "CompleteSource": [
+        5
+      ],
+      "ErrorSource": [
+        6
+      ],
+      "SubscriberLeavesOthersRemain": [
+        3
+      ],
+      "LastSubscriberLeavesKeepingConnection": [
+        7
+      ],
+      "LastSubscriberLeavesWithReset": [
+        8
+      ]
+    },
+    "single": {
+      "SubscribeSource": [
+        1
+      ],
+      "NonMatchingValue": [
+        2
+      ],
+      "FirstMatchingValue": [
+        2
+      ],
+      "SecondMatchingValue": [
+        3,
+        9
+      ],
+      "CompleteWithMatch": [
+        3,
+        4
+      ],
+      "CompleteWithoutMatch": [
+        3,
+        5
+      ],
+      "CompleteEmpty": [
+        3,
+        6
+      ],
+      "ErrorSource": [
+        7
+      ],
+      "Unsubscribe": [
+        8
+      ]
+    },
+    "skip": {
+      "SubscribeSource": [
+        1
+      ],
+      "SkipValue": [
+        2,
+        3
+      ],
+      "ForwardValue": [
+        3,
+        7
+      ],
+      "CompleteSource": [
+        4
+      ],
+      "ErrorSource": [
+        5
+      ],
+      "Unsubscribe": [
+        6
+      ]
+    },
+    "skipLast": {
+      "SubscribeSource": [
+        1
+      ],
+      "BufferValue": [
+        2
+      ],
+      "EmitOldestBufferedValue": [
+        2,
+        3,
+        7
+      ],
+      "CompleteSource": [
+        4
+      ],
+      "ErrorSource": [
+        5
+      ],
+      "Unsubscribe": [
+        6
+      ]
+    },
+    "skipUntil": {
+      "SubscribeSource": [
+        1
+      ],
+      "DropWhileGateClosed": [
+        2
+      ],
+      "ForwardWhenGateOpen": [
+        3
+      ],
+      "NotifierOpensGate": [
+        3,
+        4,
+        9
+      ],
+      "NotifierCompletesWhileGateClosed": [
+        6
+      ],
+      "CompleteSource": [
+        5
+      ],
+      "ErrorSource": [
+        7
+      ],
+      "ErrorNotifier": [
+        7
+      ],
+      "Unsubscribe": [
+        8
+      ]
+    },
+    "skipWhile": {
+      "SubscribeSource": [
+        1
+      ],
+      "SkipValue": [
+        2
+      ],
+      "StopSkipping": [
+        3
+      ],
+      "ForwardAfterSkipping": [
+        3,
+        7
+      ],
+      "CompleteSource": [
+        4
+      ],
+      "ErrorSource": [
+        5
+      ],
+      "Unsubscribe": [
+        6
+      ]
+    },
+    "startWith": {
+      "SubscribeSource": [
+        1,
+        2,
+        3
+      ],
+      "ForwardValue": [
+        7
+      ],
+      "CompleteSource": [
+        4
+      ],
+      "ErrorSource": [
+        5
+      ],
+      "Unsubscribe": [
+        6
+      ]
+    },
+    "subscribeOn": {
+      "SubscribeSource": [
+        1,
+        2
+      ],
+      "ScheduledActionRuns": [
+        3,
+        4
+      ],
+      "ForwardValue": [
+        4,
+        9
+      ],
+      "CompleteSource": [
+        5
+      ],
+      "ErrorSource": [
+        6
+      ],
+      "UnsubscribeWhileScheduled": [
+        7
+      ],
+      "UnsubscribeWhileSubscribed": [
+        8
+      ]
+    },
+    "switchAll": {
+      "SubscribeSource": [
+        1
+      ],
+      "StartInner": [
+        3
+      ],
+      "SwitchToNewInner": [
+        2,
+        3,
+        5,
+        10
+      ],
+      "ForwardInnerValue": [
+        4
+      ],
+      "InnerCompletesSourceActive": [
+        2
+      ],
+      "InnerCompletesAfterSourceCompleted": [
+        7
+      ],
+      "CompleteSourceIdle": [
+        6
+      ],
+      "CompleteSourceBusy": [
+        7
+      ],
+      "ErrorSource": [
+        8
+      ],
+      "ErrorInner": [
+        8
+      ],
+      "Unsubscribe": [
+        9
+      ]
+    },
+    "switchMap": {
+      "SubscribeSource": [
+        1
+      ],
+      "StartInner": [
+        3
+      ],
+      "SwitchToNewInner": [
+        2,
+        3,
+        5,
+        10
+      ],
+      "ForwardInnerValue": [
+        4
+      ],
+      "InnerCompletesSourceActive": [
+        2
+      ],
+      "InnerCompletesAfterSourceCompleted": [
+        7
+      ],
+      "CompleteSourceIdle": [
+        6
+      ],
+      "CompleteSourceBusy": [
+        7
+      ],
+      "ErrorSource": [
+        8
+      ],
+      "ErrorInner": [
+        8
+      ],
+      "Unsubscribe": [
+        9
+      ]
+    },
+    "switchMapTo": {
+      "SubscribeSource": [
+        1
+      ],
+      "StartInner": [
+        3
+      ],
+      "SwitchToNewInner": [
+        2,
+        3,
+        5,
+        10
+      ],
+      "ForwardInnerValue": [
+        4
+      ],
+      "InnerCompletesSourceActive": [
+        2
+      ],
+      "InnerCompletesAfterSourceCompleted": [
+        7
+      ],
+      "CompleteSourceIdle": [
+        6
+      ],
+      "CompleteSourceBusy": [
+        7
+      ],
+      "ErrorSource": [
+        8
+      ],
+      "ErrorInner": [
+        8
+      ],
+      "Unsubscribe": [
+        9
+      ]
+    },
+    "switchScan": {
+      "SubscribeSource": [
+        1
+      ],
+      "StartInner": [
+        3
+      ],
+      "SwitchToNewInner": [
+        2,
+        3,
+        5,
+        10
+      ],
+      "ForwardInnerValue": [
+        4
+      ],
+      "InnerCompletesSourceActive": [
+        2
+      ],
+      "InnerCompletesAfterSourceCompleted": [
+        7
+      ],
+      "CompleteSourceIdle": [
+        6
+      ],
+      "CompleteSourceBusy": [
+        7
+      ],
+      "ErrorSource": [
+        8
+      ],
+      "ErrorInner": [
+        8
+      ],
+      "Unsubscribe": [
+        9
+      ]
+    },
+    "take": {
+      "SubscribePositiveCount": [
+        1
+      ],
+      "SubscribeNonPositiveCount": [
+        2
+      ],
+      "TakeValue": [
+        3,
+        4
+      ],
+      "TakeFinalValue": [
+        3,
+        4,
+        8
+      ],
+      "CompleteSource": [
+        5
+      ],
+      "ErrorSource": [
+        6
+      ],
+      "Unsubscribe": [
+        7
+      ]
+    },
+    "takeLast": {
+      "SubscribePositiveCount": [
+        1
+      ],
+      "SubscribeNonPositiveCount": [
+        2
+      ],
+      "BufferValue": [
+        3
+      ],
+      "BufferValueDroppingOldest": [
+        3,
+        8
+      ],
+      "CompleteSource": [
+        4,
+        5
+      ],
+      "ErrorSource": [
+        6
+      ],
+      "Unsubscribe": [
+        7
+      ]
+    },
+    "takeUntil": {
+      "SubscribeSource": [
+        1
+      ],
+      "ForwardValue": [
+        2
+      ],
+      "NotifierEmits": [
+        3,
+        4,
+        9
+      ],
+      "NotifierCompletesSilently": [
+        6
+      ],
+      "CompleteSource": [
+        5
+      ],
+      "ErrorSource": [
+        7
+      ],
+      "ErrorNotifier": [
+        7
+      ],
+      "Unsubscribe": [
+        8
+      ]
+    },
+    "takeWhile": {
+      "SubscribeSource": [
+        1
+      ],
+      "PassingValue": [
+        2,
+        3
+      ],
+      "FailingValueInclusive": [
+        3,
+        7
+      ],
+      "FailingValueExclusive": [
+        3,
+        7
+      ],
+      "CompleteSource": [
+        4
+      ],
+      "ErrorSource": [
+        5
+      ],
+      "Unsubscribe": [
+        6
+      ]
+    },
+    "tap": {
+      "SubscribeSource": [
+        1,
+        3
+      ],
+      "ForwardValue": [
+        2,
+        3,
+        7
+      ],
+      "CompleteSource": [
+        3,
+        4
+      ],
+      "ErrorSource": [
+        3,
+        5
+      ],
+      "Unsubscribe": [
+        3,
+        6
+      ]
+    },
+    "throttle": {
+      "SubscribeSource": [
+        1
+      ],
+      "IdleValueLeading": [
+        3,
+        7
+      ],
+      "IdleValueTrailingOnly": [
+        7
+      ],
+      "BusyValueRetainedAsTrailing": [
+        2,
+        6,
+        13
+      ],
+      "BusyValueIgnored": [
+        2,
+        6,
+        13
+      ],
+      "DurationFiresWithTrailingSourceActive": [
+        3,
+        4,
+        12
+      ],
+      "DurationFiresWithTrailingAfterSourceCompleted": [
+        4,
+        8,
+        12
+      ],
+      "DurationFiresNoTrailingSourceActive": [
+        3,
+        4,
+        12
+      ],
+      "DurationFiresNoTrailingAfterSourceCompleted": [
+        4,
+        12
+      ],
+      "DurationCompletesSilentlySourceActive": [
+        5
+      ],
+      "DurationCompletesSilentlyAfterSourceCompleted": [
+        5
+      ],
+      "CompleteDeferred": [
+        8
+      ],
+      "CompleteImmediate": [
+        9
+      ],
+      "ErrorSource": [
+        10
+      ],
+      "ErrorDuration": [
+        10
+      ],
+      "Unsubscribe": [
+        11
+      ]
+    },
+    "throttleTime": {
+      "SubscribeSource": [
+        1
+      ],
+      "IdleValueLeading": [
+        3,
+        6
+      ],
+      "IdleValueTrailingOnly": [
+        6
+      ],
+      "BusyValueRetainedAsTrailing": [
+        2,
+        5,
+        11
+      ],
+      "BusyValueIgnored": [
+        2,
+        5,
+        11
+      ],
+      "TimerFiresWithTrailingSourceActive": [
+        3,
+        4
+      ],
+      "TimerFiresWithTrailingAfterSourceCompleted": [
+        4,
+        7
+      ],
+      "TimerFiresNoTrailingSourceActive": [
+        3,
+        4
+      ],
+      "TimerFiresNoTrailingAfterSourceCompleted": [
+        4
+      ],
+      "CompleteDeferred": [
+        7
+      ],
+      "CompleteImmediate": [
+        8
+      ],
+      "ErrorSource": [
+        9
+      ],
+      "Unsubscribe": [
+        10
+      ]
+    },
+    "throwIfEmpty": {
+      "SubscribeSource": [
+        1
+      ],
+      "ForwardValue": [
+        2,
+        8
+      ],
+      "CompleteEmpty": [
+        3,
+        4
+      ],
+      "CompleteNonEmpty": [
+        3,
+        5
+      ],
+      "ErrorSource": [
+        6
+      ],
+      "Unsubscribe": [
+        7
+      ]
+    },
+    "timeInterval": {
+      "SubscribeSource": [
+        1
+      ],
+      "EmitInterval": [
+        2,
+        3,
+        7
+      ],
+      "CompleteSource": [
+        4
+      ],
+      "ErrorSource": [
+        5
+      ],
+      "Unsubscribe": [
+        6
+      ]
+    },
+    "timeout": {
+      "SubscribeSource": [
+        1,
+        2
+      ],
+      "ValueRestartsTimer": [
+        2,
+        9
+      ],
+      "ValueCancelsTimer": [
+        9
+      ],
+      "TimerFiresWithFallback": [
+        3,
+        4,
+        10
+      ],
+      "TimerFiresWithoutFallback": [
+        3,
+        4,
+        10
+      ],
+      "ForwardFallbackValue": [
+        5
+      ],
+      "CompleteFallback": [
+        4
+      ],
+      "ErrorFallback": [
+        4
+      ],
+      "CompleteSource": [
+        6
+      ],
+      "ErrorSource": [
+        7
+      ],
+      "UnsubscribeSource": [
+        8
+      ],
+      "UnsubscribeFallback": [
+        8
+      ]
+    },
+    "timeoutWith": {
+      "SubscribeSource": [
+        1,
+        2
+      ],
+      "ValueRestartsTimer": [
+        2,
+        9
+      ],
+      "ValueCancelsTimer": [
+        9
+      ],
+      "TimerFiresSwitchingToFallback": [
+        3,
+        4,
+        10
+      ],
+      "ForwardFallbackValue": [
+        5
+      ],
+      "CompleteFallback": [
+        4
+      ],
+      "ErrorFallback": [
+        4
+      ],
+      "CompleteSource": [
+        6
+      ],
+      "ErrorSource": [
+        7
+      ],
+      "UnsubscribeSource": [
+        8
+      ],
+      "UnsubscribeFallback": [
+        8
+      ]
+    },
+    "timestamp": {
+      "SubscribeSource": [
+        1
+      ],
+      "EmitTimestamp": [
+        2,
+        3,
+        7
+      ],
+      "CompleteSource": [
+        4
+      ],
+      "ErrorSource": [
+        5
+      ],
+      "Unsubscribe": [
+        6
+      ]
+    },
+    "toArray": {
+      "SubscribeSource": [
+        1
+      ],
+      "CollectValue": [
+        2,
+        7
+      ],
+      "CompleteSource": [
+        3,
+        4
+      ],
+      "ErrorSource": [
+        5
+      ],
+      "Unsubscribe": [
+        6
+      ]
+    },
+    "window": {
+      "SubscribeSource": [
+        1
+      ],
+      "RouteValue": [
+        2
+      ],
+      "BoundaryEmits": [
+        3,
+        4,
+        5
+      ],
+      "BoundaryCompletes": [
+        7
+      ],
+      "CompleteSource": [
+        6,
+        10
+      ],
+      "ErrorSource": [
+        8,
+        10
+      ],
+      "ErrorBoundary": [
+        8
+      ],
+      "Unsubscribe": [
+        9
+      ]
+    },
+    "windowCount": {
+      "SubscribeSource": [
+        1
+      ],
+      "RouteValue": [
+        2,
+        9
+      ],
+      "RouteValueAndCloseOldest": [
+        3,
+        5
+      ],
+      "RouteValueAndOpenWindow": [
+        3,
+        4
+      ],
+      "RouteValueCloseOldestAndOpenWindow": [
+        3,
+        4,
+        5
+      ],
+      "CompleteSource": [
+        6
+      ],
+      "ErrorSource": [
+        7
+      ],
+      "Unsubscribe": [
+        8
+      ]
+    },
+    "windowTime": {
+      "SubscribeWithCreationInterval": [
+        1
+      ],
+      "SubscribeWithoutCreationInterval": [
+        1
+      ],
+      "RouteValue": [
+        2
+      ],
+      "RouteValueAndCloseAtMaxSizeThenReopen": [
+        3,
+        7,
+        11
+      ],
+      "RouteValueAndCloseAtMaxSize": [
+        3,
+        11
+      ],
+      "CloseTimerFiresThenReopen": [
+        3,
+        4,
+        7
+      ],
+      "CloseTimerFires": [
+        3,
+        4
+      ],
+      "CreationIntervalTicks": [
+        5,
+        6
+      ],
+      "CompleteSource": [
+        8
+      ],
+      "ErrorSource": [
+        9
+      ],
+      "Unsubscribe": [
+        10
+      ]
+    },
+    "windowToggle": {
+      "SubscribeSource": [
+        1
+      ],
+      "RouteValue": [
+        2
+      ],
+      "OpeningEmits": [
+        3,
+        4,
+        6
+      ],
+      "ClosingEmits": [
+        3,
+        5,
+        12
+      ],
+      "ClosingCompletes": [
+        5,
+        9,
+        12
+      ],
+      "OpeningsComplete": [
+        8
+      ],
+      "CompleteSource": [
+        7
+      ],
+      "ErrorSource": [
+        10
+      ],
+      "ErrorOpenings": [
+        10
+      ],
+      "ErrorClosing": [
+        10
+      ],
+      "Unsubscribe": [
+        11
+      ]
+    },
+    "windowWhen": {
+      "SubscribeSource": [
+        1
+      ],
+      "RouteValue": [
+        2
+      ],
+      "ClosingEmits": [
+        3,
+        4,
+        5,
+        10
+      ],
+      "ClosingCompletes": [
+        4,
+        5,
+        7,
+        10
+      ],
+      "CompleteSource": [
+        6
+      ],
+      "ErrorSource": [
+        8
+      ],
+      "ErrorClosing": [
+        8
+      ],
+      "Unsubscribe": [
+        9
+      ]
+    },
+    "withLatestFrom": {
+      "SubscribeSource": [
+        1
+      ],
+      "SecondaryFirstValue": [
+        2,
+        4
+      ],
+      "SecondaryLaterValue": [
+        2,
+        4,
+        6
+      ],
+      "SourceValueBeforeAllReady": [
+        5
+      ],
+      "SourceValueCombined": [
+        3
+      ],
+      "SecondaryCompletes": [
+        8
+      ],
+      "CompleteSource": [
+        7,
+        11
+      ],
+      "ErrorSource": [
+        9,
+        11
+      ],
+      "ErrorSecondary": [
+        9
+      ],
+      "Unsubscribe": [
+        10
+      ]
+    },
+    "zip": {
+      "SubscribeSource": [
+        1
+      ],
+      "QueueValue": [
+        2,
+        4,
+        5
+      ],
+      "EmitTuple": [
+        3,
+        4
+      ],
+      "EmitTupleAndComplete": [
+        3,
+        4,
+        7,
+        10
+      ],
+      "InputCompletesEmptyQueue": [
+        6,
+        10
+      ],
+      "InputCompletesNonEmptyQueue": [
+        7
+      ],
+      "ErrorInput": [
+        8
+      ],
+      "Unsubscribe": [
+        9
+      ]
+    },
+    "zipAll": {
+      "SubscribeSource": [
+        1
+      ],
+      "CollectInner": [
+        2
+      ],
+      "OuterCompletesWithoutInners": [
+        6
+      ],
+      "OuterCompletesWithInners": [
+        3,
+        6
+      ],
+      "QueueValue": [
+        2,
+        4,
+        5
+      ],
+      "EmitTuple": [
+        3,
+        4
+      ],
+      "EmitTupleAndComplete": [
+        3,
+        4,
+        8,
+        11
+      ],
+      "InnerCompletesEmptyQueue": [
+        7,
+        11
+      ],
+      "InnerCompletesNonEmptyQueue": [
+        8
+      ],
+      "ErrorOuter": [
+        9
+      ],
+      "ErrorInner": [
+        9
+      ],
+      "UnsubscribeWhileCollecting": [
+        10
+      ],
+      "UnsubscribeWhileZipping": [
+        10
+      ]
+    },
+    "zipWith": {
+      "SubscribeSource": [
+        1
+      ],
+      "QueueValue": [
+        2,
+        4,
+        5
+      ],
+      "EmitTuple": [
+        3,
+        4
+      ],
+      "EmitTupleAndComplete": [
+        3,
+        4,
+        7,
+        10
+      ],
+      "InputCompletesEmptyQueue": [
+        6,
+        10
+      ],
+      "InputCompletesNonEmptyQueue": [
+        7
+      ],
+      "ErrorInput": [
+        8
+      ],
+      "Unsubscribe": [
+        9
+      ]
+    }
+  }
+}
