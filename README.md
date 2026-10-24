@@ -108,7 +108,7 @@ RxJS implementation and tests
 The complete source catalog has now been converted to Given / When / Then form:
 
 - **116 / 116 operator modules converted**
-- every operator carries explicit subscription, completion, error, unsubscription, and cancellation rules
+- every operator carries explicit subscription, completion, error, unsubscription, and cancellation rules, plus timer and notifier rules where the operator schedules work or consumes a notifier
 - see [docs/operators.md](docs/operators.md)
 - source baseline: [rxjs-operators-state-and-policy-patterns](https://github.com/hansschenker/rxjs-operators-state-and-policy-patterns)
 
@@ -136,6 +136,16 @@ Given <no active subscription>
 When  <downstream subscriber subscribes>
 Then  <subscribe source now, later, or share it; subscribe inputs and notifiers in order; set initial state>
 
+Timer rule (operators that schedule work)
+Given <timer or scheduled action pending>
+When  <interval ticks / due time elapses / scheduled action runs>
+Then  <flush, close, deliver, resubscribe, or time out>
+
+Notifier rule (operators that consume a secondary observable)
+Given <notifier active>
+When  <closing / opening / boundary / duration / flush / reset notifier emits>
+Then  <open, close, flush, gate, resubscribe, or reset>
+
 Completion rule
 Given <state at the moment of completion>
 When  <source / input / inner / notifier completes>
@@ -157,7 +167,7 @@ When  <event that supersedes or ends that work>
 Then  <cancel the superseded work, or cancel nothing>
 ```
 
-In `spec/operators.json` these carry `kind: subscription`, `kind: completion`, `kind: error`, `kind: unsubscription`, and `kind: cancellation`, so the *Subscription*, *Source complete*, *Source error*, *Unsubscription*, and *Cancellation* rows of the transition coverage matrix can be read directly from the catalog.
+In `spec/operators.json` these carry `kind: subscription`, `kind: timer`, `kind: notifier`, `kind: completion`, `kind: error`, `kind: unsubscription`, and `kind: cancellation`, so the *Subscription*, *Timer/scheduler event*, *Notifier event*, *Source complete*, *Source error*, *Unsubscription*, and *Cancellation* rows of the transition coverage matrix can be read directly from the catalog.
 
 ## Canonical example: debounceTime
 

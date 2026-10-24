@@ -1,5 +1,5 @@
 {
-  "version": "0.4.0",
+  "version": "0.5.0",
   "operators": [
     {
       "operator": "audit",
@@ -27,6 +27,27 @@
           "when": "duration ends",
           "then": [
             "emit the pending latest value and return to idle"
+          ]
+        },
+        {
+          "kind": "notifier",
+          "given": "a duration is active with a pending value",
+          "when": "the duration observable emits",
+          "then": [
+            "unsubscribe the duration",
+            "emit the pending latest value",
+            "return to idle",
+            "complete if the source has already completed"
+          ]
+        },
+        {
+          "kind": "notifier",
+          "given": "a duration is active",
+          "when": "the duration observable completes without emitting",
+          "then": [
+            "clear the duration without emitting the pending value",
+            "the pending value is replaced by the next source value, which starts a new duration",
+            "complete, dropping the pending value, if the source has already completed"
           ]
         },
         {
@@ -116,6 +137,16 @@
           ]
         },
         {
+          "kind": "timer",
+          "given": "a pending value exists and the interval timer is running",
+          "when": "the interval timer fires",
+          "then": [
+            "emit the pending latest value",
+            "return to idle so the next source value starts a new interval",
+            "complete if the source has already completed"
+          ]
+        },
+        {
           "kind": "completion",
           "given": "no pending value exists or no interval timer is active",
           "when": "the source completes",
@@ -192,6 +223,15 @@
           "when": "closing notifier emits",
           "then": [
             "emit the current array and start a fresh buffer"
+          ]
+        },
+        {
+          "kind": "notifier",
+          "given": "a buffer is open",
+          "when": "the closing notifier emits",
+          "then": [
+            "emit the current buffer",
+            "open a fresh empty buffer"
           ]
         },
         {
@@ -347,6 +387,23 @@
           ]
         },
         {
+          "kind": "timer",
+          "given": "a buffer is open with its close timer running",
+          "when": "the close timer fires after bufferTimeSpan",
+          "then": [
+            "emit that buffer",
+            "open a new buffer immediately when no bufferCreationInterval is configured"
+          ]
+        },
+        {
+          "kind": "timer",
+          "given": "bufferCreationInterval is configured",
+          "when": "the creation interval fires",
+          "then": [
+            "open an additional buffer with its own close timer"
+          ]
+        },
+        {
           "kind": "completion",
           "given": "one or more time-span buffers are open",
           "when": "the source completes",
@@ -415,6 +472,24 @@
           "when": "an opening arrives",
           "then": [
             "open a buffer; its closing notifier fires: emit and close that buffer"
+          ]
+        },
+        {
+          "kind": "notifier",
+          "given": "the openings observable is active",
+          "when": "the openings observable emits",
+          "then": [
+            "open a new buffer",
+            "subscribe to the closing notifier produced by the closing selector for that opening value"
+          ]
+        },
+        {
+          "kind": "notifier",
+          "given": "a buffer is open with its closing notifier active",
+          "when": "that closing notifier emits",
+          "then": [
+            "emit the buffer",
+            "close it and unsubscribe its closing notifier"
           ]
         },
         {
@@ -502,6 +577,16 @@
           "when": "closing selector's notifier emits",
           "then": [
             "emit current buffer and immediately open the next buffer"
+          ]
+        },
+        {
+          "kind": "notifier",
+          "given": "a buffer is open",
+          "when": "the closing observable emits",
+          "then": [
+            "emit the current buffer",
+            "open a fresh buffer",
+            "subscribe to a new closing observable from the closing selector"
           ]
         },
         {
@@ -1490,6 +1575,24 @@
           ]
         },
         {
+          "kind": "notifier",
+          "given": "a duration is active for a pending value",
+          "when": "the duration observable emits",
+          "then": [
+            "unsubscribe the duration",
+            "emit the pending value"
+          ]
+        },
+        {
+          "kind": "notifier",
+          "given": "a duration is active for a pending value",
+          "when": "the duration observable completes without emitting",
+          "then": [
+            "keep the pending value",
+            "it is emitted on source completion or replaced by the next source value"
+          ]
+        },
+        {
           "kind": "completion",
           "given": "a pending value exists",
           "when": "the source completes",
@@ -1577,6 +1680,15 @@
           ]
         },
         {
+          "kind": "timer",
+          "given": "the silence task is scheduled and a pending value exists",
+          "when": "the scheduled task fires",
+          "then": [
+            "if dueTime has not fully elapsed since the latest value, reschedule the task for the remaining time",
+            "otherwise emit the pending latest value and clear the task"
+          ]
+        },
+        {
           "kind": "completion",
           "given": "a pending value exists",
           "when": "the source completes",
@@ -1616,11 +1728,12 @@
         },
         {
           "kind": "cancellation",
-          "given": "the silence timer is running",
+          "given": "the silence task is scheduled",
           "when": "a new source value arrives",
           "then": [
-            "cancel the running silence timer",
-            "schedule a new timer for the new value"
+            "cancel nothing",
+            "record the arrival time of the new value",
+            "the running task re-checks the deadline when it fires and reschedules itself for the remaining time"
           ]
         }
       ],
@@ -1729,6 +1842,15 @@
           ]
         },
         {
+          "kind": "timer",
+          "given": "a delayed value is pending",
+          "when": "its timer fires after the configured duration or at the configured date",
+          "then": [
+            "emit that value",
+            "complete if the source has completed and no other value is pending"
+          ]
+        },
+        {
           "kind": "completion",
           "given": "delayed values are pending",
           "when": "the source completes",
@@ -1812,6 +1934,32 @@
           "when": "that value's duration emits",
           "then": [
             "release/emit the corresponding source value"
+          ]
+        },
+        {
+          "kind": "notifier",
+          "given": "a duration is active for a pending value",
+          "when": "the duration observable emits",
+          "then": [
+            "unsubscribe the duration",
+            "emit the pending value"
+          ]
+        },
+        {
+          "kind": "notifier",
+          "given": "a duration is active for a pending value",
+          "when": "the duration observable completes without emitting",
+          "then": [
+            "drop the pending value"
+          ]
+        },
+        {
+          "kind": "notifier",
+          "given": "a subscription delay is configured and pending",
+          "when": "the subscription delay emits or completes",
+          "then": [
+            "unsubscribe the subscription delay",
+            "subscribe to the source"
           ]
         },
         {
@@ -1989,6 +2137,15 @@
           "when": "a value's key has not been seen",
           "then": [
             "remember the key and emit the value; otherwise emit nothing"
+          ]
+        },
+        {
+          "kind": "notifier",
+          "given": "seen keys are retained",
+          "when": "the flushes observable emits",
+          "then": [
+            "clear the set of seen keys",
+            "later values with previously seen keys pass again"
           ]
         },
         {
@@ -3121,6 +3278,16 @@
           "when": "a value arrives",
           "then": [
             "create group if needed and emit value into its group; emit each new group once to downstream"
+          ]
+        },
+        {
+          "kind": "notifier",
+          "given": "a group has a duration observable",
+          "when": "the duration observable emits",
+          "then": [
+            "complete that group",
+            "remove it from the group map so the key can start a new group",
+            "unsubscribe the duration"
           ]
         },
         {
@@ -4443,6 +4610,14 @@
           ]
         },
         {
+          "kind": "timer",
+          "given": "a notification has been scheduled",
+          "when": "its scheduled action runs",
+          "then": [
+            "deliver that next, error, or complete notification downstream in scheduling order"
+          ]
+        },
+        {
           "kind": "completion",
           "given": "scheduled notifications may be pending",
           "when": "the source completes",
@@ -5408,6 +5583,32 @@
           ]
         },
         {
+          "kind": "timer",
+          "given": "the source completed and delay is a number",
+          "when": "the delay timer fires",
+          "then": [
+            "unsubscribe the timer",
+            "resubscribe to the source"
+          ]
+        },
+        {
+          "kind": "notifier",
+          "given": "the source completed and delay is a function",
+          "when": "the notifier returned by delay emits",
+          "then": [
+            "unsubscribe the notifier",
+            "resubscribe to the source"
+          ]
+        },
+        {
+          "kind": "notifier",
+          "given": "the source completed and delay is a function",
+          "when": "the notifier completes without emitting",
+          "then": [
+            "complete"
+          ]
+        },
+        {
           "kind": "completion",
           "given": "the repeat count is not exhausted",
           "when": "the source completes",
@@ -5488,6 +5689,14 @@
           "when": "notifier emits after a source completion",
           "then": [
             "resubscribe to source; notifier completes/errors: terminate accordingly"
+          ]
+        },
+        {
+          "kind": "notifier",
+          "given": "the source has completed",
+          "when": "the notifier emits",
+          "then": [
+            "resubscribe to the source"
           ]
         },
         {
@@ -5588,6 +5797,32 @@
           ]
         },
         {
+          "kind": "timer",
+          "given": "the source errored and delay is a number",
+          "when": "the delay timer fires",
+          "then": [
+            "unsubscribe the timer",
+            "resubscribe to the source"
+          ]
+        },
+        {
+          "kind": "notifier",
+          "given": "the source errored and delay is a function",
+          "when": "the notifier returned by delay emits",
+          "then": [
+            "unsubscribe the notifier",
+            "resubscribe to the source"
+          ]
+        },
+        {
+          "kind": "notifier",
+          "given": "the source errored and delay is a function",
+          "when": "the notifier completes without emitting",
+          "then": [
+            "complete without re-raising the error"
+          ]
+        },
+        {
           "kind": "completion",
           "given": "any attempt is active",
           "when": "the source completes",
@@ -5668,6 +5903,14 @@
           "when": "notifier emits after an error",
           "then": [
             "resubscribe; notifier completes/errors: terminate accordingly"
+          ]
+        },
+        {
+          "kind": "notifier",
+          "given": "the source has errored",
+          "when": "the notifier emits",
+          "then": [
+            "resubscribe to the source"
           ]
         },
         {
@@ -5754,6 +5997,23 @@
           ]
         },
         {
+          "kind": "notifier",
+          "given": "a pending value exists",
+          "when": "the notifier emits",
+          "then": [
+            "emit the pending latest value",
+            "clear the pending flag"
+          ]
+        },
+        {
+          "kind": "notifier",
+          "given": "no pending value exists",
+          "when": "the notifier emits",
+          "then": [
+            "emit nothing"
+          ]
+        },
+        {
           "kind": "completion",
           "given": "a pending sampled value exists",
           "when": "the source completes",
@@ -5828,6 +6088,23 @@
           "when": "sampling interval ticks",
           "then": [
             "emit remembered latest value if one is pending"
+          ]
+        },
+        {
+          "kind": "timer",
+          "given": "a pending value exists",
+          "when": "the sampling interval ticks",
+          "then": [
+            "emit the pending latest value",
+            "clear the pending flag"
+          ]
+        },
+        {
+          "kind": "timer",
+          "given": "no pending value exists",
+          "when": "the sampling interval ticks",
+          "then": [
+            "emit nothing"
           ]
         },
         {
@@ -6129,6 +6406,15 @@
           "when": "first subscriber needs source",
           "then": [
             "connect; reset conditions occur: reset connector/connection according to configuration"
+          ]
+        },
+        {
+          "kind": "notifier",
+          "given": "a reset notifier factory is configured for resetOnRefCountZero, resetOnComplete, or resetOnError, and that condition has occurred",
+          "when": "the reset notifier emits",
+          "then": [
+            "reset the subject and connection",
+            "later subscribers resubscribe to the source"
           ]
         },
         {
@@ -6509,6 +6795,15 @@
           ]
         },
         {
+          "kind": "notifier",
+          "given": "the gate is closed",
+          "when": "the notifier emits",
+          "then": [
+            "open the gate permanently",
+            "unsubscribe the notifier"
+          ]
+        },
+        {
           "kind": "completion",
           "given": "the gate is open or closed",
           "when": "the source completes",
@@ -6709,6 +7004,15 @@
           "when": "scheduled subscription action executes",
           "then": [
             "subscribe to the source"
+          ]
+        },
+        {
+          "kind": "timer",
+          "given": "the source subscription is scheduled",
+          "when": "the scheduled action runs",
+          "then": [
+            "subscribe to the source",
+            "deliver source notifications without further scheduling"
           ]
         },
         {
@@ -7235,6 +7539,15 @@
           ]
         },
         {
+          "kind": "notifier",
+          "given": "the notifier has not emitted",
+          "when": "the notifier emits",
+          "then": [
+            "complete",
+            "unsubscribe from the source"
+          ]
+        },
+        {
           "kind": "completion",
           "given": "the notifier has not emitted",
           "when": "the source completes",
@@ -7445,6 +7758,26 @@
           ]
         },
         {
+          "kind": "notifier",
+          "given": "a duration is active",
+          "when": "the duration observable emits",
+          "then": [
+            "unsubscribe the duration",
+            "emit the pending trailing value when trailing is enabled and one exists, which starts a new duration",
+            "otherwise return to idle",
+            "complete if the source has already completed and nothing is pending"
+          ]
+        },
+        {
+          "kind": "notifier",
+          "given": "a duration is active",
+          "when": "the duration observable completes without emitting",
+          "then": [
+            "return to idle without emitting",
+            "complete, dropping any pending trailing value, if the source has already completed"
+          ]
+        },
+        {
           "kind": "completion",
           "given": "trailing is enabled, a trailing value is pending, and the duration is active",
           "when": "the source completes",
@@ -7530,6 +7863,17 @@
           "when": "interval boundary occurs",
           "then": [
             "emit according to leading/trailing configuration and reopen as required"
+          ]
+        },
+        {
+          "kind": "timer",
+          "given": "the interval timer is running",
+          "when": "the interval timer fires",
+          "then": [
+            "end throttling",
+            "emit the pending trailing value when trailing is enabled and one exists, which starts a new interval",
+            "otherwise return to idle",
+            "complete if the source has already completed and nothing is pending"
           ]
         },
         {
@@ -7749,6 +8093,16 @@
           ]
         },
         {
+          "kind": "timer",
+          "given": "a timeout timer is pending",
+          "when": "the timer fires before the awaited value",
+          "then": [
+            "unsubscribe from the source",
+            "subscribe to the observable returned by with, when configured",
+            "otherwise error with a TimeoutError carrying meta, lastValue, and seen"
+          ]
+        },
+        {
           "kind": "completion",
           "given": "a timeout deadline is pending",
           "when": "the source completes",
@@ -7822,6 +8176,15 @@
           "when": "deadline expires",
           "then": [
             "unsubscribe source and subscribe to configured fallback Observable"
+          ]
+        },
+        {
+          "kind": "timer",
+          "given": "a timeout timer is pending",
+          "when": "the timer fires before the awaited value",
+          "then": [
+            "unsubscribe from the source",
+            "subscribe to the configured fallback observable"
           ]
         },
         {
@@ -8032,6 +8395,15 @@
           ]
         },
         {
+          "kind": "notifier",
+          "given": "a window is open",
+          "when": "the boundary notifier emits",
+          "then": [
+            "complete the current window",
+            "open a new window and emit it downstream"
+          ]
+        },
+        {
           "kind": "completion",
           "given": "a window is open",
           "when": "the source completes",
@@ -8176,6 +8548,23 @@
           ]
         },
         {
+          "kind": "timer",
+          "given": "a window is open with its close timer running",
+          "when": "the close timer fires after windowTimeSpan",
+          "then": [
+            "complete that window",
+            "open and emit a new window immediately when no windowCreationInterval is configured"
+          ]
+        },
+        {
+          "kind": "timer",
+          "given": "windowCreationInterval is configured",
+          "when": "the creation interval fires",
+          "then": [
+            "open and emit an additional window with its own close timer"
+          ]
+        },
+        {
           "kind": "completion",
           "given": "one or more windows are open",
           "when": "the source completes",
@@ -8244,6 +8633,24 @@
           "when": "opening emits",
           "then": [
             "create/emit a new window; its closing notifier fires: close that window"
+          ]
+        },
+        {
+          "kind": "notifier",
+          "given": "the openings observable is active",
+          "when": "the openings observable emits",
+          "then": [
+            "open a new window and emit it downstream",
+            "subscribe to the closing notifier produced by the closing selector for that opening value"
+          ]
+        },
+        {
+          "kind": "notifier",
+          "given": "a window is open with its closing notifier active",
+          "when": "that closing notifier emits or completes",
+          "then": [
+            "complete that window",
+            "unsubscribe its closing notifier"
           ]
         },
         {
@@ -8331,6 +8738,16 @@
           "when": "closing notifier fires",
           "then": [
             "close current window and immediately create/emit the next window"
+          ]
+        },
+        {
+          "kind": "notifier",
+          "given": "a window is open",
+          "when": "the closing notifier emits or completes",
+          "then": [
+            "complete the current window",
+            "open a new window and emit it downstream",
+            "subscribe to a new closing notifier from the closing selector"
           ]
         },
         {

@@ -20,7 +20,7 @@ Formally:
 
 The conversion deliberately keeps state-maintenance rules and event-triggered action rules separate. This prevents a common error: combining a state such as "duration active" with a mutually exclusive event such as "duration ends" in the same transition.
 
-Every operator also carries explicit lifecycle rules. **Subscription rules** come first and describe what is established when a downstream subscriber subscribes: whether the source is subscribed immediately, deferred, or shared, the order in which inputs and notifiers are subscribed, and the initial state. **Completion rules** describe what happens to pending state and output when the source, an input, an inner Observable, or a notifier completes. **Error rules** describe what is discarded, propagated, recovered, or swallowed when one of them errors. **Unsubscription rules** describe what is torn down when the downstream subscriber unsubscribes. **Cancellation rules** describe which active work the operator itself cancels in response to an event, or state explicitly that it cancels nothing on its own. Where the outcome depends on the state at that moment, the alternatives are listed as separate rules.
+Every operator also carries explicit lifecycle rules. **Subscription rules** come first and describe what is established when a downstream subscriber subscribes: whether the source is subscribed immediately, deferred, or shared, the order in which inputs and notifiers are subscribed, and the initial state. **Timer rules** (only for operators that schedule work) describe what happens when an interval, due-time timer, or scheduler action fires. **Notifier rules** (only for operators that consume a secondary observable) describe what a closing, opening, boundary, duration, flush, repeat, retry, or reset notifier does when it emits. **Completion rules** describe what happens to pending state and output when the source, an input, an inner Observable, or a notifier completes. **Error rules** describe what is discarded, propagated, recovered, or swallowed when one of them errors. **Unsubscription rules** describe what is torn down when the downstream subscriber unsubscribes. **Cancellation rules** describe which active work the operator itself cancels in response to an event, or state explicitly that it cancels nothing on its own. Where the outcome depends on the state at that moment, the alternatives are listed as separate rules.
 
 
 ---
@@ -50,6 +50,23 @@ Then replace the pending value using the new source value
 Given the corresponding pending state exists
 When duration ends
 Then emit the pending latest value and return to idle
+```
+
+### Notifier rules
+
+```text
+Given a duration is active with a pending value
+When the duration observable emits
+Then unsubscribe the duration
+     emit the pending latest value
+     return to idle
+     complete if the source has already completed
+
+Given a duration is active
+When the duration observable completes without emitting
+Then clear the duration without emitting the pending value
+     the pending value is replaced by the next source value, which starts a new duration
+     complete, dropping the pending value, if the source has already completed
 ```
 
 ### Completion rules
@@ -130,6 +147,16 @@ When interval ends
 Then emit the pending latest value and return to idle
 ```
 
+### Timer rule
+
+```text
+Given a pending value exists and the interval timer is running
+When the interval timer fires
+Then emit the pending latest value
+     return to idle so the next source value starts a new interval
+     complete if the source has already completed
+```
+
 ### Completion rules
 
 ```text
@@ -203,6 +230,15 @@ Then append the source value to the current array
 Given the corresponding pending state exists
 When closing notifier emits
 Then emit the current array and start a fresh buffer
+```
+
+### Notifier rule
+
+```text
+Given a buffer is open
+When the closing notifier emits
+Then emit the current buffer
+     open a fresh empty buffer
 ```
 
 ### Completion rules
@@ -347,6 +383,19 @@ When a buffer times out or reaches `maxBufferSize`
 Then emit it and open replacements according to configuration
 ```
 
+### Timer rules
+
+```text
+Given a buffer is open with its close timer running
+When the close timer fires after bufferTimeSpan
+Then emit that buffer
+     open a new buffer immediately when no bufferCreationInterval is configured
+
+Given bufferCreationInterval is configured
+When the creation interval fires
+Then open an additional buffer with its own close timer
+```
+
 ### Completion rule
 
 ```text
@@ -415,6 +464,20 @@ Then route the source value into every active buffer
 Given the operator is active
 When an opening arrives
 Then open a buffer; its closing notifier fires: emit and close that buffer
+```
+
+### Notifier rules
+
+```text
+Given the openings observable is active
+When the openings observable emits
+Then open a new buffer
+     subscribe to the closing notifier produced by the closing selector for that opening value
+
+Given a buffer is open with its closing notifier active
+When that closing notifier emits
+Then emit the buffer
+     close it and unsubscribe its closing notifier
 ```
 
 ### Completion rules
@@ -493,6 +556,16 @@ Then append the source value
 Given the corresponding pending state exists
 When closing selector's notifier emits
 Then emit current buffer and immediately open the next buffer
+```
+
+### Notifier rule
+
+```text
+Given a buffer is open
+When the closing observable emits
+Then emit the current buffer
+     open a fresh buffer
+     subscribe to a new closing observable from the closing selector
 ```
 
 ### Completion rules
@@ -1425,6 +1498,20 @@ When current duration emits/completes before another source value
 Then emit the pending latest value
 ```
 
+### Notifier rules
+
+```text
+Given a duration is active for a pending value
+When the duration observable emits
+Then unsubscribe the duration
+     emit the pending value
+
+Given a duration is active for a pending value
+When the duration observable completes without emitting
+Then keep the pending value
+     it is emitted on source completion or replaced by the next source value
+```
+
 ### Completion rules
 
 ```text
@@ -1503,6 +1590,15 @@ When configured silence interval elapses
 Then emit the pending latest value
 ```
 
+### Timer rule
+
+```text
+Given the silence task is scheduled and a pending value exists
+When the scheduled task fires
+Then if dueTime has not fully elapsed since the latest value, reschedule the task for the remaining time
+     otherwise emit the pending latest value and clear the task
+```
+
 ### Completion rules
 
 ```text
@@ -1540,10 +1636,11 @@ Then unsubscribe from the source
 ### Cancellation rule
 
 ```text
-Given the silence timer is running
+Given the silence task is scheduled
 When a new source value arrives
-Then cancel the running silence timer
-     schedule a new timer for the new value
+Then cancel nothing
+     record the arrival time of the new value
+     the running task re-checks the deadline when it fires and reschedules itself for the remaining time
 ```
 
 
@@ -1646,6 +1743,15 @@ When its scheduled due time arrives
 Then forward that notification
 ```
 
+### Timer rule
+
+```text
+Given a delayed value is pending
+When its timer fires after the configured duration or at the configured date
+Then emit that value
+     complete if the source has completed and no other value is pending
+```
+
 ### Completion rules
 
 ```text
@@ -1722,6 +1828,24 @@ Then associate each value with a duration Observable
 Given the corresponding pending state exists
 When that value's duration emits
 Then release/emit the corresponding source value
+```
+
+### Notifier rules
+
+```text
+Given a duration is active for a pending value
+When the duration observable emits
+Then unsubscribe the duration
+     emit the pending value
+
+Given a duration is active for a pending value
+When the duration observable completes without emitting
+Then drop the pending value
+
+Given a subscription delay is configured and pending
+When the subscription delay emits or completes
+Then unsubscribe the subscription delay
+     subscribe to the source
 ```
 
 ### Completion rules
@@ -1878,6 +2002,15 @@ Then keep a set of previously seen keys
 Given the operator is active
 When a value's key has not been seen
 Then remember the key and emit the value; otherwise emit nothing
+```
+
+### Notifier rule
+
+```text
+Given seen keys are retained
+When the flushes observable emits
+Then clear the set of seen keys
+     later values with previously seen keys pass again
 ```
 
 ### Completion rules
@@ -2966,6 +3099,16 @@ Then maintain a map from keys to live grouped Subjects
 Given the operator is subscribed and ready to process input
 When a value arrives
 Then create group if needed and emit value into its group; emit each new group once to downstream
+```
+
+### Notifier rule
+
+```text
+Given a group has a duration observable
+When the duration observable emits
+Then complete that group
+     remove it from the group map so the key can start a new group
+     unsubscribe the duration
 ```
 
 ### Completion rule
@@ -4227,6 +4370,14 @@ When scheduled action executes
 Then deliver the corresponding next/error/complete downstream
 ```
 
+### Timer rule
+
+```text
+Given a notification has been scheduled
+When its scheduled action runs
+Then deliver that next, error, or complete notification downstream in scheduling order
+```
+
 ### Completion rule
 
 ```text
@@ -5140,6 +5291,28 @@ When source completes and repeats remain
 Then resubscribe; otherwise forward completion
 ```
 
+### Timer rule
+
+```text
+Given the source completed and delay is a number
+When the delay timer fires
+Then unsubscribe the timer
+     resubscribe to the source
+```
+
+### Notifier rules
+
+```text
+Given the source completed and delay is a function
+When the notifier returned by delay emits
+Then unsubscribe the notifier
+     resubscribe to the source
+
+Given the source completed and delay is a function
+When the notifier completes without emitting
+Then complete
+```
+
 ### Completion rules
 
 ```text
@@ -5213,6 +5386,14 @@ Then route completion signals to notifier workflow
 Given the corresponding pending state exists
 When notifier emits after a source completion
 Then resubscribe to source; notifier completes/errors: terminate accordingly
+```
+
+### Notifier rule
+
+```text
+Given the source has completed
+When the notifier emits
+Then resubscribe to the source
 ```
 
 ### Completion rules
@@ -5296,6 +5477,28 @@ When source errors and retry policy permits
 Then resubscribe; otherwise forward final error
 ```
 
+### Timer rule
+
+```text
+Given the source errored and delay is a number
+When the delay timer fires
+Then unsubscribe the timer
+     resubscribe to the source
+```
+
+### Notifier rules
+
+```text
+Given the source errored and delay is a function
+When the notifier returned by delay emits
+Then unsubscribe the notifier
+     resubscribe to the source
+
+Given the source errored and delay is a function
+When the notifier completes without emitting
+Then complete without re-raising the error
+```
+
 ### Completion rule
 
 ```text
@@ -5369,6 +5572,14 @@ Then route error signals to notifier workflow
 Given the operator is active
 When notifier emits after an error
 Then resubscribe; notifier completes/errors: terminate accordingly
+```
+
+### Notifier rule
+
+```text
+Given the source has errored
+When the notifier emits
+Then resubscribe to the source
 ```
 
 ### Completion rules
@@ -5446,6 +5657,19 @@ When sampler emits
 Then emit remembered latest value if one is pending, then clear pending flag
 ```
 
+### Notifier rules
+
+```text
+Given a pending value exists
+When the notifier emits
+Then emit the pending latest value
+     clear the pending flag
+
+Given no pending value exists
+When the notifier emits
+Then emit nothing
+```
+
 ### Completion rules
 
 ```text
@@ -5516,6 +5740,19 @@ Then remember latest source value and pending flag between periodic sample ticks
 Given the corresponding pending state exists
 When sampling interval ticks
 Then emit remembered latest value if one is pending
+```
+
+### Timer rules
+
+```text
+Given a pending value exists
+When the sampling interval ticks
+Then emit the pending latest value
+     clear the pending flag
+
+Given no pending value exists
+When the sampling interval ticks
+Then emit nothing
 ```
 
 ### Completion rule
@@ -5803,6 +6040,15 @@ Then retain connector, subscriber count, and reset state
 Given the operator is active
 When first subscriber needs source
 Then connect; reset conditions occur: reset connector/connection according to configuration
+```
+
+### Notifier rule
+
+```text
+Given a reset notifier factory is configured for resetOnRefCountZero, resetOnComplete, or resetOnError, and that condition has occurred
+When the reset notifier emits
+Then reset the subject and connection
+     later subscribers resubscribe to the source
 ```
 
 ### Completion rule
@@ -6158,6 +6404,15 @@ When notifier emits
 Then open gate permanently; subsequent source values are forwarded
 ```
 
+### Notifier rule
+
+```text
+Given the gate is closed
+When the notifier emits
+Then open the gate permanently
+     unsubscribe the notifier
+```
+
 ### Completion rules
 
 ```text
@@ -6353,6 +6608,15 @@ Then keep the source subscription deferred
 Given the operator is active
 When scheduled subscription action executes
 Then subscribe to the source
+```
+
+### Timer rule
+
+```text
+Given the source subscription is scheduled
+When the scheduled action runs
+Then subscribe to the source
+     deliver source notifications without further scheduling
 ```
 
 ### Completion rule
@@ -6846,6 +7110,15 @@ When notifier emits
 Then complete output immediately and unsubscribe source
 ```
 
+### Notifier rule
+
+```text
+Given the notifier has not emitted
+When the notifier emits
+Then complete
+     unsubscribe from the source
+```
+
 ### Completion rules
 
 ```text
@@ -7049,6 +7322,22 @@ When leading/trailing boundary occurs
 Then emit according to `{leading, trailing}` policy and manage the duration
 ```
 
+### Notifier rules
+
+```text
+Given a duration is active
+When the duration observable emits
+Then unsubscribe the duration
+     emit the pending trailing value when trailing is enabled and one exists, which starts a new duration
+     otherwise return to idle
+     complete if the source has already completed and nothing is pending
+
+Given a duration is active
+When the duration observable completes without emitting
+Then return to idle without emitting
+     complete, dropping any pending trailing value, if the source has already completed
+```
+
 ### Completion rules
 
 ```text
@@ -7127,6 +7416,17 @@ Then suppress new source values, optionally retain trailing value
 Given the corresponding pending state exists
 When interval boundary occurs
 Then emit according to leading/trailing configuration and reopen as required
+```
+
+### Timer rule
+
+```text
+Given the interval timer is running
+When the interval timer fires
+Then end throttling
+     emit the pending trailing value when trailing is enabled and one exists, which starts a new interval
+     otherwise return to idle
+     complete if the source has already completed and nothing is pending
 ```
 
 ### Completion rules
@@ -7334,6 +7634,16 @@ When deadline expires before required source emission
 Then unsubscribe source and switch to configured fallback or throw TimeoutError
 ```
 
+### Timer rule
+
+```text
+Given a timeout timer is pending
+When the timer fires before the awaited value
+Then unsubscribe from the source
+     subscribe to the observable returned by with, when configured
+     otherwise error with a TimeoutError carrying meta, lastValue, and seen
+```
+
 ### Completion rule
 
 ```text
@@ -7403,6 +7713,15 @@ Then track timeout deadline
 Given the corresponding pending state exists
 When deadline expires
 Then unsubscribe source and subscribe to configured fallback Observable
+```
+
+### Timer rule
+
+```text
+Given a timeout timer is pending
+When the timer fires before the awaited value
+Then unsubscribe from the source
+     subscribe to the configured fallback observable
 ```
 
 ### Completion rule
@@ -7606,6 +7925,15 @@ When boundary Observable emits
 Then close current window, emit/open a new window
 ```
 
+### Notifier rule
+
+```text
+Given a window is open
+When the boundary notifier emits
+Then complete the current window
+     open a new window and emit it downstream
+```
+
 ### Completion rules
 
 ```text
@@ -7744,6 +8072,19 @@ When time span, creation interval, or max size boundary occurs
 Then close/open windows according to configuration
 ```
 
+### Timer rules
+
+```text
+Given a window is open with its close timer running
+When the close timer fires after windowTimeSpan
+Then complete that window
+     open and emit a new window immediately when no windowCreationInterval is configured
+
+Given windowCreationInterval is configured
+When the creation interval fires
+Then open and emit an additional window with its own close timer
+```
+
 ### Completion rule
 
 ```text
@@ -7812,6 +8153,20 @@ Then route the source value into all active windows
 Given the operator is active
 When opening emits
 Then create/emit a new window; its closing notifier fires: close that window
+```
+
+### Notifier rules
+
+```text
+Given the openings observable is active
+When the openings observable emits
+Then open a new window and emit it downstream
+     subscribe to the closing notifier produced by the closing selector for that opening value
+
+Given a window is open with its closing notifier active
+When that closing notifier emits or completes
+Then complete that window
+     unsubscribe its closing notifier
 ```
 
 ### Completion rules
@@ -7890,6 +8245,16 @@ Then route source values into it
 Given the corresponding pending state exists
 When closing notifier fires
 Then close current window and immediately create/emit the next window
+```
+
+### Notifier rule
+
+```text
+Given a window is open
+When the closing notifier emits or completes
+Then complete the current window
+     open a new window and emit it downstream
+     subscribe to a new closing notifier from the closing selector
 ```
 
 ### Completion rules

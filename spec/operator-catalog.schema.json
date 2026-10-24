@@ -46,6 +46,8 @@
                     "subscription",
                     "state",
                     "event",
+                    "timer",
+                    "notifier",
                     "completion",
                     "error",
                     "unsubscription",
