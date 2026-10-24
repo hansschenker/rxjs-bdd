@@ -1,0 +1,159 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/hansschenker/rxjs-bdd/spec/machine-semantic-model.schema.json",
+  "title": "RxJS BDD Machine Semantic Model",
+  "type": "object",
+  "required": ["version", "machine", "state", "initial", "inputs", "outputs", "actions", "transitions"],
+  "properties": {
+    "version": { "const": "0.1" },
+    "machine": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_]*$" },
+    "state": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/stateField" }
+    },
+    "initial": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/assignment" }
+    },
+    "inputs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/signature" }
+    },
+    "outputs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/signature" }
+    },
+    "actions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/signature" }
+    },
+    "transitions": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/transition" }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "stateField": {
+      "type": "object",
+      "required": ["path", "type"],
+      "properties": {
+        "path": { "$ref": "#/$defs/path" },
+        "type": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "parameter": {
+      "type": "object",
+      "required": ["name", "type"],
+      "properties": {
+        "name": { "$ref": "#/$defs/identifier" },
+        "type": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "signature": {
+      "type": "object",
+      "required": ["name", "parameters"],
+      "properties": {
+        "name": { "$ref": "#/$defs/path" },
+        "parameters": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/parameter" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "assignment": {
+      "type": "object",
+      "required": ["target", "expression"],
+      "properties": {
+        "target": { "$ref": "#/$defs/path" },
+        "expression": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "event": {
+      "type": "object",
+      "required": ["name", "arguments"],
+      "properties": {
+        "name": { "$ref": "#/$defs/path" },
+        "arguments": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "action": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["kind", "event"],
+          "properties": {
+            "kind": { "const": "emit" },
+            "event": { "$ref": "#/$defs/event" }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["kind"],
+          "properties": { "kind": { "const": "complete" } },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["kind", "expression"],
+          "properties": {
+            "kind": { "const": "error" },
+            "expression": { "type": "string", "minLength": 1 }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["kind", "call"],
+          "properties": {
+            "kind": { "const": "do" },
+            "call": { "$ref": "#/$defs/event" }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["kind"],
+          "properties": { "kind": { "const": "nothing" } },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "transition": {
+      "type": "object",
+      "required": ["name", "guard", "input", "updates", "actions"],
+      "properties": {
+        "name": { "$ref": "#/$defs/identifier" },
+        "guard": { "type": "string", "minLength": 1 },
+        "input": { "$ref": "#/$defs/event" },
+        "updates": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/assignment" }
+        },
+        "actions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/action" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "identifier": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_]*$"
+    },
+    "path": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_]*(\\.[A-Za-z][A-Za-z0-9_]*)*$"
+    }
+  }
+}
