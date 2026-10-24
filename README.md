@@ -108,7 +108,7 @@ RxJS implementation and tests
 The complete source catalog has now been converted to Given / When / Then form:
 
 - **116 / 116 operator modules converted**
-- every operator carries explicit completion and error rules
+- every operator carries explicit completion, error, unsubscription, and cancellation rules
 - see [docs/operators.md](docs/operators.md)
 - source baseline: [rxjs-operators-state-and-policy-patterns](https://github.com/hansschenker/rxjs-operators-state-and-policy-patterns)
 
@@ -140,9 +140,19 @@ Error rule
 Given <state at the moment of the error>
 When  <source / input / inner / notifier errors>
 Then  <discard pending state; error, recover, or swallow>
+
+Unsubscription rule
+Given <state at the moment of teardown>
+When  <downstream subscriber unsubscribes>
+Then  <release source, inners, timers, notifiers, and pending state>
+
+Cancellation rule
+Given <active work>
+When  <event that supersedes or ends that work>
+Then  <cancel the superseded work, or cancel nothing>
 ```
 
-In `spec/operators.json` these carry `kind: completion` and `kind: error`, so the *Source complete* and *Source error* rows of the transition coverage matrix can be read directly from the catalog.
+In `spec/operators.json` these carry `kind: completion`, `kind: error`, `kind: unsubscription`, and `kind: cancellation`, so the *Source complete*, *Source error*, *Unsubscription*, and *Cancellation* rows of the transition coverage matrix can be read directly from the catalog.
 
 ## Canonical example: debounceTime
 

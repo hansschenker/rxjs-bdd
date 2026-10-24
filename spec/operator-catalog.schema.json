@@ -46,7 +46,9 @@
                     "state",
                     "event",
                     "completion",
-                    "error"
+                    "error",
+                    "unsubscription",
+                    "cancellation"
                   ]
                 },
                 "given": {

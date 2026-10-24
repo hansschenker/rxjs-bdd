@@ -1,5 +1,5 @@
 {
-  "version": "0.2.0",
+  "version": "0.3.0",
   "operators": [
     {
       "operator": "audit",
@@ -46,6 +46,33 @@
             "discard the pending value",
             "unsubscribe the active duration",
             "error immediately"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "a duration may be active with a pending value",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source",
+            "unsubscribe the active duration",
+            "discard the pending value without emitting it"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "a duration is active",
+          "when": "a source value arrives",
+          "then": [
+            "cancel nothing",
+            "the running duration continues; the new value only replaces the pending value"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "a duration is active",
+          "when": "the duration observable emits",
+          "then": [
+            "unsubscribe the duration observable after its first emission"
           ]
         }
       ],
@@ -97,6 +124,25 @@
             "cancel the interval timer",
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "an interval timer may be active with a pending value",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source",
+            "cancel the interval timer",
+            "discard the pending value without emitting it"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "an interval timer is active",
+          "when": "a source value arrives",
+          "then": [
+            "cancel nothing",
+            "the running interval is not restarted; the new value only replaces the pending value"
+          ]
         }
       ],
       "note": "Time-based specialization of `audit`."
@@ -146,6 +192,24 @@
             "discard the current buffer",
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "a buffer is open",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source",
+            "unsubscribe the closing notifier",
+            "discard the current buffer"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the closing notifier is active",
+          "when": "the source terminates",
+          "then": [
+            "unsubscribe the closing notifier as part of termination teardown"
+          ]
         }
       ],
       "note": null
@@ -194,6 +258,24 @@
             "discard all open buffers",
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "one or more buffers are open",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source",
+            "discard all open buffers"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "one or more buffers are open",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "the source is released only by its own termination or by downstream unsubscription"
+          ]
         }
       ],
       "note": null
@@ -235,6 +317,25 @@
             "discard all open buffers",
             "cancel pending buffer timers",
             "error immediately"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "one or more buffers are open",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source",
+            "cancel every buffer creation and close timer",
+            "discard all open buffers"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "a buffer is open with a close timer pending",
+          "when": "the buffer reaches maxBufferSize",
+          "then": [
+            "cancel that buffer's close timer",
+            "emit the buffer early"
           ]
         }
       ],
@@ -294,6 +395,26 @@
             "discard all open buffers",
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "zero or more buffers are open",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source",
+            "unsubscribe the openings observable",
+            "unsubscribe every active closing notifier",
+            "discard all open buffers"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "a buffer is open with its closing notifier active",
+          "when": "the closing notifier emits",
+          "then": [
+            "unsubscribe that closing notifier",
+            "emit and close the buffer"
+          ]
         }
       ],
       "note": null
@@ -342,6 +463,25 @@
           "then": [
             "discard the current buffer",
             "error immediately"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "a buffer is open",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source",
+            "unsubscribe the current closing observable",
+            "discard the current buffer"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "a closing observable is active",
+          "when": "the closing observable emits",
+          "then": [
+            "unsubscribe the previous closing observable",
+            "subscribe to a fresh closing observable for the next buffer"
           ]
         }
       ],
@@ -401,6 +541,22 @@
             "error immediately",
             "the selector is not invoked again"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "the source or a replacement observable is active",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from whichever observable is currently active"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the source is active",
+          "when": "the source errors",
+          "then": [
+            "unsubscribe from the errored source before subscribing to the replacement"
+          ]
         }
       ],
       "note": null
@@ -451,6 +607,25 @@
             "unsubscribe all inners",
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "inners are being collected or combined",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the outer source if still collecting",
+            "unsubscribe every inner",
+            "discard retained latest values"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the combined inners are active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "every inner runs until it terminates on its own"
+          ]
         }
       ],
       "note": "Deprecated alias behavior built on `combineLatestAll`."
@@ -499,6 +674,24 @@
           "then": [
             "unsubscribe all inputs",
             "error immediately"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "inputs are active",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe every input",
+            "discard retained latest values"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "inputs are active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "every input runs until it terminates on its own"
           ]
         }
       ],
@@ -550,6 +743,25 @@
             "unsubscribe all inners",
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "inners are being collected or combined",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the outer source if still collecting",
+            "unsubscribe every inner",
+            "discard retained latest values"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the combined inners are active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "every inner runs until it terminates on its own"
+          ]
         }
       ],
       "note": "Starts combining after the higher-order source supplies/collects inners per implementation."
@@ -599,6 +811,24 @@
             "unsubscribe all inputs",
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "inputs are active",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe every input",
+            "discard retained latest values"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "inputs are active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "every input runs until it terminates on its own"
+          ]
         }
       ],
       "note": null
@@ -645,6 +875,24 @@
           "then": [
             "error immediately",
             "never subscribe to the remaining inputs"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "an input is active and later inputs are pending",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe the active input",
+            "never subscribe to the pending inputs"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "an input is active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "each input runs to completion; pending inputs are never cancelled by the operator"
           ]
         }
       ],
@@ -696,6 +944,25 @@
             "unsubscribe the active inner",
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "a inner is active or inners are queued",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the outer source",
+            "unsubscribe the active inner",
+            "discard queued inners"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "an inner is active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "the active inner always runs to completion; queued inners are never cancelled by the operator"
+          ]
         }
       ],
       "note": null
@@ -745,6 +1012,25 @@
             "discard queued outer values",
             "unsubscribe the active projected inner",
             "error immediately"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "a projected inner is active or outer values are queued",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the outer source",
+            "unsubscribe the active projected inner",
+            "discard queued outer values"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "a projected inner is active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "the active inner always runs to completion; queued outer values are never cancelled by the operator"
           ]
         }
       ],
@@ -796,6 +1082,25 @@
             "unsubscribe the active configured inner",
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "a configured inner is active or outer values are queued",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the outer source",
+            "unsubscribe the active configured inner",
+            "discard queued outer values"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "a configured inner is active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "the active inner always runs to completion; queued outer values are never cancelled by the operator"
+          ]
         }
       ],
       "note": "Deprecated specialization."
@@ -843,6 +1148,24 @@
             "error immediately",
             "never subscribe to the remaining inputs"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "an input is active and later inputs are pending",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe the active input",
+            "never subscribe to the pending inputs"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "an input is active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "each input runs to completion; pending inputs are never cancelled by the operator"
+          ]
         }
       ],
       "note": null
@@ -883,6 +1206,24 @@
             "error the subject",
             "the output errors as the selector pipeline propagates the subject's error"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "the selector output is subscribed",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the selector output",
+            "unsubscribe the source from the shared subject"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the source is connected to the shared subject",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "the source is released only by its own termination or by downstream unsubscription"
+          ]
         }
       ],
       "note": null
@@ -922,6 +1263,24 @@
           "then": [
             "discard the count",
             "error immediately"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "a running count exists",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source",
+            "discard the count"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the source subscription is active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "the source is released only by its own termination or by downstream unsubscription"
           ]
         }
       ],
@@ -973,6 +1332,34 @@
             "unsubscribe the active duration",
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "a pending value may exist with an active duration",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source",
+            "unsubscribe the active duration",
+            "discard the pending value without emitting it"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "a duration is active for a pending value",
+          "when": "a new source value arrives",
+          "then": [
+            "unsubscribe the current duration observable",
+            "start a new duration for the new value"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "a duration is active",
+          "when": "the duration observable emits",
+          "then": [
+            "unsubscribe the duration after its first emission",
+            "emit the pending value"
+          ]
         }
       ],
       "note": null
@@ -1023,6 +1410,25 @@
             "cancel the silence timer",
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "a pending value may exist with the silence timer running",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source",
+            "cancel the silence timer",
+            "discard the pending value without emitting it"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the silence timer is running",
+          "when": "a new source value arrives",
+          "then": [
+            "cancel the running silence timer",
+            "schedule a new timer for the new value"
+          ]
         }
       ],
       "note": null
@@ -1070,6 +1476,23 @@
           "then": [
             "error immediately",
             "the default value is not emitted"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "the source subscription is active",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the source subscription is active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "the source is released only by its own termination or by downstream unsubscription"
           ]
         }
       ],
@@ -1119,6 +1542,25 @@
           "then": [
             "cancel pending timers and discard their values",
             "error immediately"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "delayed values are pending",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source",
+            "cancel every pending delay timer",
+            "discard their values"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "delayed values are pending",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "pending timers are never cancelled by the operator; only downstream unsubscription or a source error cancels them"
           ]
         }
       ],
@@ -1178,6 +1620,35 @@
             "unsubscribe active durations",
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "durations are active for pending values",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source",
+            "unsubscribe every active duration",
+            "unsubscribe a pending subscription delay",
+            "discard pending values"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "a duration is active for a pending value",
+          "when": "the duration emits its first value",
+          "then": [
+            "unsubscribe that duration",
+            "emit the pending value"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the subscription delay is pending",
+          "when": "the subscription delay emits",
+          "then": [
+            "unsubscribe the subscription delay",
+            "subscribe to the source"
+          ]
         }
       ],
       "note": "Subscription delay may also defer source subscription."
@@ -1234,6 +1705,22 @@
           "then": [
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "notification objects are being interpreted",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "notification objects are being interpreted",
+          "when": "a complete or error notification arrives as a value",
+          "then": [
+            "unsubscribe from the source after forwarding the terminal notification"
+          ]
         }
       ],
       "note": null
@@ -1283,6 +1770,24 @@
             "clear the set of seen keys",
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "seen keys are retained",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source",
+            "unsubscribe the flushes observable",
+            "clear the set of seen keys"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the flushes observable is active",
+          "when": "the source terminates",
+          "then": [
+            "unsubscribe the flushes observable as part of termination teardown"
+          ]
         }
       ],
       "note": "Optional flush Observable clears remembered keys."
@@ -1321,6 +1826,24 @@
           "then": [
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "a previous value or key is retained",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source",
+            "discard the retained value"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the source subscription is active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "the source is released only by its own termination or by downstream unsubscription"
+          ]
         }
       ],
       "note": null
@@ -1358,6 +1881,24 @@
           "when": "the source errors",
           "then": [
             "error immediately"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "a previous key is retained",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source",
+            "discard the retained key"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the source subscription is active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "the source is released only by its own termination or by downstream unsubscription"
           ]
         }
       ],
@@ -1406,6 +1947,25 @@
           "then": [
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "the configured index has not been reached",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source",
+            "discard the position count"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the configured index has not been reached",
+          "when": "the value at the configured index arrives",
+          "then": [
+            "emit it",
+            "complete",
+            "unsubscribe from the source"
+          ]
         }
       ],
       "note": null
@@ -1446,6 +2006,24 @@
             "error immediately",
             "the appended values are never emitted"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "the source is active or appended values are being emitted",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source",
+            "stop emitting appended values"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the source subscription is active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "the source is released only by its own termination or by downstream unsubscription"
+          ]
         }
       ],
       "note": null
@@ -1484,6 +2062,24 @@
           "when": "the source errors",
           "then": [
             "error immediately"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "no value has failed the predicate",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "no value has failed the predicate",
+          "when": "a value fails the predicate",
+          "then": [
+            "emit false",
+            "complete",
+            "unsubscribe from the source"
           ]
         }
       ],
@@ -1533,6 +2129,24 @@
             "unsubscribe the active inner",
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "a inner is active",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the outer source",
+            "unsubscribe the active inner"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "an inner is active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "newly arriving inners are ignored, not cancelled; the active inner always runs to completion"
+          ]
         }
       ],
       "note": null
@@ -1581,6 +2195,24 @@
             "unsubscribe the active inner",
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "a inner is active",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the outer source",
+            "unsubscribe the active inner"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "an inner is active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "newly arriving inners are ignored, not cancelled; the active inner always runs to completion"
+          ]
         }
       ],
       "note": "Alias-style specialization of exhaust semantics."
@@ -1628,6 +2260,24 @@
           "then": [
             "unsubscribe the active projected inner",
             "error immediately"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "a projected inner is active",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the outer source",
+            "unsubscribe the active projected inner"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "a projected inner is active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "outer values arriving while busy are ignored, not cancelled; the active inner always runs to completion"
           ]
         }
       ],
@@ -1679,6 +2329,25 @@
             "unsubscribe active inners",
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "recursive inners are active",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source",
+            "unsubscribe every active recursive inner",
+            "discard buffered values"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "recursive inners are active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "recursive inners always run to completion"
+          ]
         }
       ],
       "note": null
@@ -1716,6 +2385,23 @@
           "when": "the source errors",
           "then": [
             "error immediately"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "the source subscription is active",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the source subscription is active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "the source is released only by its own termination or by downstream unsubscription"
           ]
         }
       ],
@@ -1757,6 +2443,24 @@
             "error immediately",
             "invoke the finalizer during teardown"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "the finalizer is registered",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source",
+            "invoke the finalizer"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the source subscription is active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "the source is released only by its own termination or by downstream unsubscription"
+          ]
         }
       ],
       "note": null
@@ -1796,6 +2500,24 @@
           "then": [
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "no value has matched",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "no value has matched",
+          "when": "the first matching value arrives",
+          "then": [
+            "emit it",
+            "complete",
+            "unsubscribe from the source"
+          ]
         }
       ],
       "note": null
@@ -1834,6 +2556,24 @@
           "when": "the source errors",
           "then": [
             "error immediately"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "no value has matched",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "no value has matched",
+          "when": "the first matching value arrives",
+          "then": [
+            "emit its index",
+            "complete",
+            "unsubscribe from the source"
           ]
         }
       ],
@@ -1881,6 +2621,24 @@
           "when": "the source errors",
           "then": [
             "error immediately"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "no value has matched",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "no value has matched",
+          "when": "the first matching value arrives",
+          "then": [
+            "emit it",
+            "complete",
+            "unsubscribe from the source"
           ]
         }
       ],
@@ -1932,6 +2690,25 @@
             "unsubscribe all active projected inners",
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "projected inners are active or outer values are queued",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the outer source",
+            "unsubscribe every active projected inner",
+            "discard queued outer values"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "projected inners are active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "inners always run to completion; excess outer values are queued, never cancelled"
+          ]
         }
       ],
       "note": "Deprecated alias of `mergeMap`."
@@ -1972,6 +2749,34 @@
             "error every active group",
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "group subscriptions are still active",
+          "when": "the outer subscriber unsubscribes",
+          "then": [
+            "keep the source subscription alive while any group subscriber remains",
+            "stop emitting new groups downstream"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "the outer subscriber has already unsubscribed",
+          "when": "the last group subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source",
+            "clear the group map"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "a group has a duration observable",
+          "when": "the duration observable emits",
+          "then": [
+            "complete that group",
+            "remove it from the group map",
+            "unsubscribe the duration observable"
+          ]
         }
       ],
       "note": "Duration/connector options can close or customize groups."
@@ -2009,6 +2814,23 @@
           "when": "the source errors",
           "then": [
             "error immediately"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "values are being ignored",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the source subscription is active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "the source is released only by its own termination or by downstream unsubscription"
           ]
         }
       ],
@@ -2048,6 +2870,24 @@
           "when": "the source errors",
           "then": [
             "error immediately"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "no value has arrived",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "no value has arrived",
+          "when": "the first value arrives",
+          "then": [
+            "emit false",
+            "complete",
+            "unsubscribe from the source"
           ]
         }
       ],
@@ -2089,6 +2929,24 @@
           "when": "the outer source or the joined observable errors",
           "then": [
             "error immediately"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "inners are being collected or the joined observable is active",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the outer source or the joined observable",
+            "discard collected inners"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "inners are being collected",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "collected inners are subscribed only after the outer completes and are then never cancelled by the helper"
           ]
         }
       ],
@@ -2147,6 +3005,24 @@
             "discard the retained value",
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "a last value may be retained",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source",
+            "discard the retained value"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the source subscription is active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "the source is released only by its own termination or by downstream unsubscription"
+          ]
         }
       ],
       "note": null
@@ -2185,6 +3061,23 @@
           "then": [
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "the source subscription is active",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the source subscription is active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "the source is released only by its own termination or by downstream unsubscription"
+          ]
         }
       ],
       "note": null
@@ -2222,6 +3115,23 @@
           "when": "the source errors",
           "then": [
             "error immediately"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "the source subscription is active",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the source subscription is active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "the source is released only by its own termination or by downstream unsubscription"
           ]
         }
       ],
@@ -2263,6 +3173,23 @@
             "emit an error Notification wrapping the error",
             "complete",
             "the error itself is not forwarded"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "the source subscription is active",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the source subscription is active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "the source is released only by its own termination or by downstream unsubscription"
           ]
         }
       ],
@@ -2312,6 +3239,24 @@
             "discard the retained maximum",
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "a maximum may be retained",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source",
+            "discard the retained maximum"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the source subscription is active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "the source is released only by its own termination or by downstream unsubscription"
+          ]
         }
       ],
       "note": "Implemented via reduction."
@@ -2359,6 +3304,24 @@
           "then": [
             "unsubscribe all inputs",
             "error immediately"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "inputs are active",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe every active input",
+            "never subscribe to inputs still waiting for concurrency capacity"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "inputs are active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "every input runs until it terminates on its own"
           ]
         }
       ],
@@ -2410,6 +3373,25 @@
             "unsubscribe all active inners",
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "inners are active or inners are queued",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the outer source",
+            "unsubscribe every active inner",
+            "discard queued inners"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "inners are active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "inners always run to completion; excess inners are queued, never cancelled"
+          ]
         }
       ],
       "note": null
@@ -2457,6 +3439,25 @@
           "then": [
             "error through the operator subscriber",
             "release the buffer during teardown"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "inners are active or values are buffered",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the outer source",
+            "unsubscribe every active inner",
+            "release the buffer"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "inners are active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "the helper never cancels inners; concurrency is enforced by queueing"
           ]
         }
       ],
@@ -2508,6 +3509,25 @@
             "unsubscribe all active projected inners",
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "projected inners are active or outer values are queued",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the outer source",
+            "unsubscribe every active projected inner",
+            "discard queued outer values"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "projected inners are active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "inners always run to completion; excess outer values are queued, never cancelled"
+          ]
         }
       ],
       "note": "Concurrency policy: allow overlap."
@@ -2557,6 +3577,25 @@
             "discard queued outer values",
             "unsubscribe all active configured inners",
             "error immediately"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "configured inners are active or outer values are queued",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the outer source",
+            "unsubscribe every active configured inner",
+            "discard queued outer values"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "configured inners are active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "inners always run to completion; excess outer values are queued, never cancelled"
           ]
         }
       ],
@@ -2608,6 +3647,25 @@
             "unsubscribe all active inners",
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "accumulator inners are active",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source",
+            "unsubscribe every active accumulator inner",
+            "discard the accumulator and queued values"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "accumulator inners are active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "accumulator inners always run to completion"
+          ]
         }
       ],
       "note": null
@@ -2655,6 +3713,24 @@
           "then": [
             "unsubscribe all inputs",
             "error immediately"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "inputs are active",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe every active input",
+            "never subscribe to inputs still waiting for concurrency capacity"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "inputs are active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "every input runs until it terminates on its own"
           ]
         }
       ],
@@ -2704,6 +3780,24 @@
             "discard the retained minimum",
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "a minimum may be retained",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source",
+            "discard the retained minimum"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the source subscription is active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "the source is released only by its own termination or by downstream unsubscription"
+          ]
         }
       ],
       "note": "Implemented via reduction."
@@ -2746,6 +3840,24 @@
             "error every current subscriber",
             "with a selector, the output errors as the selector pipeline propagates the error"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "a subscriber is attached to the shared subject",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "detach that subscriber from the subject",
+            "keep the source connection alive until the connection itself is unsubscribed, or until the selector output is unsubscribed when a selector is used"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the source is connected to the subject",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "the source is released only by its own termination or by downstream unsubscription"
+          ]
         }
       ],
       "note": "Deprecated multicasting API."
@@ -2785,6 +3897,24 @@
           "then": [
             "schedule the error on the scheduler",
             "error after previously scheduled notifications have been delivered"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "scheduled deliveries may be pending",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source",
+            "cancel every pending scheduled delivery"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "scheduled deliveries may be pending",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "the source is released only by its own termination or by downstream unsubscription"
           ]
         }
       ],
@@ -2842,6 +3972,24 @@
             "swallow the error",
             "complete"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "a source in the sequence is active",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe the active source",
+            "never subscribe to the remaining sources"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "a source in the sequence is active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "each source runs until it terminates on its own"
+          ]
         }
       ],
       "note": null
@@ -2881,6 +4029,24 @@
           "then": [
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "a previous value is retained",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source",
+            "discard the retained value"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the source subscription is active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "the source is released only by its own termination or by downstream unsubscription"
+          ]
         }
       ],
       "note": null
@@ -2919,6 +4085,24 @@
           "then": [
             "error both outputs"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "one partition output is subscribed",
+          "when": "that output's subscriber unsubscribes",
+          "then": [
+            "unsubscribe that output's own source subscription",
+            "the other output is unaffected"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "a partition output is subscribed",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "the source is released only by its own termination or by downstream unsubscription"
+          ]
         }
       ],
       "note": "Deprecated pipeable partition form."
@@ -2956,6 +4140,23 @@
           "when": "the source errors",
           "then": [
             "error immediately"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "the source subscription is active",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the source subscription is active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "the source is released only by its own termination or by downstream unsubscription"
           ]
         }
       ],
@@ -2997,6 +4198,24 @@
             "error every current subscriber",
             "late subscribers error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "a subscriber is attached to the Subject",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "detach that subscriber from the Subject",
+            "keep the source connection alive until the connection itself is unsubscribed, or until refCount drops to zero when refCount is applied"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the source is connected to the Subject",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "the source is released only by its own termination or by downstream unsubscription"
+          ]
         }
       ],
       "note": "Deprecated wrapper around connectable/multicast semantics."
@@ -3036,6 +4255,24 @@
           "then": [
             "error every current subscriber",
             "late subscribers error immediately"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "a subscriber is attached to the BehaviorSubject",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "detach that subscriber from the BehaviorSubject",
+            "keep the source connection alive until the connection itself is unsubscribed, or until refCount drops to zero when refCount is applied"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the source is connected to the BehaviorSubject",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "the source is released only by its own termination or by downstream unsubscription"
           ]
         }
       ],
@@ -3079,6 +4316,24 @@
             "late subscribers error immediately",
             "the retained last value is never emitted"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "a subscriber is attached to the AsyncSubject",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "detach that subscriber from the AsyncSubject",
+            "keep the source connection alive until the connection itself is unsubscribed, or until refCount drops to zero when refCount is applied"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the source is connected to the AsyncSubject",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "the source is released only by its own termination or by downstream unsubscription"
+          ]
         }
       ],
       "note": "Deprecated."
@@ -3118,6 +4373,24 @@
           "then": [
             "error every current subscriber",
             "late subscribers replay the buffered values and then error"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "a subscriber is attached to the ReplaySubject",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "detach that subscriber from the ReplaySubject",
+            "keep the source connection alive until the connection itself is unsubscribed, or until refCount drops to zero when refCount is applied"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the source is connected to the ReplaySubject",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "the source is released only by its own termination or by downstream unsubscription"
           ]
         }
       ],
@@ -3175,6 +4448,23 @@
           "then": [
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "competitors are pending or a winner is selected",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe every still-active competitor"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "no competitor has emitted yet",
+          "when": "the first competitor emits",
+          "then": [
+            "unsubscribe every other competitor",
+            "keep only the winner"
+          ]
         }
       ],
       "note": "Deprecated pipeable form."
@@ -3231,6 +4521,23 @@
           "then": [
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "competitors are pending or a winner is selected",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe every still-active competitor"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "no competitor has emitted yet",
+          "when": "the first competitor emits",
+          "then": [
+            "unsubscribe every other competitor",
+            "keep only the winner"
+          ]
         }
       ],
       "note": null
@@ -3279,6 +4586,24 @@
             "discard the accumulator",
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "an accumulator may be retained",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source",
+            "discard the accumulator"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the source subscription is active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "the source is released only by its own termination or by downstream unsubscription"
+          ]
         }
       ],
       "note": "Unlike `scan`, no intermediate accumulator emissions."
@@ -3316,6 +4641,32 @@
           "when": "the connectable source errors",
           "then": [
             "error every subscriber through the shared subject"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "more than one subscriber is attached",
+          "when": "a subscriber unsubscribes",
+          "then": [
+            "decrement the reference count",
+            "keep the shared connection"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "exactly one subscriber is attached",
+          "when": "that subscriber unsubscribes",
+          "then": [
+            "decrement the reference count to zero",
+            "unsubscribe the shared connection"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the shared connection is active",
+          "when": "the reference count reaches zero",
+          "then": [
+            "cancel the shared source execution by unsubscribing the connection"
           ]
         }
       ],
@@ -3364,6 +4715,32 @@
           "then": [
             "error immediately",
             "no further repetitions are started"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "a repetition is active or a repeat delay is pending",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe the active source execution",
+            "unsubscribe a pending delay notifier"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "a repetition is active",
+          "when": "the source completes with repetitions remaining",
+          "then": [
+            "unsubscribe the completed execution before resubscribing"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "a repeat delay notifier is pending",
+          "when": "the delay notifier emits",
+          "then": [
+            "unsubscribe the delay notifier after its first emission",
+            "resubscribe to the source"
           ]
         }
       ],
@@ -3428,6 +4805,24 @@
           "then": [
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "a repetition is active or the notifier is waiting",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe the active source execution",
+            "unsubscribe the notifier"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "a repetition is active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "a completed execution is torn down by its own completion; the notifier is never cancelled by the operator"
+          ]
         }
       ],
       "note": "Deprecated-style notifier API."
@@ -3475,6 +4870,32 @@
           "when": "the source errors",
           "then": [
             "error immediately"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "an attempt is active or a retry delay is pending",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe the active source execution",
+            "unsubscribe a pending delay notifier"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "an attempt is active",
+          "when": "the source errors with retries remaining",
+          "then": [
+            "unsubscribe the failed execution before resubscribing"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "a retry delay notifier is pending",
+          "when": "the delay notifier emits",
+          "then": [
+            "unsubscribe the delay notifier after its first emission",
+            "resubscribe to the source"
           ]
         }
       ],
@@ -3531,6 +4952,24 @@
           "then": [
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "an attempt is active or the notifier is waiting",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe the active source execution",
+            "unsubscribe the notifier"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "an attempt is active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "a failed execution is torn down by its own error; the notifier is never cancelled by the operator"
+          ]
         }
       ],
       "note": "Deprecated-style notifier API."
@@ -3580,6 +5019,24 @@
             "discard the pending value",
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "a pending sampled value may exist",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source",
+            "unsubscribe the notifier",
+            "discard the pending value"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the notifier is active",
+          "when": "the source terminates",
+          "then": [
+            "unsubscribe the notifier as part of termination teardown"
+          ]
         }
       ],
       "note": null
@@ -3622,6 +5079,24 @@
             "cancel the sampling interval",
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "a pending sampled value may exist",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source",
+            "cancel the sampling interval",
+            "discard the pending value"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the sampling interval is active",
+          "when": "the source terminates",
+          "then": [
+            "unsubscribe the sampling interval as part of termination teardown"
+          ]
         }
       ],
       "note": null
@@ -3660,6 +5135,24 @@
           "then": [
             "discard the accumulator",
             "error immediately"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "an accumulator is retained",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source",
+            "discard the accumulator"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the source subscription is active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "the source is released only by its own termination or by downstream unsubscription"
           ]
         }
       ],
@@ -3708,6 +5201,24 @@
           "then": [
             "discard the accumulator",
             "error immediately"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "an accumulator is retained",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source",
+            "discard the accumulator"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the source subscription is active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "the source is released only by its own termination or by downstream unsubscription"
           ]
         }
       ],
@@ -3759,6 +5270,25 @@
             "discard both queues",
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "both sequences are active",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe both sequences",
+            "discard both queues"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "both sequences are active",
+          "when": "a compared pair does not match",
+          "then": [
+            "emit false",
+            "complete",
+            "unsubscribe both sequences"
+          ]
         }
       ],
       "note": null
@@ -3799,6 +5329,33 @@
             "error every current subscriber",
             "reset the connection and subject when resetOnError is set (default true), so later subscribers resubscribe to the source"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "more than one subscriber is attached",
+          "when": "a subscriber unsubscribes",
+          "then": [
+            "decrement the reference count",
+            "keep the connection"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "exactly one subscriber is attached",
+          "when": "that subscriber unsubscribes",
+          "then": [
+            "decrement the reference count to zero",
+            "when resetOnRefCountZero is set (default true), unsubscribe the source connection and reset the subject, after the reset notifier emits if one is configured"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the reference count dropped to zero and a reset notifier is pending",
+          "when": "a new subscriber arrives before the notifier emits",
+          "then": [
+            "cancel the pending reset",
+            "keep the existing connection and subject"
+          ]
         }
       ],
       "note": null
@@ -3838,6 +5395,33 @@
           "then": [
             "error every current subscriber",
             "reset the connection because resetOnError is true; the next subscriber resubscribes to the source"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "the refCount option is false (default)",
+          "when": "the last subscriber unsubscribes",
+          "then": [
+            "keep the source connection alive",
+            "keep the replay buffer"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "the refCount option is true",
+          "when": "the last subscriber unsubscribes",
+          "then": [
+            "unsubscribe the source connection",
+            "reset the ReplaySubject"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the source is connected",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "with the default refCount false nothing is ever cancelled; the source runs to termination"
           ]
         }
       ],
@@ -3895,6 +5479,24 @@
             "discard the retained match",
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "a matching value may be retained",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source",
+            "discard the retained match"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "one matching value is retained",
+          "when": "a second matching value arrives",
+          "then": [
+            "error with SequenceError",
+            "unsubscribe from the source"
+          ]
         }
       ],
       "note": null
@@ -3932,6 +5534,23 @@
           "when": "the source errors",
           "then": [
             "error immediately"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "values are being counted",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the source subscription is active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "the source is released only by its own termination or by downstream unsubscription"
           ]
         }
       ],
@@ -3972,6 +5591,24 @@
           "then": [
             "discard the buffered values",
             "error immediately"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "the last count values are buffered",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source",
+            "discard the buffered values"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the source subscription is active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "the source is released only by its own termination or by downstream unsubscription"
           ]
         }
       ],
@@ -4020,6 +5657,24 @@
           "then": [
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "the notifier may still be active",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source",
+            "unsubscribe the notifier"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the gate is closed and the notifier is active",
+          "when": "the notifier emits",
+          "then": [
+            "unsubscribe the notifier after its first emission",
+            "open the gate"
+          ]
         }
       ],
       "note": "Notifier completion alone does not open the gate."
@@ -4057,6 +5712,23 @@
           "when": "the source errors",
           "then": [
             "error immediately"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "skipping or forwarding state is active",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the source subscription is active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "the source is released only by its own termination or by downstream unsubscription"
           ]
         }
       ],
@@ -4096,6 +5768,24 @@
           "then": [
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "prefix values are being emitted or the source is active",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "stop emitting prefix values",
+            "unsubscribe from the source"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the source subscription is active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "the source is released only by its own termination or by downstream unsubscription"
+          ]
         }
       ],
       "note": null
@@ -4133,6 +5823,32 @@
           "when": "the source errors",
           "then": [
             "error immediately"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "the source subscription is still scheduled",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "cancel the scheduled subscription action",
+            "the source is never subscribed"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "the source has been subscribed",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the source has been subscribed",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "the source is released only by its own termination or by downstream unsubscription"
           ]
         }
       ],
@@ -4182,6 +5898,24 @@
             "unsubscribe the active inner",
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "a inner is active",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the outer source",
+            "unsubscribe the active inner"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "an inner is active",
+          "when": "a new inner observable arrives",
+          "then": [
+            "unsubscribe the active inner",
+            "subscribe to the new inner"
+          ]
         }
       ],
       "note": null
@@ -4230,6 +5964,24 @@
             "unsubscribe the active projected inner",
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "a projected inner is active",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the outer source",
+            "unsubscribe the active projected inner"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "a projected inner is active",
+          "when": "a new outer value arrives",
+          "then": [
+            "unsubscribe the active projected inner",
+            "project and subscribe to the new inner"
+          ]
         }
       ],
       "note": "Concurrency policy: only latest."
@@ -4277,6 +6029,24 @@
           "then": [
             "unsubscribe the active configured inner",
             "error immediately"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "a configured inner is active",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the outer source",
+            "unsubscribe the active configured inner"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "a configured inner is active",
+          "when": "a new outer value arrives",
+          "then": [
+            "unsubscribe the active inner",
+            "subscribe to the configured inner again"
           ]
         }
       ],
@@ -4327,6 +6097,25 @@
             "unsubscribe the active inner",
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "a accumulator inner is active",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the outer source",
+            "unsubscribe the active accumulator inner",
+            "discard the accumulator"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "an accumulator inner is active",
+          "when": "a new outer value arrives",
+          "then": [
+            "unsubscribe the active accumulator inner",
+            "project and subscribe to a new inner from the current accumulator"
+          ]
         }
       ],
       "note": null
@@ -4364,6 +6153,24 @@
           "when": "the source errors",
           "then": [
             "error immediately"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "fewer than count values have been taken",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "count - 1 values have been taken",
+          "when": "the count-th value arrives",
+          "then": [
+            "emit it",
+            "complete",
+            "unsubscribe from the source"
           ]
         }
       ],
@@ -4404,6 +6211,24 @@
           "then": [
             "discard the buffered values",
             "error immediately"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "trailing values are buffered",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source",
+            "discard the buffered values"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the source subscription is active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "the source is released only by its own termination or by downstream unsubscription"
           ]
         }
       ],
@@ -4453,6 +6278,24 @@
           "then": [
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "the notifier has not emitted",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source",
+            "unsubscribe the notifier"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the notifier has not emitted",
+          "when": "the notifier emits",
+          "then": [
+            "complete",
+            "unsubscribe from the source and the notifier"
+          ]
         }
       ],
       "note": null
@@ -4490,6 +6333,24 @@
           "when": "the source errors",
           "then": [
             "error immediately"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "the predicate has not yet failed",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the predicate has not yet failed",
+          "when": "a value fails the predicate",
+          "then": [
+            "emit it only if inclusive is set",
+            "complete",
+            "unsubscribe from the source"
           ]
         }
       ],
@@ -4532,6 +6393,25 @@
             "invoke the error callback",
             "error immediately",
             "invoke the finalize callback during teardown"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "the source subscription is active",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "invoke the unsubscribe callback",
+            "unsubscribe from the source",
+            "invoke the finalize callback"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the source subscription is active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "the source is released only by its own termination or by downstream unsubscription"
           ]
         }
       ],
@@ -4584,6 +6464,34 @@
             "cancel the duration",
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "a duration may be active with a pending trailing value",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source",
+            "unsubscribe the active duration",
+            "discard the pending trailing value"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "a duration is active",
+          "when": "the duration observable emits",
+          "then": [
+            "unsubscribe the duration after its first emission",
+            "emit the trailing value if trailing is enabled and one is pending"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "a duration is active",
+          "when": "a source value arrives",
+          "then": [
+            "cancel nothing",
+            "the running duration is not restarted"
+          ]
         }
       ],
       "note": "Default is leading `true`, trailing `false`."
@@ -4635,6 +6543,25 @@
             "cancel the interval timer",
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "an interval timer may be running with a pending trailing value",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source",
+            "cancel the interval timer",
+            "discard the pending trailing value"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the interval timer is running",
+          "when": "a source value arrives",
+          "then": [
+            "cancel nothing",
+            "the running interval is not restarted; the value is suppressed or retained as the trailing value"
+          ]
         }
       ],
       "note": null
@@ -4682,6 +6609,23 @@
             "error immediately",
             "the error factory is not invoked"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "the source subscription is active",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the source subscription is active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "the source is released only by its own termination or by downstream unsubscription"
+          ]
         }
       ],
       "note": null
@@ -4719,6 +6663,23 @@
           "when": "the source errors",
           "then": [
             "error immediately"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "a previous timestamp is retained",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the source subscription is active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "the source is released only by its own termination or by downstream unsubscription"
           ]
         }
       ],
@@ -4760,6 +6721,33 @@
             "cancel the pending timeout timer",
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "a timeout timer is pending",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source",
+            "cancel the pending timeout timer"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "a timeout timer is pending",
+          "when": "a source value arrives",
+          "then": [
+            "cancel the pending timer",
+            "schedule a new timer when an each timeout is configured"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "a timeout timer is pending",
+          "when": "the timer fires",
+          "then": [
+            "unsubscribe from the source",
+            "subscribe to the fallback observable, or error with TimeoutError when none is configured"
+          ]
         }
       ],
       "note": null
@@ -4800,6 +6788,33 @@
             "cancel the pending timeout timer",
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "a timeout timer is pending",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source",
+            "cancel the pending timeout timer"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "a timeout timer is pending",
+          "when": "a source value arrives",
+          "then": [
+            "cancel the pending timer",
+            "schedule a new timer for the next value"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "a timeout timer is pending",
+          "when": "the timer fires",
+          "then": [
+            "unsubscribe from the source",
+            "subscribe to the configured fallback observable"
+          ]
         }
       ],
       "note": "Deprecated wrapper around `timeout`."
@@ -4837,6 +6852,23 @@
           "when": "the source errors",
           "then": [
             "error immediately"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "the source subscription is active",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the source subscription is active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "the source is released only by its own termination or by downstream unsubscription"
           ]
         }
       ],
@@ -4877,6 +6909,24 @@
           "then": [
             "discard the collected array",
             "error immediately"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "values are being collected",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source",
+            "discard the collected array"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the source subscription is active",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "the source is released only by its own termination or by downstream unsubscription"
           ]
         }
       ],
@@ -4927,6 +6977,24 @@
             "error the current window",
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "a window is open",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source",
+            "unsubscribe the boundary notifier",
+            "unsubscribe the current window subject"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "the boundary notifier is active",
+          "when": "the source terminates",
+          "then": [
+            "unsubscribe the boundary notifier as part of termination teardown"
+          ]
         }
       ],
       "note": null
@@ -4966,6 +7034,24 @@
           "then": [
             "error every open window",
             "error immediately"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "one or more windows are open",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source",
+            "release the open window subjects without completing them"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "one or more windows are open",
+          "when": "any source value or lifecycle event arrives",
+          "then": [
+            "cancel no active work",
+            "the source is released only by its own termination or by downstream unsubscription"
           ]
         }
       ],
@@ -5009,6 +7095,25 @@
             "cancel pending window timers",
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "one or more windows are open",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source",
+            "cancel every window creation and close timer",
+            "release the open window subjects"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "a window is open with a close timer pending",
+          "when": "the window reaches maxWindowSize",
+          "then": [
+            "cancel that window's close timer",
+            "complete the window early"
+          ]
         }
       ],
       "note": null
@@ -5047,7 +7152,16 @@
           "when": "the openings observable completes",
           "then": [
             "ignore the completion",
-            "open windows stay open until their closing notifier emits or the source completes"
+            "open windows stay open until their closing notifier emits or completes, or the source completes"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "a window is open",
+          "when": "its closing notifier completes without emitting",
+          "then": [
+            "complete and remove that window",
+            "the source and other windows are unaffected"
           ]
         },
         {
@@ -5057,6 +7171,26 @@
           "then": [
             "error every open window",
             "error immediately"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "zero or more windows are open",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source",
+            "unsubscribe the openings observable",
+            "unsubscribe every active closing notifier",
+            "unsubscribe every open window subject"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "a window is open with its closing notifier active",
+          "when": "the closing notifier emits or completes",
+          "then": [
+            "unsubscribe that closing notifier",
+            "complete and remove the window"
           ]
         }
       ],
@@ -5091,12 +7225,41 @@
           ]
         },
         {
+          "kind": "completion",
+          "given": "a window is open",
+          "when": "the closing notifier completes without emitting",
+          "then": [
+            "complete the current window",
+            "open and emit the next window with a fresh closing notifier"
+          ]
+        },
+        {
           "kind": "error",
           "given": "a window is open",
           "when": "the source or the closing notifier errors",
           "then": [
             "error the current window",
             "error immediately"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "a window is open",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source",
+            "unsubscribe the closing notifier",
+            "release the current window"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "a closing notifier is active",
+          "when": "the closing notifier emits or completes",
+          "then": [
+            "unsubscribe the previous closing notifier",
+            "complete the current window",
+            "open and emit the next window with a fresh closing notifier"
           ]
         }
       ],
@@ -5144,6 +7307,24 @@
           "when": "the source or any secondary input errors",
           "then": [
             "error immediately"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "secondary inputs are active",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the source",
+            "unsubscribe every secondary input",
+            "discard retained latest values"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "secondary inputs are active",
+          "when": "the source terminates",
+          "then": [
+            "unsubscribe the secondary inputs as part of termination teardown"
           ]
         }
       ],
@@ -5193,6 +7374,24 @@
           "then": [
             "discard all queues",
             "error immediately"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "inputs are active",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe every input",
+            "discard all queues"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "other inputs are still active",
+          "when": "an input completes with an empty queue",
+          "then": [
+            "complete",
+            "unsubscribe the remaining inputs"
           ]
         }
       ],
@@ -5252,6 +7451,25 @@
             "discard all queues",
             "error immediately"
           ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "inners are being collected or zipped",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe from the outer source if still collecting",
+            "unsubscribe every inner",
+            "discard all queues"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "other inners are still active",
+          "when": "an inner completes with an empty queue",
+          "then": [
+            "complete",
+            "unsubscribe the remaining inners"
+          ]
         }
       ],
       "note": null
@@ -5300,6 +7518,24 @@
           "then": [
             "discard all queues",
             "error immediately"
+          ]
+        },
+        {
+          "kind": "unsubscription",
+          "given": "inputs are active",
+          "when": "the downstream subscriber unsubscribes",
+          "then": [
+            "unsubscribe every input",
+            "discard all queues"
+          ]
+        },
+        {
+          "kind": "cancellation",
+          "given": "other inputs are still active",
+          "when": "an input completes with an empty queue",
+          "then": [
+            "complete",
+            "unsubscribe the remaining inputs"
           ]
         }
       ],

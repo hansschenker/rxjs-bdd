@@ -20,7 +20,7 @@ Formally:
 
 The conversion deliberately keeps state-maintenance rules and event-triggered action rules separate. This prevents a common error: combining a state such as "duration active" with a mutually exclusive event such as "duration ends" in the same transition.
 
-Every operator also carries explicit lifecycle rules. **Completion rules** describe what happens to pending state and output when the source, an input, an inner Observable, or a notifier completes. **Error rules** describe what is discarded, propagated, recovered, or swallowed when one of them errors. Where the outcome depends on the state at that moment, the alternatives are listed as separate rules.
+Every operator also carries explicit lifecycle rules. **Completion rules** describe what happens to pending state and output when the source, an input, an inner Observable, or a notifier completes. **Error rules** describe what is discarded, propagated, recovered, or swallowed when one of them errors. **Unsubscription rules** describe what is torn down when the downstream subscriber unsubscribes. **Cancellation rules** describe which active work the operator itself cancels in response to an event, or state explicitly that it cancels nothing on its own. Where the outcome depends on the state at that moment, the alternatives are listed as separate rules.
 
 
 ---
@@ -65,6 +65,29 @@ When the source or the active duration observable errors
 Then discard the pending value
      unsubscribe the active duration
      error immediately
+```
+
+### Unsubscription rule
+
+```text
+Given a duration may be active with a pending value
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+     unsubscribe the active duration
+     discard the pending value without emitting it
+```
+
+### Cancellation rules
+
+```text
+Given a duration is active
+When a source value arrives
+Then cancel nothing
+     the running duration continues; the new value only replaces the pending value
+
+Given a duration is active
+When the duration observable emits
+Then unsubscribe the duration observable after its first emission
 ```
 
 *Note:* The first source value starts the duration.
@@ -113,6 +136,25 @@ Then discard the pending value
      error immediately
 ```
 
+### Unsubscription rule
+
+```text
+Given an interval timer may be active with a pending value
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+     cancel the interval timer
+     discard the pending value without emitting it
+```
+
+### Cancellation rule
+
+```text
+Given an interval timer is active
+When a source value arrives
+Then cancel nothing
+     the running interval is not restarted; the new value only replaces the pending value
+```
+
 *Note:* Time-based specialization of `audit`.
 
 ---
@@ -158,6 +200,24 @@ Then discard the current buffer
      error immediately
 ```
 
+### Unsubscription rule
+
+```text
+Given a buffer is open
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+     unsubscribe the closing notifier
+     discard the current buffer
+```
+
+### Cancellation rule
+
+```text
+Given the closing notifier is active
+When the source terminates
+Then unsubscribe the closing notifier as part of termination teardown
+```
+
 
 ---
 
@@ -201,6 +261,24 @@ Then discard all open buffers
      error immediately
 ```
 
+### Unsubscription rule
+
+```text
+Given one or more buffers are open
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+     discard all open buffers
+```
+
+### Cancellation rule
+
+```text
+Given one or more buffers are open
+When any source value or lifecycle event arrives
+Then cancel no active work
+     the source is released only by its own termination or by downstream unsubscription
+```
+
 
 ---
 
@@ -240,6 +318,25 @@ When the source errors
 Then discard all open buffers
      cancel pending buffer timers
      error immediately
+```
+
+### Unsubscription rule
+
+```text
+Given one or more buffers are open
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+     cancel every buffer creation and close timer
+     discard all open buffers
+```
+
+### Cancellation rule
+
+```text
+Given a buffer is open with a close timer pending
+When the buffer reaches maxBufferSize
+Then cancel that buffer's close timer
+     emit the buffer early
 ```
 
 
@@ -291,6 +388,26 @@ Then discard all open buffers
      error immediately
 ```
 
+### Unsubscription rule
+
+```text
+Given zero or more buffers are open
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+     unsubscribe the openings observable
+     unsubscribe every active closing notifier
+     discard all open buffers
+```
+
+### Cancellation rule
+
+```text
+Given a buffer is open with its closing notifier active
+When the closing notifier emits
+Then unsubscribe that closing notifier
+     emit and close the buffer
+```
+
 
 ---
 
@@ -333,6 +450,25 @@ Given any state
 When the source or the closing observable errors
 Then discard the current buffer
      error immediately
+```
+
+### Unsubscription rule
+
+```text
+Given a buffer is open
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+     unsubscribe the current closing observable
+     discard the current buffer
+```
+
+### Cancellation rule
+
+```text
+Given a closing observable is active
+When the closing observable emits
+Then unsubscribe the previous closing observable
+     subscribe to a fresh closing observable for the next buffer
 ```
 
 
@@ -384,6 +520,22 @@ Then error immediately
      the selector is not invoked again
 ```
 
+### Unsubscription rule
+
+```text
+Given the source or a replacement observable is active
+When the downstream subscriber unsubscribes
+Then unsubscribe from whichever observable is currently active
+```
+
+### Cancellation rule
+
+```text
+Given the source is active
+When the source errors
+Then unsubscribe from the errored source before subscribing to the replacement
+```
+
 
 ---
 
@@ -429,6 +581,25 @@ Then unsubscribe all inners
      error immediately
 ```
 
+### Unsubscription rule
+
+```text
+Given inners are being collected or combined
+When the downstream subscriber unsubscribes
+Then unsubscribe from the outer source if still collecting
+     unsubscribe every inner
+     discard retained latest values
+```
+
+### Cancellation rule
+
+```text
+Given the combined inners are active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     every inner runs until it terminates on its own
+```
+
 *Note:* Deprecated alias behavior built on `combineLatestAll`.
 
 ---
@@ -472,6 +643,24 @@ Given any state
 When the source or any supplied input errors
 Then unsubscribe all inputs
      error immediately
+```
+
+### Unsubscription rule
+
+```text
+Given inputs are active
+When the downstream subscriber unsubscribes
+Then unsubscribe every input
+     discard retained latest values
+```
+
+### Cancellation rule
+
+```text
+Given inputs are active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     every input runs until it terminates on its own
 ```
 
 *Note:* Deprecated pipeable form.
@@ -520,6 +709,25 @@ Then unsubscribe all inners
      error immediately
 ```
 
+### Unsubscription rule
+
+```text
+Given inners are being collected or combined
+When the downstream subscriber unsubscribes
+Then unsubscribe from the outer source if still collecting
+     unsubscribe every inner
+     discard retained latest values
+```
+
+### Cancellation rule
+
+```text
+Given the combined inners are active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     every inner runs until it terminates on its own
+```
+
 *Note:* Starts combining after the higher-order source supplies/collects inners per implementation.
 
 ---
@@ -565,6 +773,24 @@ Then unsubscribe all inputs
      error immediately
 ```
 
+### Unsubscription rule
+
+```text
+Given inputs are active
+When the downstream subscriber unsubscribes
+Then unsubscribe every input
+     discard retained latest values
+```
+
+### Cancellation rule
+
+```text
+Given inputs are active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     every input runs until it terminates on its own
+```
+
 
 ---
 
@@ -605,6 +831,24 @@ Given any input is active
 When the active input errors
 Then error immediately
      never subscribe to the remaining inputs
+```
+
+### Unsubscription rule
+
+```text
+Given an input is active and later inputs are pending
+When the downstream subscriber unsubscribes
+Then unsubscribe the active input
+     never subscribe to the pending inputs
+```
+
+### Cancellation rule
+
+```text
+Given an input is active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     each input runs to completion; pending inputs are never cancelled by the operator
 ```
 
 *Note:* Deprecated pipeable form.
@@ -653,6 +897,25 @@ Then discard queued inners
      error immediately
 ```
 
+### Unsubscription rule
+
+```text
+Given a inner is active or inners are queued
+When the downstream subscriber unsubscribes
+Then unsubscribe from the outer source
+     unsubscribe the active inner
+     discard queued inners
+```
+
+### Cancellation rule
+
+```text
+Given an inner is active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     the active inner always runs to completion; queued inners are never cancelled by the operator
+```
+
 
 ---
 
@@ -696,6 +959,25 @@ When the outer source or the active projected inner errors
 Then discard queued outer values
      unsubscribe the active projected inner
      error immediately
+```
+
+### Unsubscription rule
+
+```text
+Given a projected inner is active or outer values are queued
+When the downstream subscriber unsubscribes
+Then unsubscribe from the outer source
+     unsubscribe the active projected inner
+     discard queued outer values
+```
+
+### Cancellation rule
+
+```text
+Given a projected inner is active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     the active inner always runs to completion; queued outer values are never cancelled by the operator
 ```
 
 *Note:* Concurrency policy: queue.
@@ -744,6 +1026,25 @@ Then discard queued outer values
      error immediately
 ```
 
+### Unsubscription rule
+
+```text
+Given a configured inner is active or outer values are queued
+When the downstream subscriber unsubscribes
+Then unsubscribe from the outer source
+     unsubscribe the active configured inner
+     discard queued outer values
+```
+
+### Cancellation rule
+
+```text
+Given a configured inner is active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     the active inner always runs to completion; queued outer values are never cancelled by the operator
+```
+
 *Note:* Deprecated specialization.
 
 ---
@@ -787,6 +1088,24 @@ Then error immediately
      never subscribe to the remaining inputs
 ```
 
+### Unsubscription rule
+
+```text
+Given an input is active and later inputs are pending
+When the downstream subscriber unsubscribes
+Then unsubscribe the active input
+     never subscribe to the pending inputs
+```
+
+### Cancellation rule
+
+```text
+Given an input is active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     each input runs to completion; pending inputs are never cancelled by the operator
+```
+
 
 ---
 
@@ -826,6 +1145,24 @@ Then error the subject
      the output errors as the selector pipeline propagates the subject's error
 ```
 
+### Unsubscription rule
+
+```text
+Given the selector output is subscribed
+When the downstream subscriber unsubscribes
+Then unsubscribe from the selector output
+     unsubscribe the source from the shared subject
+```
+
+### Cancellation rule
+
+```text
+Given the source is connected to the shared subject
+When any source value or lifecycle event arrives
+Then cancel no active work
+     the source is released only by its own termination or by downstream unsubscription
+```
+
 
 ---
 
@@ -863,6 +1200,24 @@ Given a running count exists
 When the source errors
 Then discard the count
      error immediately
+```
+
+### Unsubscription rule
+
+```text
+Given a running count exists
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+     discard the count
+```
+
+### Cancellation rule
+
+```text
+Given the source subscription is active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     the source is released only by its own termination or by downstream unsubscription
 ```
 
 
@@ -910,6 +1265,30 @@ Then discard the pending value
      error immediately
 ```
 
+### Unsubscription rule
+
+```text
+Given a pending value may exist with an active duration
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+     unsubscribe the active duration
+     discard the pending value without emitting it
+```
+
+### Cancellation rules
+
+```text
+Given a duration is active for a pending value
+When a new source value arrives
+Then unsubscribe the current duration observable
+     start a new duration for the new value
+
+Given a duration is active
+When the duration observable emits
+Then unsubscribe the duration after its first emission
+     emit the pending value
+```
+
 
 ---
 
@@ -955,6 +1334,25 @@ Then discard the pending value
      error immediately
 ```
 
+### Unsubscription rule
+
+```text
+Given a pending value may exist with the silence timer running
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+     cancel the silence timer
+     discard the pending value without emitting it
+```
+
+### Cancellation rule
+
+```text
+Given the silence timer is running
+When a new source value arrives
+Then cancel the running silence timer
+     schedule a new timer for the new value
+```
+
 
 ---
 
@@ -996,6 +1394,23 @@ Given any state
 When the source errors
 Then error immediately
      the default value is not emitted
+```
+
+### Unsubscription rule
+
+```text
+Given the source subscription is active
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+```
+
+### Cancellation rule
+
+```text
+Given the source subscription is active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     the source is released only by its own termination or by downstream unsubscription
 ```
 
 *Note:* If values were seen, they were forwarded normally.
@@ -1041,6 +1456,25 @@ Given any state
 When the source errors
 Then cancel pending timers and discard their values
      error immediately
+```
+
+### Unsubscription rule
+
+```text
+Given delayed values are pending
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+     cancel every pending delay timer
+     discard their values
+```
+
+### Cancellation rule
+
+```text
+Given delayed values are pending
+When any source value or lifecycle event arrives
+Then cancel no active work
+     pending timers are never cancelled by the operator; only downstream unsubscription or a source error cancels them
 ```
 
 *Note:* Implemented via `delayWhen`/timer semantics in RxJS 7.x.
@@ -1093,6 +1527,31 @@ Then discard pending values
      error immediately
 ```
 
+### Unsubscription rule
+
+```text
+Given durations are active for pending values
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+     unsubscribe every active duration
+     unsubscribe a pending subscription delay
+     discard pending values
+```
+
+### Cancellation rules
+
+```text
+Given a duration is active for a pending value
+When the duration emits its first value
+Then unsubscribe that duration
+     emit the pending value
+
+Given the subscription delay is pending
+When the subscription delay emits
+Then unsubscribe the subscription delay
+     subscribe to the source
+```
+
 *Note:* Subscription delay may also defer source subscription.
 
 ---
@@ -1141,6 +1600,22 @@ When the source errors
 Then error immediately
 ```
 
+### Unsubscription rule
+
+```text
+Given notification objects are being interpreted
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+```
+
+### Cancellation rule
+
+```text
+Given notification objects are being interpreted
+When a complete or error notification arrives as a value
+Then unsubscribe from the source after forwarding the terminal notification
+```
+
 
 ---
 
@@ -1185,6 +1660,24 @@ Then clear the set of seen keys
      error immediately
 ```
 
+### Unsubscription rule
+
+```text
+Given seen keys are retained
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+     unsubscribe the flushes observable
+     clear the set of seen keys
+```
+
+### Cancellation rule
+
+```text
+Given the flushes observable is active
+When the source terminates
+Then unsubscribe the flushes observable as part of termination teardown
+```
+
 *Note:* Optional flush Observable clears remembered keys.
 
 ---
@@ -1223,6 +1716,24 @@ When the source errors
 Then error immediately
 ```
 
+### Unsubscription rule
+
+```text
+Given a previous value or key is retained
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+     discard the retained value
+```
+
+### Cancellation rule
+
+```text
+Given the source subscription is active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     the source is released only by its own termination or by downstream unsubscription
+```
+
 
 ---
 
@@ -1258,6 +1769,24 @@ Then complete
 Given a previous key is retained
 When the source errors
 Then error immediately
+```
+
+### Unsubscription rule
+
+```text
+Given a previous key is retained
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+     discard the retained key
+```
+
+### Cancellation rule
+
+```text
+Given the source subscription is active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     the source is released only by its own termination or by downstream unsubscription
 ```
 
 
@@ -1302,6 +1831,25 @@ When the source errors
 Then error immediately
 ```
 
+### Unsubscription rule
+
+```text
+Given the configured index has not been reached
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+     discard the position count
+```
+
+### Cancellation rule
+
+```text
+Given the configured index has not been reached
+When the value at the configured index arrives
+Then emit it
+     complete
+     unsubscribe from the source
+```
+
 
 ---
 
@@ -1341,6 +1889,24 @@ Then error immediately
      the appended values are never emitted
 ```
 
+### Unsubscription rule
+
+```text
+Given the source is active or appended values are being emitted
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+     stop emitting appended values
+```
+
+### Cancellation rule
+
+```text
+Given the source subscription is active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     the source is released only by its own termination or by downstream unsubscription
+```
+
 
 ---
 
@@ -1377,6 +1943,24 @@ Then emit true
 Given no value has failed the predicate
 When the source errors
 Then error immediately
+```
+
+### Unsubscription rule
+
+```text
+Given no value has failed the predicate
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+```
+
+### Cancellation rule
+
+```text
+Given no value has failed the predicate
+When a value fails the predicate
+Then emit false
+     complete
+     unsubscribe from the source
 ```
 
 
@@ -1422,6 +2006,24 @@ Then unsubscribe the active inner
      error immediately
 ```
 
+### Unsubscription rule
+
+```text
+Given a inner is active
+When the downstream subscriber unsubscribes
+Then unsubscribe from the outer source
+     unsubscribe the active inner
+```
+
+### Cancellation rule
+
+```text
+Given an inner is active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     newly arriving inners are ignored, not cancelled; the active inner always runs to completion
+```
+
 
 ---
 
@@ -1463,6 +2065,24 @@ Given any state
 When the outer source or the active inner errors
 Then unsubscribe the active inner
      error immediately
+```
+
+### Unsubscription rule
+
+```text
+Given a inner is active
+When the downstream subscriber unsubscribes
+Then unsubscribe from the outer source
+     unsubscribe the active inner
+```
+
+### Cancellation rule
+
+```text
+Given an inner is active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     newly arriving inners are ignored, not cancelled; the active inner always runs to completion
 ```
 
 *Note:* Alias-style specialization of exhaust semantics.
@@ -1507,6 +2127,24 @@ Given any state
 When the outer source or the active projected inner errors
 Then unsubscribe the active projected inner
      error immediately
+```
+
+### Unsubscription rule
+
+```text
+Given a projected inner is active
+When the downstream subscriber unsubscribes
+Then unsubscribe from the outer source
+     unsubscribe the active projected inner
+```
+
+### Cancellation rule
+
+```text
+Given a projected inner is active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     outer values arriving while busy are ignored, not cancelled; the active inner always runs to completion
 ```
 
 *Note:* Concurrency policy: ignore while busy.
@@ -1555,6 +2193,25 @@ Then discard buffered values
      error immediately
 ```
 
+### Unsubscription rule
+
+```text
+Given recursive inners are active
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+     unsubscribe every active recursive inner
+     discard buffered values
+```
+
+### Cancellation rule
+
+```text
+Given recursive inners are active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     recursive inners always run to completion
+```
+
 
 ---
 
@@ -1590,6 +2247,23 @@ Then complete
 Given the source subscription is active
 When the source errors
 Then error immediately
+```
+
+### Unsubscription rule
+
+```text
+Given the source subscription is active
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+```
+
+### Cancellation rule
+
+```text
+Given the source subscription is active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     the source is released only by its own termination or by downstream unsubscription
 ```
 
 
@@ -1631,6 +2305,24 @@ Then error immediately
      invoke the finalizer during teardown
 ```
 
+### Unsubscription rule
+
+```text
+Given the finalizer is registered
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+     invoke the finalizer
+```
+
+### Cancellation rule
+
+```text
+Given the source subscription is active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     the source is released only by its own termination or by downstream unsubscription
+```
+
 
 ---
 
@@ -1669,6 +2361,24 @@ When the source errors
 Then error immediately
 ```
 
+### Unsubscription rule
+
+```text
+Given no value has matched
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+```
+
+### Cancellation rule
+
+```text
+Given no value has matched
+When the first matching value arrives
+Then emit it
+     complete
+     unsubscribe from the source
+```
+
 
 ---
 
@@ -1705,6 +2415,24 @@ Then emit -1
 Given no value has matched the predicate
 When the source errors
 Then error immediately
+```
+
+### Unsubscription rule
+
+```text
+Given no value has matched
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+```
+
+### Cancellation rule
+
+```text
+Given no value has matched
+When the first matching value arrives
+Then emit its index
+     complete
+     unsubscribe from the source
 ```
 
 
@@ -1747,6 +2475,24 @@ Then emit the default value
 Given no value has matched
 When the source errors
 Then error immediately
+```
+
+### Unsubscription rule
+
+```text
+Given no value has matched
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+```
+
+### Cancellation rule
+
+```text
+Given no value has matched
+When the first matching value arrives
+Then emit it
+     complete
+     unsubscribe from the source
 ```
 
 
@@ -1794,6 +2540,25 @@ Then discard queued outer values
      error immediately
 ```
 
+### Unsubscription rule
+
+```text
+Given projected inners are active or outer values are queued
+When the downstream subscriber unsubscribes
+Then unsubscribe from the outer source
+     unsubscribe every active projected inner
+     discard queued outer values
+```
+
+### Cancellation rule
+
+```text
+Given projected inners are active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     inners always run to completion; excess outer values are queued, never cancelled
+```
+
 *Note:* Deprecated alias of `mergeMap`.
 
 ---
@@ -1834,6 +2599,30 @@ Then error every active group
      error immediately
 ```
 
+### Unsubscription rules
+
+```text
+Given group subscriptions are still active
+When the outer subscriber unsubscribes
+Then keep the source subscription alive while any group subscriber remains
+     stop emitting new groups downstream
+
+Given the outer subscriber has already unsubscribed
+When the last group subscriber unsubscribes
+Then unsubscribe from the source
+     clear the group map
+```
+
+### Cancellation rule
+
+```text
+Given a group has a duration observable
+When the duration observable emits
+Then complete that group
+     remove it from the group map
+     unsubscribe the duration observable
+```
+
 *Note:* Duration/connector options can close or customize groups.
 
 ---
@@ -1870,6 +2659,23 @@ Then complete
 Given values are being ignored
 When the source errors
 Then error immediately
+```
+
+### Unsubscription rule
+
+```text
+Given values are being ignored
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+```
+
+### Cancellation rule
+
+```text
+Given the source subscription is active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     the source is released only by its own termination or by downstream unsubscription
 ```
 
 
@@ -1910,6 +2716,24 @@ When the source errors
 Then error immediately
 ```
 
+### Unsubscription rule
+
+```text
+Given no value has arrived
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+```
+
+### Cancellation rule
+
+```text
+Given no value has arrived
+When the first value arrives
+Then emit false
+     complete
+     unsubscribe from the source
+```
+
 
 ---
 
@@ -1948,6 +2772,24 @@ Then pass the collected inners to the join function
 Given any state
 When the outer source or the joined observable errors
 Then error immediately
+```
+
+### Unsubscription rule
+
+```text
+Given inners are being collected or the joined observable is active
+When the downstream subscriber unsubscribes
+Then unsubscribe from the outer source or the joined observable
+     discard collected inners
+```
+
+### Cancellation rule
+
+```text
+Given inners are being collected
+When any source value or lifecycle event arrives
+Then cancel no active work
+     collected inners are subscribed only after the outer completes and are then never cancelled by the helper
 ```
 
 *Note:* Internal helper used by higher-order join operators.
@@ -1999,6 +2841,24 @@ Then discard the retained value
      error immediately
 ```
 
+### Unsubscription rule
+
+```text
+Given a last value may be retained
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+     discard the retained value
+```
+
+### Cancellation rule
+
+```text
+Given the source subscription is active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     the source is released only by its own termination or by downstream unsubscription
+```
+
 
 ---
 
@@ -2036,6 +2896,23 @@ When the source errors
 Then error immediately
 ```
 
+### Unsubscription rule
+
+```text
+Given the source subscription is active
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+```
+
+### Cancellation rule
+
+```text
+Given the source subscription is active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     the source is released only by its own termination or by downstream unsubscription
+```
+
 
 ---
 
@@ -2071,6 +2948,23 @@ Then complete
 Given the source subscription is active
 When the source errors
 Then error immediately
+```
+
+### Unsubscription rule
+
+```text
+Given the source subscription is active
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+```
+
+### Cancellation rule
+
+```text
+Given the source subscription is active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     the source is released only by its own termination or by downstream unsubscription
 ```
 
 *Note:* Deprecated specialization of `map`.
@@ -2112,6 +3006,23 @@ When the source errors
 Then emit an error Notification wrapping the error
      complete
      the error itself is not forwarded
+```
+
+### Unsubscription rule
+
+```text
+Given the source subscription is active
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+```
+
+### Cancellation rule
+
+```text
+Given the source subscription is active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     the source is released only by its own termination or by downstream unsubscription
 ```
 
 
@@ -2157,6 +3068,24 @@ Then discard the retained maximum
      error immediately
 ```
 
+### Unsubscription rule
+
+```text
+Given a maximum may be retained
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+     discard the retained maximum
+```
+
+### Cancellation rule
+
+```text
+Given the source subscription is active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     the source is released only by its own termination or by downstream unsubscription
+```
+
 *Note:* Implemented via reduction.
 
 ---
@@ -2199,6 +3128,24 @@ Given any state
 When the source or any supplied input errors
 Then unsubscribe all inputs
      error immediately
+```
+
+### Unsubscription rule
+
+```text
+Given inputs are active
+When the downstream subscriber unsubscribes
+Then unsubscribe every active input
+     never subscribe to inputs still waiting for concurrency capacity
+```
+
+### Cancellation rule
+
+```text
+Given inputs are active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     every input runs until it terminates on its own
 ```
 
 *Note:* Deprecated pipeable form.
@@ -2247,6 +3194,25 @@ Then discard queued inners
      error immediately
 ```
 
+### Unsubscription rule
+
+```text
+Given inners are active or inners are queued
+When the downstream subscriber unsubscribes
+Then unsubscribe from the outer source
+     unsubscribe every active inner
+     discard queued inners
+```
+
+### Cancellation rule
+
+```text
+Given inners are active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     inners always run to completion; excess inners are queued, never cancelled
+```
+
 
 ---
 
@@ -2288,6 +3254,25 @@ Given any state
 When the outer source or any inner errors
 Then error through the operator subscriber
      release the buffer during teardown
+```
+
+### Unsubscription rule
+
+```text
+Given inners are active or values are buffered
+When the downstream subscriber unsubscribes
+Then unsubscribe from the outer source
+     unsubscribe every active inner
+     release the buffer
+```
+
+### Cancellation rule
+
+```text
+Given inners are active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     the helper never cancels inners; concurrency is enforced by queueing
 ```
 
 *Note:* Internal engine behind several flattening operators.
@@ -2336,6 +3321,25 @@ Then discard queued outer values
      error immediately
 ```
 
+### Unsubscription rule
+
+```text
+Given projected inners are active or outer values are queued
+When the downstream subscriber unsubscribes
+Then unsubscribe from the outer source
+     unsubscribe every active projected inner
+     discard queued outer values
+```
+
+### Cancellation rule
+
+```text
+Given projected inners are active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     inners always run to completion; excess outer values are queued, never cancelled
+```
+
 *Note:* Concurrency policy: allow overlap.
 
 ---
@@ -2380,6 +3384,25 @@ When the outer source or any active configured inner errors
 Then discard queued outer values
      unsubscribe all active configured inners
      error immediately
+```
+
+### Unsubscription rule
+
+```text
+Given configured inners are active or outer values are queued
+When the downstream subscriber unsubscribes
+Then unsubscribe from the outer source
+     unsubscribe every active configured inner
+     discard queued outer values
+```
+
+### Cancellation rule
+
+```text
+Given configured inners are active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     inners always run to completion; excess outer values are queued, never cancelled
 ```
 
 *Note:* Deprecated specialization.
@@ -2428,6 +3451,25 @@ Then discard the accumulator and queued values
      error immediately
 ```
 
+### Unsubscription rule
+
+```text
+Given accumulator inners are active
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+     unsubscribe every active accumulator inner
+     discard the accumulator and queued values
+```
+
+### Cancellation rule
+
+```text
+Given accumulator inners are active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     accumulator inners always run to completion
+```
+
 
 ---
 
@@ -2469,6 +3511,24 @@ Given any state
 When the source or any supplied input errors
 Then unsubscribe all inputs
      error immediately
+```
+
+### Unsubscription rule
+
+```text
+Given inputs are active
+When the downstream subscriber unsubscribes
+Then unsubscribe every active input
+     never subscribe to inputs still waiting for concurrency capacity
+```
+
+### Cancellation rule
+
+```text
+Given inputs are active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     every input runs until it terminates on its own
 ```
 
 
@@ -2514,6 +3574,24 @@ Then discard the retained minimum
      error immediately
 ```
 
+### Unsubscription rule
+
+```text
+Given a minimum may be retained
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+     discard the retained minimum
+```
+
+### Cancellation rule
+
+```text
+Given the source subscription is active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     the source is released only by its own termination or by downstream unsubscription
+```
+
 *Note:* Implemented via reduction.
 
 ---
@@ -2556,6 +3634,24 @@ Then error the subject
      with a selector, the output errors as the selector pipeline propagates the error
 ```
 
+### Unsubscription rule
+
+```text
+Given a subscriber is attached to the shared subject
+When the downstream subscriber unsubscribes
+Then detach that subscriber from the subject
+     keep the source connection alive until the connection itself is unsubscribed, or until the selector output is unsubscribed when a selector is used
+```
+
+### Cancellation rule
+
+```text
+Given the source is connected to the subject
+When any source value or lifecycle event arrives
+Then cancel no active work
+     the source is released only by its own termination or by downstream unsubscription
+```
+
 *Note:* Deprecated multicasting API.
 
 ---
@@ -2594,6 +3690,24 @@ Given scheduled notifications may be pending
 When the source errors
 Then schedule the error on the scheduler
      error after previously scheduled notifications have been delivered
+```
+
+### Unsubscription rule
+
+```text
+Given scheduled deliveries may be pending
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+     cancel every pending scheduled delivery
+```
+
+### Cancellation rule
+
+```text
+Given scheduled deliveries may be pending
+When any source value or lifecycle event arrives
+Then cancel no active work
+     the source is released only by its own termination or by downstream unsubscription
 ```
 
 *Note:* Changes notification delivery context, not source production.
@@ -2644,6 +3758,24 @@ Then swallow the error
      complete
 ```
 
+### Unsubscription rule
+
+```text
+Given a source in the sequence is active
+When the downstream subscriber unsubscribes
+Then unsubscribe the active source
+     never subscribe to the remaining sources
+```
+
+### Cancellation rule
+
+```text
+Given a source in the sequence is active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     each source runs until it terminates on its own
+```
+
 
 ---
 
@@ -2680,6 +3812,24 @@ Then discard the retained value
 Given a previous value is retained
 When the source errors
 Then error immediately
+```
+
+### Unsubscription rule
+
+```text
+Given a previous value is retained
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+     discard the retained value
+```
+
+### Cancellation rule
+
+```text
+Given the source subscription is active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     the source is released only by its own termination or by downstream unsubscription
 ```
 
 
@@ -2719,6 +3869,24 @@ When the source errors
 Then error both outputs
 ```
 
+### Unsubscription rule
+
+```text
+Given one partition output is subscribed
+When that output's subscriber unsubscribes
+Then unsubscribe that output's own source subscription
+     the other output is unaffected
+```
+
+### Cancellation rule
+
+```text
+Given a partition output is subscribed
+When any source value or lifecycle event arrives
+Then cancel no active work
+     the source is released only by its own termination or by downstream unsubscription
+```
+
 *Note:* Deprecated pipeable partition form.
 
 ---
@@ -2755,6 +3923,23 @@ Then complete
 Given the source subscription is active
 When the source errors
 Then error immediately
+```
+
+### Unsubscription rule
+
+```text
+Given the source subscription is active
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+```
+
+### Cancellation rule
+
+```text
+Given the source subscription is active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     the source is released only by its own termination or by downstream unsubscription
 ```
 
 *Note:* Deprecated; equivalent to `map` property access.
@@ -2797,6 +3982,24 @@ Then error every current subscriber
      late subscribers error immediately
 ```
 
+### Unsubscription rule
+
+```text
+Given a subscriber is attached to the Subject
+When the downstream subscriber unsubscribes
+Then detach that subscriber from the Subject
+     keep the source connection alive until the connection itself is unsubscribed, or until refCount drops to zero when refCount is applied
+```
+
+### Cancellation rule
+
+```text
+Given the source is connected to the Subject
+When any source value or lifecycle event arrives
+Then cancel no active work
+     the source is released only by its own termination or by downstream unsubscription
+```
+
 *Note:* Deprecated wrapper around connectable/multicast semantics.
 
 ---
@@ -2835,6 +4038,24 @@ Given the source is connected to the BehaviorSubject
 When the source errors
 Then error every current subscriber
      late subscribers error immediately
+```
+
+### Unsubscription rule
+
+```text
+Given a subscriber is attached to the BehaviorSubject
+When the downstream subscriber unsubscribes
+Then detach that subscriber from the BehaviorSubject
+     keep the source connection alive until the connection itself is unsubscribed, or until refCount drops to zero when refCount is applied
+```
+
+### Cancellation rule
+
+```text
+Given the source is connected to the BehaviorSubject
+When any source value or lifecycle event arrives
+Then cancel no active work
+     the source is released only by its own termination or by downstream unsubscription
 ```
 
 *Note:* Deprecated.
@@ -2879,6 +4100,24 @@ Then error every current subscriber
      the retained last value is never emitted
 ```
 
+### Unsubscription rule
+
+```text
+Given a subscriber is attached to the AsyncSubject
+When the downstream subscriber unsubscribes
+Then detach that subscriber from the AsyncSubject
+     keep the source connection alive until the connection itself is unsubscribed, or until refCount drops to zero when refCount is applied
+```
+
+### Cancellation rule
+
+```text
+Given the source is connected to the AsyncSubject
+When any source value or lifecycle event arrives
+Then cancel no active work
+     the source is released only by its own termination or by downstream unsubscription
+```
+
 *Note:* Deprecated.
 
 ---
@@ -2917,6 +4156,24 @@ Given the source is connected to the ReplaySubject
 When the source errors
 Then error every current subscriber
      late subscribers replay the buffered values and then error
+```
+
+### Unsubscription rule
+
+```text
+Given a subscriber is attached to the ReplaySubject
+When the downstream subscriber unsubscribes
+Then detach that subscriber from the ReplaySubject
+     keep the source connection alive until the connection itself is unsubscribed, or until refCount drops to zero when refCount is applied
+```
+
+### Cancellation rule
+
+```text
+Given the source is connected to the ReplaySubject
+When any source value or lifecycle event arrives
+Then cancel no active work
+     the source is released only by its own termination or by downstream unsubscription
 ```
 
 *Note:* Deprecated.
@@ -2967,6 +4224,23 @@ When the winner errors
 Then error immediately
 ```
 
+### Unsubscription rule
+
+```text
+Given competitors are pending or a winner is selected
+When the downstream subscriber unsubscribes
+Then unsubscribe every still-active competitor
+```
+
+### Cancellation rule
+
+```text
+Given no competitor has emitted yet
+When the first competitor emits
+Then unsubscribe every other competitor
+     keep only the winner
+```
+
 *Note:* Deprecated pipeable form.
 
 ---
@@ -3015,6 +4289,23 @@ When the winner errors
 Then error immediately
 ```
 
+### Unsubscription rule
+
+```text
+Given competitors are pending or a winner is selected
+When the downstream subscriber unsubscribes
+Then unsubscribe every still-active competitor
+```
+
+### Cancellation rule
+
+```text
+Given no competitor has emitted yet
+When the first competitor emits
+Then unsubscribe every other competitor
+     keep only the winner
+```
+
 
 ---
 
@@ -3058,6 +4349,24 @@ Then discard the accumulator
      error immediately
 ```
 
+### Unsubscription rule
+
+```text
+Given an accumulator may be retained
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+     discard the accumulator
+```
+
+### Cancellation rule
+
+```text
+Given the source subscription is active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     the source is released only by its own termination or by downstream unsubscription
+```
+
 *Note:* Unlike `scan`, no intermediate accumulator emissions.
 
 ---
@@ -3094,6 +4403,28 @@ Then complete every subscriber through the shared subject
 Given the connection is active with subscribers
 When the connectable source errors
 Then error every subscriber through the shared subject
+```
+
+### Unsubscription rules
+
+```text
+Given more than one subscriber is attached
+When a subscriber unsubscribes
+Then decrement the reference count
+     keep the shared connection
+
+Given exactly one subscriber is attached
+When that subscriber unsubscribes
+Then decrement the reference count to zero
+     unsubscribe the shared connection
+```
+
+### Cancellation rule
+
+```text
+Given the shared connection is active
+When the reference count reaches zero
+Then cancel the shared source execution by unsubscribing the connection
 ```
 
 
@@ -3137,6 +4468,28 @@ Given any repetition is active
 When the source errors
 Then error immediately
      no further repetitions are started
+```
+
+### Unsubscription rule
+
+```text
+Given a repetition is active or a repeat delay is pending
+When the downstream subscriber unsubscribes
+Then unsubscribe the active source execution
+     unsubscribe a pending delay notifier
+```
+
+### Cancellation rules
+
+```text
+Given a repetition is active
+When the source completes with repetitions remaining
+Then unsubscribe the completed execution before resubscribing
+
+Given a repeat delay notifier is pending
+When the delay notifier emits
+Then unsubscribe the delay notifier after its first emission
+     resubscribe to the source
 ```
 
 *Note:* Does not repeat on error.
@@ -3190,6 +4543,24 @@ When the notifier errors
 Then error immediately
 ```
 
+### Unsubscription rule
+
+```text
+Given a repetition is active or the notifier is waiting
+When the downstream subscriber unsubscribes
+Then unsubscribe the active source execution
+     unsubscribe the notifier
+```
+
+### Cancellation rule
+
+```text
+Given a repetition is active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     a completed execution is torn down by its own completion; the notifier is never cancelled by the operator
+```
+
 *Note:* Deprecated-style notifier API.
 
 ---
@@ -3232,6 +4603,28 @@ Then unsubscribe the failed source execution
 Given the retry count is exhausted
 When the source errors
 Then error immediately
+```
+
+### Unsubscription rule
+
+```text
+Given an attempt is active or a retry delay is pending
+When the downstream subscriber unsubscribes
+Then unsubscribe the active source execution
+     unsubscribe a pending delay notifier
+```
+
+### Cancellation rules
+
+```text
+Given an attempt is active
+When the source errors with retries remaining
+Then unsubscribe the failed execution before resubscribing
+
+Given a retry delay notifier is pending
+When the delay notifier emits
+Then unsubscribe the delay notifier after its first emission
+     resubscribe to the source
 ```
 
 *Note:* Does not retry on normal completion.
@@ -3281,6 +4674,24 @@ When the notifier errors
 Then error immediately
 ```
 
+### Unsubscription rule
+
+```text
+Given an attempt is active or the notifier is waiting
+When the downstream subscriber unsubscribes
+Then unsubscribe the active source execution
+     unsubscribe the notifier
+```
+
+### Cancellation rule
+
+```text
+Given an attempt is active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     a failed execution is torn down by its own error; the notifier is never cancelled by the operator
+```
+
 *Note:* Deprecated-style notifier API.
 
 ---
@@ -3326,6 +4737,24 @@ Then discard the pending value
      error immediately
 ```
 
+### Unsubscription rule
+
+```text
+Given a pending sampled value may exist
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+     unsubscribe the notifier
+     discard the pending value
+```
+
+### Cancellation rule
+
+```text
+Given the notifier is active
+When the source terminates
+Then unsubscribe the notifier as part of termination teardown
+```
+
 
 ---
 
@@ -3367,6 +4796,24 @@ Then discard the pending value
      error immediately
 ```
 
+### Unsubscription rule
+
+```text
+Given a pending sampled value may exist
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+     cancel the sampling interval
+     discard the pending value
+```
+
+### Cancellation rule
+
+```text
+Given the sampling interval is active
+When the source terminates
+Then unsubscribe the sampling interval as part of termination teardown
+```
+
 
 ---
 
@@ -3403,6 +4850,24 @@ Given an accumulator is retained
 When the source errors
 Then discard the accumulator
      error immediately
+```
+
+### Unsubscription rule
+
+```text
+Given an accumulator is retained
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+     discard the accumulator
+```
+
+### Cancellation rule
+
+```text
+Given the source subscription is active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     the source is released only by its own termination or by downstream unsubscription
 ```
 
 *Note:* State is emitted on every reduction step.
@@ -3447,6 +4912,24 @@ Given any state
 When the source errors
 Then discard the accumulator
      error immediately
+```
+
+### Unsubscription rule
+
+```text
+Given an accumulator is retained
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+     discard the accumulator
+```
+
+### Cancellation rule
+
+```text
+Given the source subscription is active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     the source is released only by its own termination or by downstream unsubscription
 ```
 
 *Note:* Internal helper behind `scan`/`reduce`.
@@ -3495,6 +4978,25 @@ Then discard both queues
      error immediately
 ```
 
+### Unsubscription rule
+
+```text
+Given both sequences are active
+When the downstream subscriber unsubscribes
+Then unsubscribe both sequences
+     discard both queues
+```
+
+### Cancellation rule
+
+```text
+Given both sequences are active
+When a compared pair does not match
+Then emit false
+     complete
+     unsubscribe both sequences
+```
+
 
 ---
 
@@ -3534,6 +5036,29 @@ Then error every current subscriber
      reset the connection and subject when resetOnError is set (default true), so later subscribers resubscribe to the source
 ```
 
+### Unsubscription rules
+
+```text
+Given more than one subscriber is attached
+When a subscriber unsubscribes
+Then decrement the reference count
+     keep the connection
+
+Given exactly one subscriber is attached
+When that subscriber unsubscribes
+Then decrement the reference count to zero
+     when resetOnRefCountZero is set (default true), unsubscribe the source connection and reset the subject, after the reset notifier emits if one is configured
+```
+
+### Cancellation rule
+
+```text
+Given the reference count dropped to zero and a reset notifier is pending
+When a new subscriber arrives before the notifier emits
+Then cancel the pending reset
+     keep the existing connection and subject
+```
+
 
 ---
 
@@ -3571,6 +5096,29 @@ Given the source is connected
 When the source errors
 Then error every current subscriber
      reset the connection because resetOnError is true; the next subscriber resubscribes to the source
+```
+
+### Unsubscription rules
+
+```text
+Given the refCount option is false (default)
+When the last subscriber unsubscribes
+Then keep the source connection alive
+     keep the replay buffer
+
+Given the refCount option is true
+When the last subscriber unsubscribes
+Then unsubscribe the source connection
+     reset the ReplaySubject
+```
+
+### Cancellation rule
+
+```text
+Given the source is connected
+When any source value or lifecycle event arrives
+Then cancel no active work
+     with the default refCount false nothing is ever cancelled; the source runs to termination
 ```
 
 
@@ -3620,6 +5168,24 @@ Then discard the retained match
      error immediately
 ```
 
+### Unsubscription rule
+
+```text
+Given a matching value may be retained
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+     discard the retained match
+```
+
+### Cancellation rule
+
+```text
+Given one matching value is retained
+When a second matching value arrives
+Then error with SequenceError
+     unsubscribe from the source
+```
+
 
 ---
 
@@ -3655,6 +5221,23 @@ Then complete
 Given values are being counted
 When the source errors
 Then error immediately
+```
+
+### Unsubscription rule
+
+```text
+Given values are being counted
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+```
+
+### Cancellation rule
+
+```text
+Given the source subscription is active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     the source is released only by its own termination or by downstream unsubscription
 ```
 
 
@@ -3694,6 +5277,24 @@ Given the last count values are buffered
 When the source errors
 Then discard the buffered values
      error immediately
+```
+
+### Unsubscription rule
+
+```text
+Given the last count values are buffered
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+     discard the buffered values
+```
+
+### Cancellation rule
+
+```text
+Given the source subscription is active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     the source is released only by its own termination or by downstream unsubscription
 ```
 
 *Note:* Trailing `count` values are discarded on completion.
@@ -3739,6 +5340,24 @@ When the source or the notifier errors
 Then error immediately
 ```
 
+### Unsubscription rule
+
+```text
+Given the notifier may still be active
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+     unsubscribe the notifier
+```
+
+### Cancellation rule
+
+```text
+Given the gate is closed and the notifier is active
+When the notifier emits
+Then unsubscribe the notifier after its first emission
+     open the gate
+```
+
 *Note:* Notifier completion alone does not open the gate.
 
 ---
@@ -3775,6 +5394,23 @@ Then complete
 Given skipping or forwarding state is active
 When the source errors
 Then error immediately
+```
+
+### Unsubscription rule
+
+```text
+Given skipping or forwarding state is active
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+```
+
+### Cancellation rule
+
+```text
+Given the source subscription is active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     the source is released only by its own termination or by downstream unsubscription
 ```
 
 
@@ -3814,6 +5450,24 @@ When the source errors
 Then error immediately
 ```
 
+### Unsubscription rule
+
+```text
+Given prefix values are being emitted or the source is active
+When the downstream subscriber unsubscribes
+Then stop emitting prefix values
+     unsubscribe from the source
+```
+
+### Cancellation rule
+
+```text
+Given the source subscription is active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     the source is released only by its own termination or by downstream unsubscription
+```
+
 
 ---
 
@@ -3849,6 +5503,28 @@ Then complete
 Given the source subscription has been scheduled or established
 When the source errors
 Then error immediately
+```
+
+### Unsubscription rules
+
+```text
+Given the source subscription is still scheduled
+When the downstream subscriber unsubscribes
+Then cancel the scheduled subscription action
+     the source is never subscribed
+
+Given the source has been subscribed
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+```
+
+### Cancellation rule
+
+```text
+Given the source has been subscribed
+When any source value or lifecycle event arrives
+Then cancel no active work
+     the source is released only by its own termination or by downstream unsubscription
 ```
 
 *Note:* Moves subscription side effect in time/context.
@@ -3895,6 +5571,24 @@ Then unsubscribe the active inner
      error immediately
 ```
 
+### Unsubscription rule
+
+```text
+Given a inner is active
+When the downstream subscriber unsubscribes
+Then unsubscribe from the outer source
+     unsubscribe the active inner
+```
+
+### Cancellation rule
+
+```text
+Given an inner is active
+When a new inner observable arrives
+Then unsubscribe the active inner
+     subscribe to the new inner
+```
+
 
 ---
 
@@ -3936,6 +5630,24 @@ Given any state
 When the outer source or the active projected inner errors
 Then unsubscribe the active projected inner
      error immediately
+```
+
+### Unsubscription rule
+
+```text
+Given a projected inner is active
+When the downstream subscriber unsubscribes
+Then unsubscribe from the outer source
+     unsubscribe the active projected inner
+```
+
+### Cancellation rule
+
+```text
+Given a projected inner is active
+When a new outer value arrives
+Then unsubscribe the active projected inner
+     project and subscribe to the new inner
 ```
 
 *Note:* Concurrency policy: only latest.
@@ -3980,6 +5692,24 @@ Given any state
 When the outer source or the active configured inner errors
 Then unsubscribe the active configured inner
      error immediately
+```
+
+### Unsubscription rule
+
+```text
+Given a configured inner is active
+When the downstream subscriber unsubscribes
+Then unsubscribe from the outer source
+     unsubscribe the active configured inner
+```
+
+### Cancellation rule
+
+```text
+Given a configured inner is active
+When a new outer value arrives
+Then unsubscribe the active inner
+     subscribe to the configured inner again
 ```
 
 *Note:* Deprecated specialization.
@@ -4027,6 +5757,25 @@ Then discard the accumulator
      error immediately
 ```
 
+### Unsubscription rule
+
+```text
+Given a accumulator inner is active
+When the downstream subscriber unsubscribes
+Then unsubscribe from the outer source
+     unsubscribe the active accumulator inner
+     discard the accumulator
+```
+
+### Cancellation rule
+
+```text
+Given an accumulator inner is active
+When a new outer value arrives
+Then unsubscribe the active accumulator inner
+     project and subscribe to a new inner from the current accumulator
+```
+
 
 ---
 
@@ -4062,6 +5811,24 @@ Then complete
 Given fewer than count values have been taken
 When the source errors
 Then error immediately
+```
+
+### Unsubscription rule
+
+```text
+Given fewer than count values have been taken
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+```
+
+### Cancellation rule
+
+```text
+Given count - 1 values have been taken
+When the count-th value arrives
+Then emit it
+     complete
+     unsubscribe from the source
 ```
 
 
@@ -4101,6 +5868,24 @@ Given up to count trailing values are buffered
 When the source errors
 Then discard the buffered values
      error immediately
+```
+
+### Unsubscription rule
+
+```text
+Given trailing values are buffered
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+     discard the buffered values
+```
+
+### Cancellation rule
+
+```text
+Given the source subscription is active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     the source is released only by its own termination or by downstream unsubscription
 ```
 
 
@@ -4146,6 +5931,24 @@ When the source or the notifier errors
 Then error immediately
 ```
 
+### Unsubscription rule
+
+```text
+Given the notifier has not emitted
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+     unsubscribe the notifier
+```
+
+### Cancellation rule
+
+```text
+Given the notifier has not emitted
+When the notifier emits
+Then complete
+     unsubscribe from the source and the notifier
+```
+
 
 ---
 
@@ -4181,6 +5984,24 @@ Then complete
 Given the predicate has not yet failed
 When the source errors
 Then error immediately
+```
+
+### Unsubscription rule
+
+```text
+Given the predicate has not yet failed
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+```
+
+### Cancellation rule
+
+```text
+Given the predicate has not yet failed
+When a value fails the predicate
+Then emit it only if inclusive is set
+     complete
+     unsubscribe from the source
 ```
 
 
@@ -4222,6 +6043,25 @@ When the source errors
 Then invoke the error callback
      error immediately
      invoke the finalize callback during teardown
+```
+
+### Unsubscription rule
+
+```text
+Given the source subscription is active
+When the downstream subscriber unsubscribes
+Then invoke the unsubscribe callback
+     unsubscribe from the source
+     invoke the finalize callback
+```
+
+### Cancellation rule
+
+```text
+Given the source subscription is active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     the source is released only by its own termination or by downstream unsubscription
 ```
 
 
@@ -4268,6 +6108,30 @@ When the source or the active duration observable errors
 Then discard any pending value
      cancel the duration
      error immediately
+```
+
+### Unsubscription rule
+
+```text
+Given a duration may be active with a pending trailing value
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+     unsubscribe the active duration
+     discard the pending trailing value
+```
+
+### Cancellation rules
+
+```text
+Given a duration is active
+When the duration observable emits
+Then unsubscribe the duration after its first emission
+     emit the trailing value if trailing is enabled and one is pending
+
+Given a duration is active
+When a source value arrives
+Then cancel nothing
+     the running duration is not restarted
 ```
 
 *Note:* Default is leading `true`, trailing `false`.
@@ -4317,6 +6181,25 @@ Then discard any pending value
      error immediately
 ```
 
+### Unsubscription rule
+
+```text
+Given an interval timer may be running with a pending trailing value
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+     cancel the interval timer
+     discard the pending trailing value
+```
+
+### Cancellation rule
+
+```text
+Given the interval timer is running
+When a source value arrives
+Then cancel nothing
+     the running interval is not restarted; the value is suppressed or retained as the trailing value
+```
+
 
 ---
 
@@ -4359,6 +6242,23 @@ Then error immediately
      the error factory is not invoked
 ```
 
+### Unsubscription rule
+
+```text
+Given the source subscription is active
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+```
+
+### Cancellation rule
+
+```text
+Given the source subscription is active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     the source is released only by its own termination or by downstream unsubscription
+```
+
 
 ---
 
@@ -4394,6 +6294,23 @@ Then complete
 Given a previous timestamp is retained
 When the source errors
 Then error immediately
+```
+
+### Unsubscription rule
+
+```text
+Given a previous timestamp is retained
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+```
+
+### Cancellation rule
+
+```text
+Given the source subscription is active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     the source is released only by its own termination or by downstream unsubscription
 ```
 
 
@@ -4435,6 +6352,29 @@ Then cancel the pending timeout timer
      error immediately
 ```
 
+### Unsubscription rule
+
+```text
+Given a timeout timer is pending
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+     cancel the pending timeout timer
+```
+
+### Cancellation rules
+
+```text
+Given a timeout timer is pending
+When a source value arrives
+Then cancel the pending timer
+     schedule a new timer when an each timeout is configured
+
+Given a timeout timer is pending
+When the timer fires
+Then unsubscribe from the source
+     subscribe to the fallback observable, or error with TimeoutError when none is configured
+```
+
 
 ---
 
@@ -4472,6 +6412,29 @@ Given a timeout deadline is pending
 When the source errors
 Then cancel the pending timeout timer
      error immediately
+```
+
+### Unsubscription rule
+
+```text
+Given a timeout timer is pending
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+     cancel the pending timeout timer
+```
+
+### Cancellation rules
+
+```text
+Given a timeout timer is pending
+When a source value arrives
+Then cancel the pending timer
+     schedule a new timer for the next value
+
+Given a timeout timer is pending
+When the timer fires
+Then unsubscribe from the source
+     subscribe to the configured fallback observable
 ```
 
 *Note:* Deprecated wrapper around `timeout`.
@@ -4512,6 +6475,23 @@ When the source errors
 Then error immediately
 ```
 
+### Unsubscription rule
+
+```text
+Given the source subscription is active
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+```
+
+### Cancellation rule
+
+```text
+Given the source subscription is active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     the source is released only by its own termination or by downstream unsubscription
+```
+
 
 ---
 
@@ -4549,6 +6529,24 @@ Given values are being collected
 When the source errors
 Then discard the collected array
      error immediately
+```
+
+### Unsubscription rule
+
+```text
+Given values are being collected
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+     discard the collected array
+```
+
+### Cancellation rule
+
+```text
+Given the source subscription is active
+When any source value or lifecycle event arrives
+Then cancel no active work
+     the source is released only by its own termination or by downstream unsubscription
 ```
 
 
@@ -4595,6 +6593,24 @@ Then error the current window
      error immediately
 ```
 
+### Unsubscription rule
+
+```text
+Given a window is open
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+     unsubscribe the boundary notifier
+     unsubscribe the current window subject
+```
+
+### Cancellation rule
+
+```text
+Given the boundary notifier is active
+When the source terminates
+Then unsubscribe the boundary notifier as part of termination teardown
+```
+
 
 ---
 
@@ -4632,6 +6648,24 @@ Given one or more windows are open
 When the source errors
 Then error every open window
      error immediately
+```
+
+### Unsubscription rule
+
+```text
+Given one or more windows are open
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+     release the open window subjects without completing them
+```
+
+### Cancellation rule
+
+```text
+Given one or more windows are open
+When any source value or lifecycle event arrives
+Then cancel no active work
+     the source is released only by its own termination or by downstream unsubscription
 ```
 
 
@@ -4675,6 +6709,25 @@ Then error every open window
      error immediately
 ```
 
+### Unsubscription rule
+
+```text
+Given one or more windows are open
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+     cancel every window creation and close timer
+     release the open window subjects
+```
+
+### Cancellation rule
+
+```text
+Given a window is open with a close timer pending
+When the window reaches maxWindowSize
+Then cancel that window's close timer
+     complete the window early
+```
+
 
 ---
 
@@ -4707,7 +6760,12 @@ Then complete every open window
 Given the operator is active
 When the openings observable completes
 Then ignore the completion
-     open windows stay open until their closing notifier emits or the source completes
+     open windows stay open until their closing notifier emits or completes, or the source completes
+
+Given a window is open
+When its closing notifier completes without emitting
+Then complete and remove that window
+     the source and other windows are unaffected
 ```
 
 ### Error rule
@@ -4717,6 +6775,26 @@ Given any state
 When the source, the openings observable, or a closing notifier errors
 Then error every open window
      error immediately
+```
+
+### Unsubscription rule
+
+```text
+Given zero or more windows are open
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+     unsubscribe the openings observable
+     unsubscribe every active closing notifier
+     unsubscribe every open window subject
+```
+
+### Cancellation rule
+
+```text
+Given a window is open with its closing notifier active
+When the closing notifier emits or completes
+Then unsubscribe that closing notifier
+     complete and remove the window
 ```
 
 
@@ -4740,13 +6818,18 @@ When closing notifier fires
 Then close current window and immediately create/emit the next window
 ```
 
-### Completion rule
+### Completion rules
 
 ```text
 Given a window is open
 When the source completes
 Then complete the current window
      complete
+
+Given a window is open
+When the closing notifier completes without emitting
+Then complete the current window
+     open and emit the next window with a fresh closing notifier
 ```
 
 ### Error rule
@@ -4756,6 +6839,26 @@ Given a window is open
 When the source or the closing notifier errors
 Then error the current window
      error immediately
+```
+
+### Unsubscription rule
+
+```text
+Given a window is open
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+     unsubscribe the closing notifier
+     release the current window
+```
+
+### Cancellation rule
+
+```text
+Given a closing notifier is active
+When the closing notifier emits or completes
+Then unsubscribe the previous closing notifier
+     complete the current window
+     open and emit the next window with a fresh closing notifier
 ```
 
 
@@ -4798,6 +6901,24 @@ Then ignore the completion
 Given any state
 When the source or any secondary input errors
 Then error immediately
+```
+
+### Unsubscription rule
+
+```text
+Given secondary inputs are active
+When the downstream subscriber unsubscribes
+Then unsubscribe from the source
+     unsubscribe every secondary input
+     discard retained latest values
+```
+
+### Cancellation rule
+
+```text
+Given secondary inputs are active
+When the source terminates
+Then unsubscribe the secondary inputs as part of termination teardown
 ```
 
 *Note:* Only the source triggers output.
@@ -4843,6 +6964,24 @@ Given any state
 When any input errors
 Then discard all queues
      error immediately
+```
+
+### Unsubscription rule
+
+```text
+Given inputs are active
+When the downstream subscriber unsubscribes
+Then unsubscribe every input
+     discard all queues
+```
+
+### Cancellation rule
+
+```text
+Given other inputs are still active
+When an input completes with an empty queue
+Then complete
+     unsubscribe the remaining inputs
 ```
 
 *Note:* Deprecated pipeable form.
@@ -4895,6 +7034,25 @@ Then discard all queues
      error immediately
 ```
 
+### Unsubscription rule
+
+```text
+Given inners are being collected or zipped
+When the downstream subscriber unsubscribes
+Then unsubscribe from the outer source if still collecting
+     unsubscribe every inner
+     discard all queues
+```
+
+### Cancellation rule
+
+```text
+Given other inners are still active
+When an inner completes with an empty queue
+Then complete
+     unsubscribe the remaining inners
+```
+
 
 ---
 
@@ -4937,6 +7095,24 @@ Given any state
 When any input errors
 Then discard all queues
      error immediately
+```
+
+### Unsubscription rule
+
+```text
+Given inputs are active
+When the downstream subscriber unsubscribes
+Then unsubscribe every input
+     discard all queues
+```
+
+### Cancellation rule
+
+```text
+Given other inputs are still active
+When an input completes with an empty queue
+Then complete
+     unsubscribe the remaining inputs
 ```
 
 

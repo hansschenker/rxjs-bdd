@@ -28,4 +28,6 @@ The rule kinds in `spec/operators.json` cover the matrix as follows:
 | Source next, Timer/scheduler event, Notifier event, Inner next, Concurrency admission | `state` and `event` |
 | Source complete, Inner complete, notifier completion | `completion` |
 | Source error, Inner error, notifier error | `error` |
-| Subscription, Unsubscription, Cancellation | not yet a dedicated rule kind; partially implied by `completion` and `error` rules that mention unsubscribing inners or notifiers |
+| Unsubscription | `unsubscription` |
+| Cancellation | `cancellation`, including explicit "cancels nothing" rules for operators that never cancel work on their own |
+| Subscription | not yet a dedicated rule kind; partially covered by the `state` and `event` rules of `subscribeOn`, `startWith`, `share`, `refCount`, and the `publish*` family |

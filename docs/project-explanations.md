@@ -111,7 +111,7 @@ RxJS implementation and tests
 | `docs/formal-language.md` | The formal-language architecture: the three language levels, grammar model, BDD-to-Mealy mapping, semantic constraints, round-trip property. |
 | `docs/testing.md` | How a rule becomes a test: marble tests, pure transition-model tests, and conformance tests. |
 | `docs/transition-coverage-matrix.md` | The twelve transition categories a state-complete operator test suite should consider. |
-| `spec/operators.json` | Machine-readable catalog (version `0.2.0`), one entry per operator with `rules[]` and an optional `note`. |
+| `spec/operators.json` | Machine-readable catalog (version `0.3.0`), one entry per operator with `rules[]` and an optional `note`. |
 | `spec/operator-catalog.schema.json` | JSON Schema (draft 2020-12) that structurally validates `operators.json`. |
 | `spec/convertible-bdd.ebnf` | EBNF grammar for **Convertible BDD**, the strict, parser-friendly Given / When / Then syntax. |
 | `spec/mealy.ebnf` | EBNF grammar for the **Mealy DSL**, the machine-oriented target language. |
@@ -137,9 +137,9 @@ modules rather than only the public API, so it includes:
 - internal helper modules that are not user-facing operators (`mergeInternals`,
   `joinAllInternals`, `scanInternals`).
 
-### 4.2 Four kinds of rule per operator
+### 4.2 Six kinds of rule per operator
 
-Every operator in the catalog has at least one rule of each of four kinds:
+Every operator in the catalog has at least one rule of each of six kinds:
 
 | `kind` | Heading in `operators.md` | Meaning |
 |---|---|---|
@@ -147,6 +147,8 @@ Every operator in the catalog has at least one rule of each of four kinds:
 | `event` | Event-triggered rule | What Action Policy fires on a discrete **boundary** event (for example, "closing notifier emits", "duration ends", "every queue has at least one value"). |
 | `completion` | Completion rule(s) | What happens to pending state and output when the source, an input, an inner Observable, or a notifier **completes**. Where the outcome depends on state (a pending value or none, a retry budget left or exhausted), each case is its own rule. |
 | `error` | Error rule(s) | What is discarded, propagated, recovered, or swallowed when the source, an input, an inner Observable, or a notifier **errors**. |
+| `unsubscription` | Unsubscription rule(s) | What is torn down when the **downstream subscriber unsubscribes**: the source, inner subscriptions, timers, notifiers, and pending state. For multicast operators, what happens when a subscriber detaches from the shared subject. |
+| `cancellation` | Cancellation rule(s) | Which active work the operator **itself cancels** in response to an event (a superseded inner in `switchMap`, a restarted timer in `debounceTime`, losers in `race`, the source in `take`), or an explicit statement that it cancels nothing on its own. |
 
 Rule counts in the current catalog:
 
@@ -154,8 +156,10 @@ Rule counts in the current catalog:
 |---|---|
 | `state` | 116 |
 | `event` | 116 |
-| `completion` | 188 |
+| `completion` | 190 |
 | `error` | 124 |
+| `unsubscription` | 121 |
+| `cancellation` | 124 |
 
 Keeping `state` and `event` rules apart is a deliberate design rule. A persistent state such as
 "duration active" and the event that *ends* that state ("duration ends") are mutually
@@ -192,6 +196,23 @@ When  the source or the active duration observable errors
 Then  discard the pending value
       unsubscribe the active duration
       error immediately
+
+Unsubscription rule
+Given a duration may be active with a pending value
+When  the downstream subscriber unsubscribes
+Then  unsubscribe from the source
+      unsubscribe the active duration
+      discard the pending value without emitting it
+
+Cancellation rules
+Given a duration is active
+When  a source value arrives
+Then  cancel nothing
+      the running duration continues; the new value only replaces the pending value
+
+Given a duration is active
+When  the duration observable emits
+Then  unsubscribe the duration observable after its first emission
 
 Note: The first source value starts the duration.
 ```
@@ -445,10 +466,10 @@ model. Things worth knowing when working on it:
 - **Specification only, no code.** The parser, semantic analyzer, Mealy generator, RxJS
   generator, and conformance tests described in the docs are design intent. None are
   implemented in this repository.
-- **Subscription, unsubscription, and cancellation are not yet rule kinds.** The catalog
-  covers state, event, completion, and error transitions. The remaining rows of the coverage
-  matrix are only implied where a completion or error rule mentions unsubscribing an inner
-  or a notifier.
+- **Subscription is not yet a rule kind.** The catalog covers state, event, completion,
+  error, unsubscription, and cancellation transitions. The Subscription row of the coverage
+  matrix (immediate, deferred, or shared connection) is only implied by the state and event
+  rules of operators such as `subscribeOn`, `share`, and `refCount`.
 - **Some existing `event` rules overlap the new lifecycle rules.** Operators such as
   `count`, `toArray`, `last`, and `endWith` already had an event rule whose trigger is
   source completion. Those were left untouched; the dedicated `completion` rule restates the
