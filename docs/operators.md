@@ -20,7 +20,7 @@ Formally:
 
 The conversion deliberately keeps state-maintenance rules and event-triggered action rules separate. This prevents a common error: combining a state such as "duration active" with a mutually exclusive event such as "duration ends" in the same transition.
 
-Every operator also carries explicit lifecycle rules. **Subscription rules** come first and describe what is established when a downstream subscriber subscribes: whether the source is subscribed immediately, deferred, or shared, the order in which inputs and notifiers are subscribed, and the initial state. **Timer rules** (only for operators that schedule work) describe what happens when an interval, due-time timer, or scheduler action fires. **Notifier rules** (only for operators that consume a secondary observable) describe what a closing, opening, boundary, duration, flush, repeat, retry, or reset notifier does when it emits. **Completion rules** describe what happens to pending state and output when the source, an input, an inner Observable, or a notifier completes. **Error rules** describe what is discarded, propagated, recovered, or swallowed when one of them errors. **Unsubscription rules** describe what is torn down when the downstream subscriber unsubscribes. **Cancellation rules** describe which active work the operator itself cancels in response to an event, or state explicitly that it cancels nothing on its own. Where the outcome depends on the state at that moment, the alternatives are listed as separate rules.
+Every operator also carries explicit lifecycle rules. **Subscription rules** come first and describe what is established when a downstream subscriber subscribes: whether the source is subscribed immediately, deferred, or shared, the order in which inputs and notifiers are subscribed, and the initial state. **Timer rules** (only for operators that schedule work) describe what happens when an interval, due-time timer, or scheduler action fires. **Notifier rules** (only for operators that consume a secondary observable) describe what a closing, opening, boundary, duration, flush, repeat, retry, or reset notifier does when it emits. **Inner rules** (only for operators with inner observables or secondary inputs) describe how a value from such an observable is handled. **Concurrency rules** (only for operators whose work can overlap or be superseded) state whether new work is allowed, queued, replaced, or ignored. **Completion rules** describe what happens to pending state and output when the source, an input, an inner Observable, or a notifier completes. **Error rules** describe what is discarded, propagated, recovered, or swallowed when one of them errors. **Unsubscription rules** describe what is torn down when the downstream subscriber unsubscribes. **Cancellation rules** describe which active work the operator itself cancels in response to an event, or state explicitly that it cancels nothing on its own. Where the outcome depends on the state at that moment, the alternatives are listed as separate rules.
 
 
 ---
@@ -67,6 +67,20 @@ When the duration observable completes without emitting
 Then clear the duration without emitting the pending value
      the pending value is replaced by the next source value, which starts a new duration
      complete, dropping the pending value, if the source has already completed
+```
+
+### Concurrency rules
+
+```text
+Given a duration is active
+When a source value arrives
+Then replace the pending value
+     do not start another duration
+
+Given the operator is idle
+When a source value arrives
+Then admit it as the pending value
+     start the duration
 ```
 
 ### Completion rules
@@ -157,6 +171,20 @@ Then emit the pending latest value
      complete if the source has already completed
 ```
 
+### Concurrency rules
+
+```text
+Given a interval timer is active
+When a source value arrives
+Then replace the pending value
+     do not start another interval timer
+
+Given the operator is idle
+When a source value arrives
+Then admit it as the pending value
+     start the interval timer
+```
+
 ### Completion rules
 
 ```text
@@ -241,6 +269,15 @@ Then emit the current buffer
      open a fresh empty buffer
 ```
 
+### Concurrency rule
+
+```text
+Given a buffer is open
+When the closing notifier emits
+Then open exactly one replacement buffer
+     buffers never overlap
+```
+
 ### Completion rules
 
 ```text
@@ -310,6 +347,20 @@ Then append source values and track size/start positions
 Given the operator is active
 When a buffer reaches its configured size
 Then emit that buffer; open later buffers according to `startBufferEvery`
+```
+
+### Concurrency rules
+
+```text
+Given startBufferEvery is less than bufferSize
+When a source value arrives at a start boundary
+Then open an additional buffer alongside the open ones
+     each value is admitted to every open buffer, so buffers overlap
+
+Given startBufferEvery is omitted or at least bufferSize
+When a buffer reaches bufferSize
+Then emit it
+     the next buffer opens at the next start boundary, so buffers never overlap
 ```
 
 ### Completion rules
@@ -396,6 +447,20 @@ When the creation interval fires
 Then open an additional buffer with its own close timer
 ```
 
+### Concurrency rules
+
+```text
+Given bufferCreationInterval is configured and shorter than bufferTimeSpan
+When the creation interval fires
+Then open an additional buffer alongside the open ones
+     each value is admitted to every open buffer
+
+Given no bufferCreationInterval is configured
+When a buffer closes
+Then open exactly one replacement buffer
+     buffers never overlap
+```
+
 ### Completion rule
 
 ```text
@@ -478,6 +543,15 @@ Given a buffer is open with its closing notifier active
 When that closing notifier emits
 Then emit the buffer
      close it and unsubscribe its closing notifier
+```
+
+### Concurrency rule
+
+```text
+Given buffers are open
+When the openings observable emits
+Then open an additional buffer
+     any number of buffers may overlap; each value is admitted to every open buffer
 ```
 
 ### Completion rules
@@ -568,6 +642,15 @@ Then emit the current buffer
      subscribe to a new closing observable from the closing selector
 ```
 
+### Concurrency rule
+
+```text
+Given a buffer is open
+When the closing observable emits
+Then open exactly one replacement buffer
+     buffers never overlap
+```
+
 ### Completion rules
 
 ```text
@@ -638,6 +721,14 @@ Then forward values without recovery state
 Given the operator is active
 When source errors
 Then invoke selector and subscribe to the replacement Observable instead of forwarding the error
+```
+
+### Inner rule
+
+```text
+Given the replacement observable is active
+When the replacement observable emits a value
+Then forward the value unchanged
 ```
 
 ### Completion rules
@@ -714,6 +805,25 @@ When outer completes
 Then subscribe/combine inners and emit whenever all have values and any inner updates
 ```
 
+### Inner rule
+
+```text
+Given inners are active
+When a inner emits a value
+Then replace that inner's retained latest value
+     emit the combined tuple, or its projection, once every inner has emitted at least once
+     emit nothing before that
+```
+
+### Concurrency rule
+
+```text
+Given inners are active
+When a inner emits again before the others
+Then replace its retained latest value
+     nothing is queued
+```
+
 ### Completion rules
 
 ```text
@@ -788,6 +898,25 @@ When every input has emitted at least once and any input emits
 Then emit the tuple/projected latest combination
 ```
 
+### Inner rule
+
+```text
+Given inputs are active
+When a input emits a value
+Then replace that input's retained latest value
+     emit the combined tuple, or its projection, once every input has emitted at least once
+     emit nothing before that
+```
+
+### Concurrency rule
+
+```text
+Given inputs are active
+When a input emits again before the others
+Then replace its retained latest value
+     nothing is queued
+```
+
 ### Completion rules
 
 ```text
@@ -858,6 +987,25 @@ Then retain each inner's latest value and readiness
 Given the relevant inner state exists
 When all active inners are ready and any inner emits
 Then emit the latest-value tuple
+```
+
+### Inner rule
+
+```text
+Given inners are active
+When a inner emits a value
+Then replace that inner's retained latest value
+     emit the combined tuple, or its projection, once every inner has emitted at least once
+     emit nothing before that
+```
+
+### Concurrency rule
+
+```text
+Given inners are active
+When a inner emits again before the others
+Then replace its retained latest value
+     nothing is queued
 ```
 
 ### Completion rules
@@ -934,6 +1082,25 @@ When all inputs have emitted and any input emits
 Then emit the latest-value tuple
 ```
 
+### Inner rule
+
+```text
+Given inputs are active
+When a input emits a value
+Then replace that input's retained latest value
+     emit the combined tuple, or its projection, once every input has emitted at least once
+     emit nothing before that
+```
+
+### Concurrency rule
+
+```text
+Given inputs are active
+When a input emits again before the others
+Then replace its retained latest value
+     nothing is queued
+```
+
 ### Completion rules
 
 ```text
@@ -1005,6 +1172,24 @@ When current input completes
 Then subscribe to the next; forward values from only the current input
 ```
 
+### Inner rule
+
+```text
+Given an input is active
+When the active input emits a value
+Then forward the value immediately
+     pending inputs are not yet subscribed and cannot emit
+```
+
+### Concurrency rule
+
+```text
+Given an input is active
+When later inputs are pending
+Then queue them
+     admit the next input only when the active input completes
+```
+
 ### Completion rules
 
 ```text
@@ -1073,6 +1258,28 @@ Then queue later inner Observables
 Given the operator is active and completion has not yet been forwarded
 When current inner completes
 Then subscribe to the next queued inner; forward inner values in order
+```
+
+### Inner rule
+
+```text
+Given the active inner is running
+When the active inner emits a value
+Then forward the value immediately
+     values from queued inners are never interleaved with it
+```
+
+### Concurrency rules
+
+```text
+Given no inner is active
+When an inner observable arrives
+Then admit it immediately
+
+Given an inner is active
+When an inner observable arrives
+Then queue the inner behind the active inner
+     admit queued items one at a time in arrival order
 ```
 
 ### Completion rules
@@ -1146,6 +1353,28 @@ Then queue the outer value
 Given the operator is active and completion has not yet been forwarded
 When current inner completes
 Then project and subscribe to the next queued outer value
+```
+
+### Inner rule
+
+```text
+Given the active projected inner is running
+When the active projected inner emits a value
+Then forward the value immediately
+     values from queued projected inners are never interleaved with it
+```
+
+### Concurrency rules
+
+```text
+Given no inner is active
+When an outer value arrives
+Then admit it immediately
+
+Given an inner is active
+When an outer value arrives
+Then queue the outer value behind the active inner
+     admit queued items one at a time in arrival order
 ```
 
 ### Completion rules
@@ -1222,6 +1451,28 @@ When current inner completes
 Then subscribe to another instance of the configured inner for the next queued outer value
 ```
 
+### Inner rule
+
+```text
+Given the active configured inner is running
+When the active configured inner emits a value
+Then forward the value immediately
+     values from queued configured inners are never interleaved with it
+```
+
+### Concurrency rules
+
+```text
+Given no inner is active
+When an outer value arrives
+Then admit it immediately
+
+Given an inner is active
+When an outer value arrives
+Then queue the outer value behind the active inner
+     admit queued items one at a time in arrival order
+```
+
 ### Completion rules
 
 ```text
@@ -1294,6 +1545,24 @@ Then keep following Observables pending
 Given the operator is active and completion has not yet been forwarded
 When current Observable completes
 Then subscribe to the next and continue forwarding
+```
+
+### Inner rule
+
+```text
+Given an input is active
+When the active input emits a value
+Then forward the value immediately
+     pending inputs are not yet subscribed and cannot emit
+```
+
+### Concurrency rule
+
+```text
+Given an input is active
+When later inputs are pending
+Then queue them
+     admit the next input only when the active input completes
 ```
 
 ### Completion rules
@@ -1512,6 +1781,15 @@ Then keep the pending value
      it is emitted on source completion or replaced by the next source value
 ```
 
+### Concurrency rule
+
+```text
+Given a duration is active
+When a source value arrives
+Then replace the pending value
+     restart the silence window from this value
+```
+
 ### Completion rules
 
 ```text
@@ -1597,6 +1875,15 @@ Given the silence task is scheduled and a pending value exists
 When the scheduled task fires
 Then if dueTime has not fully elapsed since the latest value, reschedule the task for the remaining time
      otherwise emit the pending latest value and clear the task
+```
+
+### Concurrency rule
+
+```text
+Given a silence timer is active
+When a source value arrives
+Then replace the pending value
+     restart the silence window from this value
 ```
 
 ### Completion rules
@@ -1752,6 +2039,15 @@ Then emit that value
      complete if the source has completed and no other value is pending
 ```
 
+### Concurrency rule
+
+```text
+Given delayed values are pending
+When a source value arrives
+Then admit it: schedule its own timer
+     pending values are unbounded and preserve arrival order
+```
+
 ### Completion rules
 
 ```text
@@ -1846,6 +2142,15 @@ Given a subscription delay is configured and pending
 When the subscription delay emits or completes
 Then unsubscribe the subscription delay
      subscribe to the source
+```
+
+### Concurrency rule
+
+```text
+Given durations are active
+When a source value arrives
+Then admit it: start its own duration without limit
+     emission order follows duration order, not arrival order
 ```
 
 ### Completion rules
@@ -2414,6 +2719,27 @@ When current inner completes
 Then become idle and allow the next outer inner Observable to be subscribed
 ```
 
+### Inner rule
+
+```text
+Given the active inner is running
+When the active inner emits a value
+Then forward the value immediately
+```
+
+### Concurrency rules
+
+```text
+Given an inner is active
+When a new inner observable arrives
+Then ignore it
+     it is dropped, not queued
+
+Given no inner is active
+When a new inner observable arrives
+Then admit it immediately
+```
+
 ### Completion rules
 
 ```text
@@ -2482,6 +2808,27 @@ Then ignore newly arriving inner Observables
 Given the operator is active and completion has not yet been forwarded
 When current inner completes
 Then become idle and allow the next inner
+```
+
+### Inner rule
+
+```text
+Given the active inner is running
+When the active inner emits a value
+Then forward the value immediately
+```
+
+### Concurrency rules
+
+```text
+Given an inner is active
+When a new inner observable arrives
+Then ignore it
+     it is dropped, not queued
+
+Given no inner is active
+When a new inner observable arrives
+Then admit it immediately
 ```
 
 ### Completion rules
@@ -2555,6 +2902,27 @@ When current inner completes
 Then become idle; next outer value may start a new inner
 ```
 
+### Inner rule
+
+```text
+Given the active projected inner is running
+When the active projected inner emits a value
+Then forward the value immediately
+```
+
+### Concurrency rules
+
+```text
+Given an inner is active
+When a new outer value arrives
+Then ignore it
+     it is dropped, not queued
+
+Given no inner is active
+When a new outer value arrives
+Then admit it immediately
+```
+
 ### Completion rules
 
 ```text
@@ -2624,6 +2992,28 @@ Then feed emitted values back through the projection while respecting concurrenc
 Given the operator is active
 When a value is accepted for expansion
 Then emit it and subscribe to its projected Observable recursively
+```
+
+### Inner rule
+
+```text
+Given a recursive inner is active
+When it emits a value
+Then forward the value downstream
+     feed it back through the projection as a new expansion, subject to the concurrency limit
+```
+
+### Concurrency rules
+
+```text
+Given fewer than concurrent inners are active
+When a value is accepted for expansion
+Then admit it: project and subscribe immediately
+
+Given concurrent inners are already active
+When a value is accepted for expansion
+Then buffer it
+     expand it when an active inner completes
 ```
 
 ### Completion rules
@@ -3027,6 +3417,29 @@ When outer value arrives
 Then project and subscribe according to `mergeMap` concurrency policy
 ```
 
+### Inner rule
+
+```text
+Given projected inners are active
+When a projected inner emits a value
+Then forward the value immediately
+     values from different active projected inners interleave in arrival order
+```
+
+### Concurrency rules
+
+```text
+Given fewer than concurrent inners are active
+When an outer value arrives
+Then admit it: project and subscribe immediately
+     increment the active count
+
+Given concurrent inners are already active
+When an outer value arrives
+Then queue the outer value
+     admit the oldest queued item when an active inner completes
+```
+
 ### Completion rules
 
 ```text
@@ -3109,6 +3522,19 @@ When the duration observable emits
 Then complete that group
      remove it from the group map so the key can start a new group
      unsubscribe the duration
+```
+
+### Concurrency rules
+
+```text
+Given groups are active
+When a value with a new key arrives
+Then create a new group
+     the number of concurrent groups is unbounded
+
+Given groups are active
+When a value with an existing key arrives
+Then route it into the existing group
 ```
 
 ### Completion rule
@@ -3309,6 +3735,24 @@ Then delegate state to chosen join strategy
 Given the relevant inner state exists
 When join strategy has enough inner values
 Then emit projected joined result
+```
+
+### Inner rule
+
+```text
+Given the joined observable is active
+When it emits a value
+Then apply the optional projection
+     forward the result
+```
+
+### Concurrency rule
+
+```text
+Given inner observables are being collected
+When an inner observable arrives
+Then collect it without limit
+     all inners are admitted together once the outer completes
 ```
 
 ### Completion rule
@@ -3716,6 +4160,27 @@ When any active input emits
 Then forward immediately; an input completes: admit pending input if capacity exists
 ```
 
+### Inner rule
+
+```text
+Given inputs are active
+When any input emits a value
+Then forward the value immediately
+```
+
+### Concurrency rules
+
+```text
+Given fewer than concurrent inputs are active
+When an input is pending
+Then admit it: subscribe immediately
+
+Given concurrent inputs are active
+When an input is pending
+Then queue it
+     admit it when an active input completes
+```
+
 ### Completion rules
 
 ```text
@@ -3785,6 +4250,29 @@ Then track active count and queue excess inners beyond concurrency limit
 Given the relevant inner state exists
 When an inner emits
 Then forward immediately; capacity opens: subscribe to queued inner
+```
+
+### Inner rule
+
+```text
+Given inners are active
+When a inner emits a value
+Then forward the value immediately
+     values from different active inners interleave in arrival order
+```
+
+### Concurrency rules
+
+```text
+Given fewer than concurrent inners are active
+When an inner observable arrives
+Then admit it: subscribe immediately
+     increment the active count
+
+Given concurrent inners are already active
+When an inner observable arrives
+Then queue the inner
+     admit the oldest queued item when an active inner completes
 ```
 
 ### Completion rules
@@ -3860,6 +4348,29 @@ When outer/inner events occur
 Then apply merge concurrency admission, forwarding, drain, and completion policy
 ```
 
+### Inner rule
+
+```text
+Given inners are active
+When an inner emits a value
+Then forward the value immediately
+     in expand mode, also feed the value back through the projection
+```
+
+### Concurrency rules
+
+```text
+Given fewer than concurrent inners are active
+When a value arrives
+Then admit it: project and subscribe immediately
+     increment the active count
+
+Given concurrent inners are already active
+When a value arrives
+Then queue the value
+     admit the oldest queued item when an active inner completes
+```
+
 ### Completion rules
 
 ```text
@@ -3930,6 +4441,29 @@ Then allow overlap up to concurrency limit and queue excess outer values
 Given the operator is subscribed and ready to process input
 When outer value arrives with capacity
 Then start projected inner; inner emits: forward immediately
+```
+
+### Inner rule
+
+```text
+Given projected inners are active
+When a projected inner emits a value
+Then forward the value immediately
+     values from different active projected inners interleave in arrival order
+```
+
+### Concurrency rules
+
+```text
+Given fewer than concurrent inners are active
+When an outer value arrives
+Then admit it: project and subscribe immediately
+     increment the active count
+
+Given concurrent inners are already active
+When an outer value arrives
+Then queue the outer value
+     admit the oldest queued item when an active inner completes
 ```
 
 ### Completion rules
@@ -4004,6 +4538,29 @@ Then allow overlap up to concurrency limit
 Given the operator is subscribed and ready to process input
 When outer value arrives with capacity
 Then subscribe to configured inner and forward its values
+```
+
+### Inner rule
+
+```text
+Given configured inners are active
+When a configured inner emits a value
+Then forward the value immediately
+     values from different active configured inners interleave in arrival order
+```
+
+### Concurrency rules
+
+```text
+Given fewer than concurrent inners are active
+When an outer value arrives
+Then admit it: subscribe to the configured inner immediately
+     increment the active count
+
+Given concurrent inners are already active
+When an outer value arrives
+Then queue the outer value
+     admit the oldest queued item when an active inner completes
 ```
 
 ### Completion rules
@@ -4081,6 +4638,29 @@ When outer value arrives
 Then project `(acc, value)` to inner; inner emits: replace accumulator and emit it
 ```
 
+### Inner rule
+
+```text
+Given an accumulator inner is active
+When it emits a value
+Then replace the accumulator with the value
+     emit the new accumulator
+```
+
+### Concurrency rules
+
+```text
+Given fewer than concurrent inners are active
+When an outer value arrives
+Then admit it: project it with the current accumulator and subscribe immediately
+     increment the active count
+
+Given concurrent inners are already active
+When an outer value arrives
+Then queue the outer value
+     admit the oldest queued item when an active inner completes
+```
+
 ### Completion rules
 
 ```text
@@ -4152,6 +4732,23 @@ Then retain their concurrent subscriptions
 Given the operator is active
 When any input emits
 Then forward immediately; complete after all inputs complete
+```
+
+### Inner rule
+
+```text
+Given inputs are active
+When any input emits a value
+Then forward the value immediately
+```
+
+### Concurrency rule
+
+```text
+Given inputs are pending
+When the output is subscribed
+Then admit every input at once
+     concurrency is unlimited
 ```
 
 ### Completion rules
@@ -4378,6 +4975,15 @@ When its scheduled action runs
 Then deliver that next, error, or complete notification downstream in scheduling order
 ```
 
+### Concurrency rule
+
+```text
+Given scheduled deliveries are pending
+When a notification arrives
+Then schedule it behind the pending deliveries
+     delivery order equals arrival order
+```
+
 ### Completion rule
 
 ```text
@@ -4443,6 +5049,23 @@ Then keep fallback Observables pending
 Given the operator is active and completion has not yet been forwarded
 When current source errors or completes
 Then suppress the distinction and subscribe to the next fallback; complete after all finish
+```
+
+### Inner rule
+
+```text
+Given a fallback source is active
+When a fallback source emits a value
+Then forward the value unchanged
+```
+
+### Concurrency rule
+
+```text
+Given a source is active
+When the active source terminates
+Then admit the next source
+     sources never overlap
 ```
 
 ### Completion rules
@@ -4995,6 +5618,29 @@ When first competitor emits
 Then choose it as winner, unsubscribe losers, and forward only winner thereafter
 ```
 
+### Inner rules
+
+```text
+Given no competitor has emitted yet
+When a competitor emits a value
+Then select it as the winner
+     unsubscribe the other competitors
+     forward the value
+
+Given a winner has been selected
+When the winner emits a value
+Then forward the value
+```
+
+### Concurrency rule
+
+```text
+Given competitors are pending
+When the output is subscribed
+Then admit every competitor at once
+     after the first emission only the winner remains admitted
+```
+
 ### Completion rules
 
 ```text
@@ -5067,6 +5713,29 @@ Then subscribe to source and supplied Observables
 Given the operator is active
 When first competitor emits
 Then choose it, unsubscribe losers, forward winner only
+```
+
+### Inner rules
+
+```text
+Given no competitor has emitted yet
+When a competitor emits a value
+Then select it as the winner
+     unsubscribe the other competitors
+     forward the value
+
+Given a winner has been selected
+When the winner emits a value
+Then forward the value
+```
+
+### Concurrency rule
+
+```text
+Given competitors are pending
+When the output is subscribed
+Then admit every competitor at once
+     after the first emission only the winner remains admitted
 ```
 
 ### Completion rules
@@ -5313,6 +5982,15 @@ When the notifier completes without emitting
 Then complete
 ```
 
+### Concurrency rule
+
+```text
+Given an execution is active
+When the execution completes
+Then start the next execution only after the current one has completes
+     executions never overlap
+```
+
 ### Completion rules
 
 ```text
@@ -5394,6 +6072,15 @@ Then resubscribe to source; notifier completes/errors: terminate accordingly
 Given the source has completed
 When the notifier emits
 Then resubscribe to the source
+```
+
+### Concurrency rule
+
+```text
+Given an execution is active
+When the execution completes
+Then start the next execution only after the current one has completes
+     executions never overlap
 ```
 
 ### Completion rules
@@ -5499,6 +6186,15 @@ When the notifier completes without emitting
 Then complete without re-raising the error
 ```
 
+### Concurrency rule
+
+```text
+Given an attempt is active
+When the attempt errors
+Then start the next attempt only after the current one has errors
+     attempts never overlap
+```
+
 ### Completion rule
 
 ```text
@@ -5580,6 +6276,15 @@ Then resubscribe; notifier completes/errors: terminate accordingly
 Given the source has errored
 When the notifier emits
 Then resubscribe to the source
+```
+
+### Concurrency rule
+
+```text
+Given an attempt is active
+When the attempt errors
+Then start the next attempt only after the current one has errors
+     attempts never overlap
 ```
 
 ### Completion rules
@@ -5670,6 +6375,15 @@ When the notifier emits
 Then emit nothing
 ```
 
+### Concurrency rule
+
+```text
+Given the next sample has not occurred
+When a source value arrives
+Then replace the pending value
+     only the latest value per sample period is admitted
+```
+
 ### Completion rules
 
 ```text
@@ -5753,6 +6467,15 @@ Then emit the pending latest value
 Given no pending value exists
 When the sampling interval ticks
 Then emit nothing
+```
+
+### Concurrency rule
+
+```text
+Given the next sample has not occurred
+When a source value arrives
+Then replace the pending value
+     only the latest value per sample period is admitted
 ```
 
 ### Completion rule
@@ -5959,6 +6682,24 @@ Then queue unmatched values from each side and compare in order
 Given the operator is active
 When both sides provide the next pair
 Then compare them; mismatch emits false and completes; matched completion emits true
+```
+
+### Inner rule
+
+```text
+Given both sequences are active
+When the comparison sequence emits a value
+Then if the source queue holds a value, compare it with the oldest queued source value and emit false and complete on mismatch
+     otherwise enqueue the value, or emit false and complete if the source has already completed
+```
+
+### Concurrency rule
+
+```text
+Given values are being compared
+When a value arrives on one side without a counterpart
+Then queue it without limit
+     it is compared when the other side emits
 ```
 
 ### Completion rules
@@ -6688,6 +7429,24 @@ When new inner Observable arrives
 Then cancel previous inner and subscribe to the new one; forward only current inner
 ```
 
+### Inner rule
+
+```text
+Given the current inner is active
+When the current inner emits a value
+Then forward the value immediately
+     values from a replaced inner are never forwarded
+```
+
+### Concurrency rule
+
+```text
+Given an inner is active
+When a new inner observable arrives
+Then replace: unsubscribe the active inner and admit the new one immediately
+     nothing is queued
+```
+
 ### Completion rules
 
 ```text
@@ -6756,6 +7515,24 @@ Then remember only the latest inner subscription
 Given the operator is subscribed and ready to process input
 When new outer value arrives
 Then cancel current inner, project, and subscribe to the new inner
+```
+
+### Inner rule
+
+```text
+Given the current projected inner is active
+When the current projected inner emits a value
+Then forward the value immediately
+     values from a replaced projected inner are never forwarded
+```
+
+### Concurrency rule
+
+```text
+Given an inner is active
+When a new outer value arrives
+Then replace: unsubscribe the active inner and admit the new one immediately
+     nothing is queued
 ```
 
 ### Completion rules
@@ -6829,6 +7606,24 @@ When new outer value arrives
 Then cancel current inner and subscribe to the configured inner again
 ```
 
+### Inner rule
+
+```text
+Given the current configured inner is active
+When the current configured inner emits a value
+Then forward the value immediately
+     values from a replaced configured inner are never forwarded
+```
+
+### Concurrency rule
+
+```text
+Given an inner is active
+When a new outer value arrives
+Then replace: unsubscribe the active inner and admit the new one immediately
+     nothing is queued
+```
+
 ### Completion rules
 
 ```text
@@ -6899,6 +7694,25 @@ Then retain accumulator and current inner
 Given the operator is subscribed and ready to process input
 When new outer value arrives
 Then cancel current inner and start projection from current accumulator; inner emissions replace and emit accumulator
+```
+
+### Inner rule
+
+```text
+Given the current accumulator inner is active
+When it emits a value
+Then replace the accumulator with the value
+     emit the new accumulator
+     values from a replaced inner are never applied
+```
+
+### Concurrency rule
+
+```text
+Given an inner is active
+When a new outer value arrives
+Then replace: unsubscribe the active inner and admit the new one immediately
+     nothing is queued
 ```
 
 ### Completion rules
@@ -7338,6 +8152,20 @@ Then return to idle without emitting
      complete, dropping any pending trailing value, if the source has already completed
 ```
 
+### Concurrency rules
+
+```text
+Given the duration is active
+When a source value arrives
+Then ignore the value when trailing is false
+     retain it as the trailing value, replacing any earlier one, when trailing is true
+
+Given the operator is idle
+When a source value arrives
+Then emit it immediately when leading is true, otherwise retain it as the trailing value
+     start the duration
+```
+
 ### Completion rules
 
 ```text
@@ -7427,6 +8255,20 @@ Then end throttling
      emit the pending trailing value when trailing is enabled and one exists, which starts a new interval
      otherwise return to idle
      complete if the source has already completed and nothing is pending
+```
+
+### Concurrency rules
+
+```text
+Given the interval timer is active
+When a source value arrives
+Then ignore the value when trailing is false
+     retain it as the trailing value, replacing any earlier one, when trailing is true
+
+Given the operator is idle
+When a source value arrives
+Then emit it immediately when leading is true, otherwise retain it as the trailing value
+     start the interval timer
 ```
 
 ### Completion rules
@@ -7644,6 +8486,15 @@ Then unsubscribe from the source
      otherwise error with a TimeoutError carrying meta, lastValue, and seen
 ```
 
+### Inner rule
+
+```text
+Given the fallback observable is active
+When the fallback observable emits a value
+Then forward the value unchanged
+     no further timeout is applied
+```
+
 ### Completion rule
 
 ```text
@@ -7722,6 +8573,15 @@ Given a timeout timer is pending
 When the timer fires before the awaited value
 Then unsubscribe from the source
      subscribe to the configured fallback observable
+```
+
+### Inner rule
+
+```text
+Given the fallback observable is active
+When the fallback observable emits a value
+Then forward the value unchanged
+     no further timeout is applied
 ```
 
 ### Completion rule
@@ -7934,6 +8794,15 @@ Then complete the current window
      open a new window and emit it downstream
 ```
 
+### Concurrency rule
+
+```text
+Given a window is open
+When the boundary notifier emits
+Then open exactly one replacement window
+     windows never overlap
+```
+
 ### Completion rules
 
 ```text
@@ -8003,6 +8872,20 @@ Then route source values into active windows and track counts
 Given the corresponding pending state exists
 When start/size boundary is reached
 Then open or close windows according to `windowSize` and `startWindowEvery`
+```
+
+### Concurrency rules
+
+```text
+Given startWindowEvery is less than windowSize
+When a source value arrives at a start boundary
+Then open an additional window alongside the open ones
+     each value is admitted to every open window, so windows overlap
+
+Given startWindowEvery is omitted or at least windowSize
+When a window reaches windowSize
+Then complete it
+     the next window opens at the next start boundary, so windows never overlap
 ```
 
 ### Completion rule
@@ -8083,6 +8966,20 @@ Then complete that window
 Given windowCreationInterval is configured
 When the creation interval fires
 Then open and emit an additional window with its own close timer
+```
+
+### Concurrency rules
+
+```text
+Given windowCreationInterval is configured and shorter than windowTimeSpan
+When the creation interval fires
+Then open an additional window alongside the open ones
+     each value is admitted to every open window
+
+Given no windowCreationInterval is configured
+When a window closes
+Then open exactly one replacement window
+     windows never overlap
 ```
 
 ### Completion rule
@@ -8167,6 +9064,15 @@ Given a window is open with its closing notifier active
 When that closing notifier emits or completes
 Then complete that window
      unsubscribe its closing notifier
+```
+
+### Concurrency rule
+
+```text
+Given windows are open
+When the openings observable emits
+Then open an additional window
+     any number of windows may overlap; each value is admitted to every open window
 ```
 
 ### Completion rules
@@ -8257,6 +9163,15 @@ Then complete the current window
      subscribe to a new closing notifier from the closing selector
 ```
 
+### Concurrency rule
+
+```text
+Given a window is open
+When the closing notifier emits or completes
+Then open exactly one replacement window
+     windows never overlap
+```
+
 ### Completion rules
 
 ```text
@@ -8330,6 +9245,28 @@ When source emits and every secondary has emitted at least once
 Then emit source value combined with latest secondary values
 ```
 
+### Inner rule
+
+```text
+Given secondary inputs are active
+When a secondary input emits a value
+Then replace its retained latest value
+     emit nothing; only source values trigger output
+```
+
+### Concurrency rules
+
+```text
+Given not every secondary input has emitted yet
+When a source value arrives
+Then ignore the source value
+     it is dropped, not queued
+
+Given secondary inputs are active
+When a secondary input emits again
+Then replace its retained latest value
+```
+
 ### Completion rules
 
 ```text
@@ -8398,6 +9335,24 @@ Then maintain one FIFO queue per input
 Given the operator is active
 When every queue has at least one value
 Then dequeue one from each and emit the tuple/projected result
+```
+
+### Inner rule
+
+```text
+Given inputs are active
+When a input emits a value
+Then enqueue the value on that input's FIFO queue
+     when every queue is non-empty, dequeue one value from each and emit the tuple, or its projection
+```
+
+### Concurrency rule
+
+```text
+Given inputs are active
+When a input emits faster than the others
+Then queue its values without limit
+     no value is dropped or replaced
 ```
 
 ### Completion rules
@@ -8470,6 +9425,24 @@ Then maintain one FIFO queue per inner
 Given the relevant inner state exists
 When every inner queue has a value
 Then dequeue one from each and emit tuple; terminate when further full tuples become impossible
+```
+
+### Inner rule
+
+```text
+Given inners are active
+When a inner emits a value
+Then enqueue the value on that inner's FIFO queue
+     when every queue is non-empty, dequeue one value from each and emit the tuple, or its projection
+```
+
+### Concurrency rule
+
+```text
+Given inners are active
+When a inner emits faster than the others
+Then queue its values without limit
+     no value is dropped or replaced
 ```
 
 ### Completion rules
@@ -8547,6 +9520,24 @@ Then maintain one FIFO queue per input
 Given the operator is active
 When every queue has at least one value
 Then dequeue one from each and emit the tuple
+```
+
+### Inner rule
+
+```text
+Given inputs are active
+When a input emits a value
+Then enqueue the value on that input's FIFO queue
+     when every queue is non-empty, dequeue one value from each and emit the tuple, or its projection
+```
+
+### Concurrency rule
+
+```text
+Given inputs are active
+When a input emits faster than the others
+Then queue its values without limit
+     no value is dropped or replaced
 ```
 
 ### Completion rules

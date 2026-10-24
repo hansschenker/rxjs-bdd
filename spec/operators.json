@@ -1,5 +1,5 @@
 {
-  "version": "0.5.0",
+  "version": "0.6.0",
   "operators": [
     {
       "operator": "audit",
@@ -48,6 +48,24 @@
             "clear the duration without emitting the pending value",
             "the pending value is replaced by the next source value, which starts a new duration",
             "complete, dropping the pending value, if the source has already completed"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "a duration is active",
+          "when": "a source value arrives",
+          "then": [
+            "replace the pending value",
+            "do not start another duration"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "the operator is idle",
+          "when": "a source value arrives",
+          "then": [
+            "admit it as the pending value",
+            "start the duration"
           ]
         },
         {
@@ -147,6 +165,24 @@
           ]
         },
         {
+          "kind": "concurrency",
+          "given": "a interval timer is active",
+          "when": "a source value arrives",
+          "then": [
+            "replace the pending value",
+            "do not start another interval timer"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "the operator is idle",
+          "when": "a source value arrives",
+          "then": [
+            "admit it as the pending value",
+            "start the interval timer"
+          ]
+        },
+        {
           "kind": "completion",
           "given": "no pending value exists or no interval timer is active",
           "when": "the source completes",
@@ -235,6 +271,15 @@
           ]
         },
         {
+          "kind": "concurrency",
+          "given": "a buffer is open",
+          "when": "the closing notifier emits",
+          "then": [
+            "open exactly one replacement buffer",
+            "buffers never overlap"
+          ]
+        },
+        {
           "kind": "completion",
           "given": "a buffer is open",
           "when": "the source completes",
@@ -308,6 +353,24 @@
           "when": "a buffer reaches its configured size",
           "then": [
             "emit that buffer; open later buffers according to `startBufferEvery`"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "startBufferEvery is less than bufferSize",
+          "when": "a source value arrives at a start boundary",
+          "then": [
+            "open an additional buffer alongside the open ones",
+            "each value is admitted to every open buffer, so buffers overlap"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "startBufferEvery is omitted or at least bufferSize",
+          "when": "a buffer reaches bufferSize",
+          "then": [
+            "emit it",
+            "the next buffer opens at the next start boundary, so buffers never overlap"
           ]
         },
         {
@@ -404,6 +467,24 @@
           ]
         },
         {
+          "kind": "concurrency",
+          "given": "bufferCreationInterval is configured and shorter than bufferTimeSpan",
+          "when": "the creation interval fires",
+          "then": [
+            "open an additional buffer alongside the open ones",
+            "each value is admitted to every open buffer"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "no bufferCreationInterval is configured",
+          "when": "a buffer closes",
+          "then": [
+            "open exactly one replacement buffer",
+            "buffers never overlap"
+          ]
+        },
+        {
           "kind": "completion",
           "given": "one or more time-span buffers are open",
           "when": "the source completes",
@@ -490,6 +571,15 @@
           "then": [
             "emit the buffer",
             "close it and unsubscribe its closing notifier"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "buffers are open",
+          "when": "the openings observable emits",
+          "then": [
+            "open an additional buffer",
+            "any number of buffers may overlap; each value is admitted to every open buffer"
           ]
         },
         {
@@ -590,6 +680,15 @@
           ]
         },
         {
+          "kind": "concurrency",
+          "given": "a buffer is open",
+          "when": "the closing observable emits",
+          "then": [
+            "open exactly one replacement buffer",
+            "buffers never overlap"
+          ]
+        },
+        {
           "kind": "completion",
           "given": "a buffer is open",
           "when": "the source completes",
@@ -664,6 +763,14 @@
           "when": "source errors",
           "then": [
             "invoke selector and subscribe to the replacement Observable instead of forwarding the error"
+          ]
+        },
+        {
+          "kind": "inner",
+          "given": "the replacement observable is active",
+          "when": "the replacement observable emits a value",
+          "then": [
+            "forward the value unchanged"
           ]
         },
         {
@@ -750,6 +857,25 @@
           ]
         },
         {
+          "kind": "inner",
+          "given": "inners are active",
+          "when": "a inner emits a value",
+          "then": [
+            "replace that inner's retained latest value",
+            "emit the combined tuple, or its projection, once every inner has emitted at least once",
+            "emit nothing before that"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "inners are active",
+          "when": "a inner emits again before the others",
+          "then": [
+            "replace its retained latest value",
+            "nothing is queued"
+          ]
+        },
+        {
           "kind": "completion",
           "given": "inner observables are being collected",
           "when": "the outer source completes",
@@ -828,6 +954,25 @@
           ]
         },
         {
+          "kind": "inner",
+          "given": "inputs are active",
+          "when": "a input emits a value",
+          "then": [
+            "replace that input's retained latest value",
+            "emit the combined tuple, or its projection, once every input has emitted at least once",
+            "emit nothing before that"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "inputs are active",
+          "when": "a input emits again before the others",
+          "then": [
+            "replace its retained latest value",
+            "nothing is queued"
+          ]
+        },
+        {
           "kind": "completion",
           "given": "other inputs are still active",
           "when": "an input completes",
@@ -901,6 +1046,25 @@
           "when": "all active inners are ready and any inner emits",
           "then": [
             "emit the latest-value tuple"
+          ]
+        },
+        {
+          "kind": "inner",
+          "given": "inners are active",
+          "when": "a inner emits a value",
+          "then": [
+            "replace that inner's retained latest value",
+            "emit the combined tuple, or its projection, once every inner has emitted at least once",
+            "emit nothing before that"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "inners are active",
+          "when": "a inner emits again before the others",
+          "then": [
+            "replace its retained latest value",
+            "nothing is queued"
           ]
         },
         {
@@ -982,6 +1146,25 @@
           ]
         },
         {
+          "kind": "inner",
+          "given": "inputs are active",
+          "when": "a input emits a value",
+          "then": [
+            "replace that input's retained latest value",
+            "emit the combined tuple, or its projection, once every input has emitted at least once",
+            "emit nothing before that"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "inputs are active",
+          "when": "a input emits again before the others",
+          "then": [
+            "replace its retained latest value",
+            "nothing is queued"
+          ]
+        },
+        {
           "kind": "completion",
           "given": "other inputs are still active",
           "when": "an input completes",
@@ -1058,6 +1241,24 @@
           ]
         },
         {
+          "kind": "inner",
+          "given": "an input is active",
+          "when": "the active input emits a value",
+          "then": [
+            "forward the value immediately",
+            "pending inputs are not yet subscribed and cannot emit"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "an input is active",
+          "when": "later inputs are pending",
+          "then": [
+            "queue them",
+            "admit the next input only when the active input completes"
+          ]
+        },
+        {
           "kind": "completion",
           "given": "an input is active and further inputs remain",
           "when": "the active input completes",
@@ -1129,6 +1330,32 @@
           "when": "current inner completes",
           "then": [
             "subscribe to the next queued inner; forward inner values in order"
+          ]
+        },
+        {
+          "kind": "inner",
+          "given": "the active inner is running",
+          "when": "the active inner emits a value",
+          "then": [
+            "forward the value immediately",
+            "values from queued inners are never interleaved with it"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "no inner is active",
+          "when": "an inner observable arrives",
+          "then": [
+            "admit it immediately"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "an inner is active",
+          "when": "an inner observable arrives",
+          "then": [
+            "queue the inner behind the active inner",
+            "admit queued items one at a time in arrival order"
           ]
         },
         {
@@ -1210,6 +1437,32 @@
           ]
         },
         {
+          "kind": "inner",
+          "given": "the active projected inner is running",
+          "when": "the active projected inner emits a value",
+          "then": [
+            "forward the value immediately",
+            "values from queued projected inners are never interleaved with it"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "no inner is active",
+          "when": "an outer value arrives",
+          "then": [
+            "admit it immediately"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "an inner is active",
+          "when": "an outer value arrives",
+          "then": [
+            "queue the outer value behind the active inner",
+            "admit queued items one at a time in arrival order"
+          ]
+        },
+        {
           "kind": "completion",
           "given": "no projected inner is active and no outer values are queued",
           "when": "the outer source completes",
@@ -1288,6 +1541,32 @@
           ]
         },
         {
+          "kind": "inner",
+          "given": "the active configured inner is running",
+          "when": "the active configured inner emits a value",
+          "then": [
+            "forward the value immediately",
+            "values from queued configured inners are never interleaved with it"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "no inner is active",
+          "when": "an outer value arrives",
+          "then": [
+            "admit it immediately"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "an inner is active",
+          "when": "an outer value arrives",
+          "then": [
+            "queue the outer value behind the active inner",
+            "admit queued items one at a time in arrival order"
+          ]
+        },
+        {
           "kind": "completion",
           "given": "no configured inner is active and no outer values are queued",
           "when": "the outer source completes",
@@ -1363,6 +1642,24 @@
           "when": "current Observable completes",
           "then": [
             "subscribe to the next and continue forwarding"
+          ]
+        },
+        {
+          "kind": "inner",
+          "given": "an input is active",
+          "when": "the active input emits a value",
+          "then": [
+            "forward the value immediately",
+            "pending inputs are not yet subscribed and cannot emit"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "an input is active",
+          "when": "later inputs are pending",
+          "then": [
+            "queue them",
+            "admit the next input only when the active input completes"
           ]
         },
         {
@@ -1593,6 +1890,15 @@
           ]
         },
         {
+          "kind": "concurrency",
+          "given": "a duration is active",
+          "when": "a source value arrives",
+          "then": [
+            "replace the pending value",
+            "restart the silence window from this value"
+          ]
+        },
+        {
           "kind": "completion",
           "given": "a pending value exists",
           "when": "the source completes",
@@ -1686,6 +1992,15 @@
           "then": [
             "if dueTime has not fully elapsed since the latest value, reschedule the task for the remaining time",
             "otherwise emit the pending latest value and clear the task"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "a silence timer is active",
+          "when": "a source value arrives",
+          "then": [
+            "replace the pending value",
+            "restart the silence window from this value"
           ]
         },
         {
@@ -1851,6 +2166,15 @@
           ]
         },
         {
+          "kind": "concurrency",
+          "given": "delayed values are pending",
+          "when": "a source value arrives",
+          "then": [
+            "admit it: schedule its own timer",
+            "pending values are unbounded and preserve arrival order"
+          ]
+        },
+        {
           "kind": "completion",
           "given": "delayed values are pending",
           "when": "the source completes",
@@ -1960,6 +2284,15 @@
           "then": [
             "unsubscribe the subscription delay",
             "subscribe to the source"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "durations are active",
+          "when": "a source value arrives",
+          "then": [
+            "admit it: start its own duration without limit",
+            "emission order follows duration order, not arrival order"
           ]
         },
         {
@@ -2563,6 +2896,31 @@
           ]
         },
         {
+          "kind": "inner",
+          "given": "the active inner is running",
+          "when": "the active inner emits a value",
+          "then": [
+            "forward the value immediately"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "an inner is active",
+          "when": "a new inner observable arrives",
+          "then": [
+            "ignore it",
+            "it is dropped, not queued"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "no inner is active",
+          "when": "a new inner observable arrives",
+          "then": [
+            "admit it immediately"
+          ]
+        },
+        {
           "kind": "completion",
           "given": "no inner is active",
           "when": "the outer source completes",
@@ -2635,6 +2993,31 @@
           "when": "current inner completes",
           "then": [
             "become idle and allow the next inner"
+          ]
+        },
+        {
+          "kind": "inner",
+          "given": "the active inner is running",
+          "when": "the active inner emits a value",
+          "then": [
+            "forward the value immediately"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "an inner is active",
+          "when": "a new inner observable arrives",
+          "then": [
+            "ignore it",
+            "it is dropped, not queued"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "no inner is active",
+          "when": "a new inner observable arrives",
+          "then": [
+            "admit it immediately"
           ]
         },
         {
@@ -2713,6 +3096,31 @@
           ]
         },
         {
+          "kind": "inner",
+          "given": "the active projected inner is running",
+          "when": "the active projected inner emits a value",
+          "then": [
+            "forward the value immediately"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "an inner is active",
+          "when": "a new outer value arrives",
+          "then": [
+            "ignore it",
+            "it is dropped, not queued"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "no inner is active",
+          "when": "a new outer value arrives",
+          "then": [
+            "admit it immediately"
+          ]
+        },
+        {
           "kind": "completion",
           "given": "no projected inner is active",
           "when": "the outer source completes",
@@ -2785,6 +3193,32 @@
           "when": "a value is accepted for expansion",
           "then": [
             "emit it and subscribe to its projected Observable recursively"
+          ]
+        },
+        {
+          "kind": "inner",
+          "given": "a recursive inner is active",
+          "when": "it emits a value",
+          "then": [
+            "forward the value downstream",
+            "feed it back through the projection as a new expansion, subject to the concurrency limit"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "fewer than concurrent inners are active",
+          "when": "a value is accepted for expansion",
+          "then": [
+            "admit it: project and subscribe immediately"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "concurrent inners are already active",
+          "when": "a value is accepted for expansion",
+          "then": [
+            "buffer it",
+            "expand it when an active inner completes"
           ]
         },
         {
@@ -3203,6 +3637,33 @@
           ]
         },
         {
+          "kind": "inner",
+          "given": "projected inners are active",
+          "when": "a projected inner emits a value",
+          "then": [
+            "forward the value immediately",
+            "values from different active projected inners interleave in arrival order"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "fewer than concurrent inners are active",
+          "when": "an outer value arrives",
+          "then": [
+            "admit it: project and subscribe immediately",
+            "increment the active count"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "concurrent inners are already active",
+          "when": "an outer value arrives",
+          "then": [
+            "queue the outer value",
+            "admit the oldest queued item when an active inner completes"
+          ]
+        },
+        {
           "kind": "completion",
           "given": "no projected inner is active and no outer values are queued",
           "when": "the outer source completes",
@@ -3288,6 +3749,23 @@
             "complete that group",
             "remove it from the group map so the key can start a new group",
             "unsubscribe the duration"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "groups are active",
+          "when": "a value with a new key arrives",
+          "then": [
+            "create a new group",
+            "the number of concurrent groups is unbounded"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "groups are active",
+          "when": "a value with an existing key arrives",
+          "then": [
+            "route it into the existing group"
           ]
         },
         {
@@ -3494,6 +3972,24 @@
           "when": "join strategy has enough inner values",
           "then": [
             "emit projected joined result"
+          ]
+        },
+        {
+          "kind": "inner",
+          "given": "the joined observable is active",
+          "when": "it emits a value",
+          "then": [
+            "apply the optional projection",
+            "forward the result"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "inner observables are being collected",
+          "when": "an inner observable arrives",
+          "then": [
+            "collect it without limit",
+            "all inners are admitted together once the outer completes"
           ]
         },
         {
@@ -3917,6 +4413,31 @@
           ]
         },
         {
+          "kind": "inner",
+          "given": "inputs are active",
+          "when": "any input emits a value",
+          "then": [
+            "forward the value immediately"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "fewer than concurrent inputs are active",
+          "when": "an input is pending",
+          "then": [
+            "admit it: subscribe immediately"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "concurrent inputs are active",
+          "when": "an input is pending",
+          "then": [
+            "queue it",
+            "admit it when an active input completes"
+          ]
+        },
+        {
           "kind": "completion",
           "given": "other inputs are still active",
           "when": "an input completes",
@@ -3989,6 +4510,33 @@
           "when": "an inner emits",
           "then": [
             "forward immediately; capacity opens: subscribe to queued inner"
+          ]
+        },
+        {
+          "kind": "inner",
+          "given": "inners are active",
+          "when": "a inner emits a value",
+          "then": [
+            "forward the value immediately",
+            "values from different active inners interleave in arrival order"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "fewer than concurrent inners are active",
+          "when": "an inner observable arrives",
+          "then": [
+            "admit it: subscribe immediately",
+            "increment the active count"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "concurrent inners are already active",
+          "when": "an inner observable arrives",
+          "then": [
+            "queue the inner",
+            "admit the oldest queued item when an active inner completes"
           ]
         },
         {
@@ -4070,6 +4618,33 @@
           ]
         },
         {
+          "kind": "inner",
+          "given": "inners are active",
+          "when": "an inner emits a value",
+          "then": [
+            "forward the value immediately",
+            "in expand mode, also feed the value back through the projection"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "fewer than concurrent inners are active",
+          "when": "a value arrives",
+          "then": [
+            "admit it: project and subscribe immediately",
+            "increment the active count"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "concurrent inners are already active",
+          "when": "a value arrives",
+          "then": [
+            "queue the value",
+            "admit the oldest queued item when an active inner completes"
+          ]
+        },
+        {
           "kind": "completion",
           "given": "no inner is active and the buffer is empty",
           "when": "the outer source completes",
@@ -4143,6 +4718,33 @@
           "when": "outer value arrives with capacity",
           "then": [
             "start projected inner; inner emits: forward immediately"
+          ]
+        },
+        {
+          "kind": "inner",
+          "given": "projected inners are active",
+          "when": "a projected inner emits a value",
+          "then": [
+            "forward the value immediately",
+            "values from different active projected inners interleave in arrival order"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "fewer than concurrent inners are active",
+          "when": "an outer value arrives",
+          "then": [
+            "admit it: project and subscribe immediately",
+            "increment the active count"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "concurrent inners are already active",
+          "when": "an outer value arrives",
+          "then": [
+            "queue the outer value",
+            "admit the oldest queued item when an active inner completes"
           ]
         },
         {
@@ -4221,6 +4823,33 @@
           "when": "outer value arrives with capacity",
           "then": [
             "subscribe to configured inner and forward its values"
+          ]
+        },
+        {
+          "kind": "inner",
+          "given": "configured inners are active",
+          "when": "a configured inner emits a value",
+          "then": [
+            "forward the value immediately",
+            "values from different active configured inners interleave in arrival order"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "fewer than concurrent inners are active",
+          "when": "an outer value arrives",
+          "then": [
+            "admit it: subscribe to the configured inner immediately",
+            "increment the active count"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "concurrent inners are already active",
+          "when": "an outer value arrives",
+          "then": [
+            "queue the outer value",
+            "admit the oldest queued item when an active inner completes"
           ]
         },
         {
@@ -4303,6 +4932,33 @@
           ]
         },
         {
+          "kind": "inner",
+          "given": "an accumulator inner is active",
+          "when": "it emits a value",
+          "then": [
+            "replace the accumulator with the value",
+            "emit the new accumulator"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "fewer than concurrent inners are active",
+          "when": "an outer value arrives",
+          "then": [
+            "admit it: project it with the current accumulator and subscribe immediately",
+            "increment the active count"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "concurrent inners are already active",
+          "when": "an outer value arrives",
+          "then": [
+            "queue the outer value",
+            "admit the oldest queued item when an active inner completes"
+          ]
+        },
+        {
           "kind": "completion",
           "given": "no accumulator inner is active and no outer values are queued",
           "when": "the source completes",
@@ -4378,6 +5034,23 @@
           "when": "any input emits",
           "then": [
             "forward immediately; complete after all inputs complete"
+          ]
+        },
+        {
+          "kind": "inner",
+          "given": "inputs are active",
+          "when": "any input emits a value",
+          "then": [
+            "forward the value immediately"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "inputs are pending",
+          "when": "the output is subscribed",
+          "then": [
+            "admit every input at once",
+            "concurrency is unlimited"
           ]
         },
         {
@@ -4618,6 +5291,15 @@
           ]
         },
         {
+          "kind": "concurrency",
+          "given": "scheduled deliveries are pending",
+          "when": "a notification arrives",
+          "then": [
+            "schedule it behind the pending deliveries",
+            "delivery order equals arrival order"
+          ]
+        },
+        {
           "kind": "completion",
           "given": "scheduled notifications may be pending",
           "when": "the source completes",
@@ -4682,6 +5364,23 @@
           "when": "current source errors or completes",
           "then": [
             "suppress the distinction and subscribe to the next fallback; complete after all finish"
+          ]
+        },
+        {
+          "kind": "inner",
+          "given": "a fallback source is active",
+          "when": "a fallback source emits a value",
+          "then": [
+            "forward the value unchanged"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "a source is active",
+          "when": "the active source terminates",
+          "then": [
+            "admit the next source",
+            "sources never overlap"
           ]
         },
         {
@@ -5253,6 +5952,33 @@
           ]
         },
         {
+          "kind": "inner",
+          "given": "no competitor has emitted yet",
+          "when": "a competitor emits a value",
+          "then": [
+            "select it as the winner",
+            "unsubscribe the other competitors",
+            "forward the value"
+          ]
+        },
+        {
+          "kind": "inner",
+          "given": "a winner has been selected",
+          "when": "the winner emits a value",
+          "then": [
+            "forward the value"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "competitors are pending",
+          "when": "the output is subscribed",
+          "then": [
+            "admit every competitor at once",
+            "after the first emission only the winner remains admitted"
+          ]
+        },
+        {
           "kind": "completion",
           "given": "no competitor has emitted yet",
           "when": "any competitor completes",
@@ -5332,6 +6058,33 @@
           "when": "first competitor emits",
           "then": [
             "choose it, unsubscribe losers, forward winner only"
+          ]
+        },
+        {
+          "kind": "inner",
+          "given": "no competitor has emitted yet",
+          "when": "a competitor emits a value",
+          "then": [
+            "select it as the winner",
+            "unsubscribe the other competitors",
+            "forward the value"
+          ]
+        },
+        {
+          "kind": "inner",
+          "given": "a winner has been selected",
+          "when": "the winner emits a value",
+          "then": [
+            "forward the value"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "competitors are pending",
+          "when": "the output is subscribed",
+          "then": [
+            "admit every competitor at once",
+            "after the first emission only the winner remains admitted"
           ]
         },
         {
@@ -5609,6 +6362,15 @@
           ]
         },
         {
+          "kind": "concurrency",
+          "given": "an execution is active",
+          "when": "the execution completes",
+          "then": [
+            "start the next execution only after the current one has completes",
+            "executions never overlap"
+          ]
+        },
+        {
           "kind": "completion",
           "given": "the repeat count is not exhausted",
           "when": "the source completes",
@@ -5697,6 +6459,15 @@
           "when": "the notifier emits",
           "then": [
             "resubscribe to the source"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "an execution is active",
+          "when": "the execution completes",
+          "then": [
+            "start the next execution only after the current one has completes",
+            "executions never overlap"
           ]
         },
         {
@@ -5823,6 +6594,15 @@
           ]
         },
         {
+          "kind": "concurrency",
+          "given": "an attempt is active",
+          "when": "the attempt errors",
+          "then": [
+            "start the next attempt only after the current one has errors",
+            "attempts never overlap"
+          ]
+        },
+        {
           "kind": "completion",
           "given": "any attempt is active",
           "when": "the source completes",
@@ -5911,6 +6691,15 @@
           "when": "the notifier emits",
           "then": [
             "resubscribe to the source"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "an attempt is active",
+          "when": "the attempt errors",
+          "then": [
+            "start the next attempt only after the current one has errors",
+            "attempts never overlap"
           ]
         },
         {
@@ -6014,6 +6803,15 @@
           ]
         },
         {
+          "kind": "concurrency",
+          "given": "the next sample has not occurred",
+          "when": "a source value arrives",
+          "then": [
+            "replace the pending value",
+            "only the latest value per sample period is admitted"
+          ]
+        },
+        {
           "kind": "completion",
           "given": "a pending sampled value exists",
           "when": "the source completes",
@@ -6105,6 +6903,15 @@
           "when": "the sampling interval ticks",
           "then": [
             "emit nothing"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "the next sample has not occurred",
+          "when": "a source value arrives",
+          "then": [
+            "replace the pending value",
+            "only the latest value per sample period is admitted"
           ]
         },
         {
@@ -6316,6 +7123,24 @@
           "when": "both sides provide the next pair",
           "then": [
             "compare them; mismatch emits false and completes; matched completion emits true"
+          ]
+        },
+        {
+          "kind": "inner",
+          "given": "both sequences are active",
+          "when": "the comparison sequence emits a value",
+          "then": [
+            "if the source queue holds a value, compare it with the oldest queued source value and emit false and complete on mismatch",
+            "otherwise enqueue the value, or emit false and complete if the source has already completed"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "values are being compared",
+          "when": "a value arrives on one side without a counterpart",
+          "then": [
+            "queue it without limit",
+            "it is compared when the other side emits"
           ]
         },
         {
@@ -7089,6 +7914,24 @@
           ]
         },
         {
+          "kind": "inner",
+          "given": "the current inner is active",
+          "when": "the current inner emits a value",
+          "then": [
+            "forward the value immediately",
+            "values from a replaced inner are never forwarded"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "an inner is active",
+          "when": "a new inner observable arrives",
+          "then": [
+            "replace: unsubscribe the active inner and admit the new one immediately",
+            "nothing is queued"
+          ]
+        },
+        {
           "kind": "completion",
           "given": "no inner is active",
           "when": "the outer source completes",
@@ -7161,6 +8004,24 @@
           "when": "new outer value arrives",
           "then": [
             "cancel current inner, project, and subscribe to the new inner"
+          ]
+        },
+        {
+          "kind": "inner",
+          "given": "the current projected inner is active",
+          "when": "the current projected inner emits a value",
+          "then": [
+            "forward the value immediately",
+            "values from a replaced projected inner are never forwarded"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "an inner is active",
+          "when": "a new outer value arrives",
+          "then": [
+            "replace: unsubscribe the active inner and admit the new one immediately",
+            "nothing is queued"
           ]
         },
         {
@@ -7239,6 +8100,24 @@
           ]
         },
         {
+          "kind": "inner",
+          "given": "the current configured inner is active",
+          "when": "the current configured inner emits a value",
+          "then": [
+            "forward the value immediately",
+            "values from a replaced configured inner are never forwarded"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "an inner is active",
+          "when": "a new outer value arrives",
+          "then": [
+            "replace: unsubscribe the active inner and admit the new one immediately",
+            "nothing is queued"
+          ]
+        },
+        {
           "kind": "completion",
           "given": "no configured inner is active",
           "when": "the outer source completes",
@@ -7312,6 +8191,25 @@
           "when": "new outer value arrives",
           "then": [
             "cancel current inner and start projection from current accumulator; inner emissions replace and emit accumulator"
+          ]
+        },
+        {
+          "kind": "inner",
+          "given": "the current accumulator inner is active",
+          "when": "it emits a value",
+          "then": [
+            "replace the accumulator with the value",
+            "emit the new accumulator",
+            "values from a replaced inner are never applied"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "an inner is active",
+          "when": "a new outer value arrives",
+          "then": [
+            "replace: unsubscribe the active inner and admit the new one immediately",
+            "nothing is queued"
           ]
         },
         {
@@ -7778,6 +8676,24 @@
           ]
         },
         {
+          "kind": "concurrency",
+          "given": "the duration is active",
+          "when": "a source value arrives",
+          "then": [
+            "ignore the value when trailing is false",
+            "retain it as the trailing value, replacing any earlier one, when trailing is true"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "the operator is idle",
+          "when": "a source value arrives",
+          "then": [
+            "emit it immediately when leading is true, otherwise retain it as the trailing value",
+            "start the duration"
+          ]
+        },
+        {
           "kind": "completion",
           "given": "trailing is enabled, a trailing value is pending, and the duration is active",
           "when": "the source completes",
@@ -7874,6 +8790,24 @@
             "emit the pending trailing value when trailing is enabled and one exists, which starts a new interval",
             "otherwise return to idle",
             "complete if the source has already completed and nothing is pending"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "the interval timer is active",
+          "when": "a source value arrives",
+          "then": [
+            "ignore the value when trailing is false",
+            "retain it as the trailing value, replacing any earlier one, when trailing is true"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "the operator is idle",
+          "when": "a source value arrives",
+          "then": [
+            "emit it immediately when leading is true, otherwise retain it as the trailing value",
+            "start the interval timer"
           ]
         },
         {
@@ -8103,6 +9037,15 @@
           ]
         },
         {
+          "kind": "inner",
+          "given": "the fallback observable is active",
+          "when": "the fallback observable emits a value",
+          "then": [
+            "forward the value unchanged",
+            "no further timeout is applied"
+          ]
+        },
+        {
           "kind": "completion",
           "given": "a timeout deadline is pending",
           "when": "the source completes",
@@ -8185,6 +9128,15 @@
           "then": [
             "unsubscribe from the source",
             "subscribe to the configured fallback observable"
+          ]
+        },
+        {
+          "kind": "inner",
+          "given": "the fallback observable is active",
+          "when": "the fallback observable emits a value",
+          "then": [
+            "forward the value unchanged",
+            "no further timeout is applied"
           ]
         },
         {
@@ -8404,6 +9356,15 @@
           ]
         },
         {
+          "kind": "concurrency",
+          "given": "a window is open",
+          "when": "the boundary notifier emits",
+          "then": [
+            "open exactly one replacement window",
+            "windows never overlap"
+          ]
+        },
+        {
           "kind": "completion",
           "given": "a window is open",
           "when": "the source completes",
@@ -8477,6 +9438,24 @@
           "when": "start/size boundary is reached",
           "then": [
             "open or close windows according to `windowSize` and `startWindowEvery`"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "startWindowEvery is less than windowSize",
+          "when": "a source value arrives at a start boundary",
+          "then": [
+            "open an additional window alongside the open ones",
+            "each value is admitted to every open window, so windows overlap"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "startWindowEvery is omitted or at least windowSize",
+          "when": "a window reaches windowSize",
+          "then": [
+            "complete it",
+            "the next window opens at the next start boundary, so windows never overlap"
           ]
         },
         {
@@ -8562,6 +9541,24 @@
           "when": "the creation interval fires",
           "then": [
             "open and emit an additional window with its own close timer"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "windowCreationInterval is configured and shorter than windowTimeSpan",
+          "when": "the creation interval fires",
+          "then": [
+            "open an additional window alongside the open ones",
+            "each value is admitted to every open window"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "no windowCreationInterval is configured",
+          "when": "a window closes",
+          "then": [
+            "open exactly one replacement window",
+            "windows never overlap"
           ]
         },
         {
@@ -8651,6 +9648,15 @@
           "then": [
             "complete that window",
             "unsubscribe its closing notifier"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "windows are open",
+          "when": "the openings observable emits",
+          "then": [
+            "open an additional window",
+            "any number of windows may overlap; each value is admitted to every open window"
           ]
         },
         {
@@ -8751,6 +9757,15 @@
           ]
         },
         {
+          "kind": "concurrency",
+          "given": "a window is open",
+          "when": "the closing notifier emits or completes",
+          "then": [
+            "open exactly one replacement window",
+            "windows never overlap"
+          ]
+        },
+        {
           "kind": "completion",
           "given": "a window is open",
           "when": "the source completes",
@@ -8829,6 +9844,32 @@
           ]
         },
         {
+          "kind": "inner",
+          "given": "secondary inputs are active",
+          "when": "a secondary input emits a value",
+          "then": [
+            "replace its retained latest value",
+            "emit nothing; only source values trigger output"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "not every secondary input has emitted yet",
+          "when": "a source value arrives",
+          "then": [
+            "ignore the source value",
+            "it is dropped, not queued"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "secondary inputs are active",
+          "when": "a secondary input emits again",
+          "then": [
+            "replace its retained latest value"
+          ]
+        },
+        {
           "kind": "completion",
           "given": "latest values from secondary inputs may be retained",
           "when": "the source completes",
@@ -8900,6 +9941,24 @@
           "when": "every queue has at least one value",
           "then": [
             "dequeue one from each and emit the tuple/projected result"
+          ]
+        },
+        {
+          "kind": "inner",
+          "given": "inputs are active",
+          "when": "a input emits a value",
+          "then": [
+            "enqueue the value on that input's FIFO queue",
+            "when every queue is non-empty, dequeue one value from each and emit the tuple, or its projection"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "inputs are active",
+          "when": "a input emits faster than the others",
+          "then": [
+            "queue its values without limit",
+            "no value is dropped or replaced"
           ]
         },
         {
@@ -8976,6 +10035,24 @@
           "when": "every inner queue has a value",
           "then": [
             "dequeue one from each and emit tuple; terminate when further full tuples become impossible"
+          ]
+        },
+        {
+          "kind": "inner",
+          "given": "inners are active",
+          "when": "a inner emits a value",
+          "then": [
+            "enqueue the value on that inner's FIFO queue",
+            "when every queue is non-empty, dequeue one value from each and emit the tuple, or its projection"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "inners are active",
+          "when": "a inner emits faster than the others",
+          "then": [
+            "queue its values without limit",
+            "no value is dropped or replaced"
           ]
         },
         {
@@ -9062,6 +10139,24 @@
           "when": "every queue has at least one value",
           "then": [
             "dequeue one from each and emit the tuple"
+          ]
+        },
+        {
+          "kind": "inner",
+          "given": "inputs are active",
+          "when": "a input emits a value",
+          "then": [
+            "enqueue the value on that input's FIFO queue",
+            "when every queue is non-empty, dequeue one value from each and emit the tuple, or its projection"
+          ]
+        },
+        {
+          "kind": "concurrency",
+          "given": "inputs are active",
+          "when": "a input emits faster than the others",
+          "then": [
+            "queue its values without limit",
+            "no value is dropped or replaced"
           ]
         },
         {

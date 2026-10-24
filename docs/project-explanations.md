@@ -111,7 +111,7 @@ RxJS implementation and tests
 | `docs/formal-language.md` | The formal-language architecture: the three language levels, grammar model, BDD-to-Mealy mapping, semantic constraints, round-trip property. |
 | `docs/testing.md` | How a rule becomes a test: marble tests, pure transition-model tests, and conformance tests. |
 | `docs/transition-coverage-matrix.md` | The twelve transition categories a state-complete operator test suite should consider. |
-| `spec/operators.json` | Machine-readable catalog (version `0.5.0`), one entry per operator with `rules[]` and an optional `note`. |
+| `spec/operators.json` | Machine-readable catalog (version `0.6.0`), one entry per operator with `rules[]` and an optional `note`. |
 | `spec/operator-catalog.schema.json` | JSON Schema (draft 2020-12) that structurally validates `operators.json`. |
 | `spec/convertible-bdd.ebnf` | EBNF grammar for **Convertible BDD**, the strict, parser-friendly Given / When / Then syntax. |
 | `spec/mealy.ebnf` | EBNF grammar for the **Mealy DSL**, the machine-oriented target language. |
@@ -137,9 +137,9 @@ modules rather than only the public API, so it includes:
 - internal helper modules that are not user-facing operators (`mergeInternals`,
   `joinAllInternals`, `scanInternals`).
 
-### 4.2 Nine kinds of rule
+### 4.2 Eleven kinds of rule
 
-Every operator has at least one rule of each of the seven lifecycle kinds. The `timer` and `notifier` kinds appear only where the operator schedules work or consumes a secondary observable. In lifecycle order:
+Every operator has at least one rule of each of the seven lifecycle kinds. The `timer`, `notifier`, `inner`, and `concurrency` kinds appear only where they apply. In lifecycle order:
 
 | `kind` | Heading in `operators.md` | Meaning |
 |---|---|---|
@@ -148,6 +148,8 @@ Every operator has at least one rule of each of the seven lifecycle kinds. The `
 | `event` | Event-triggered rule | What Action Policy fires on a discrete **boundary** event (for example, "closing notifier emits", "duration ends", "every queue has at least one value"). |
 | `timer` | Timer rule(s) | What happens when a **scheduled action fires**: an interval tick (`sampleTime`), a due-time timer (`debounceTime`, `delay`, `timeout`), a close or creation timer (`bufferTime`, `windowTime`), or a scheduler-dispatched delivery or subscription (`observeOn`, `subscribeOn`). Only for the 13 operators that schedule work. |
 | `notifier` | Notifier rule(s) | What a **secondary observable's emission** does: open or close a buffer or window, flush a pending value, open a gate, end a duration, clear seen keys, trigger a resubscription, or reset a shared connection. Only for the 20 operators that consume a notifier. |
+| `inner` | Inner rule(s) | How a **value from an inner observable or secondary input** is handled: forwarded and interleaved (`mergeMap`), forwarded without interleaving (`concatMap`), forwarded only from the current inner (`switchMap`), combined (`combineLatest`), queued (`zip`), retained silently (`withLatestFrom`), fed back (`expand`), or forwarded unchanged from a fallback (`catchError`, `timeout`). Only for the 37 operators with such inputs. |
+| `concurrency` | Concurrency rule(s) | Whether **new work arriving while work is active** is allowed up to a limit (`mergeMap`), queued (`concatMap`, `zip`), replaced (`switchMap`, `debounce`, `combineLatest`), or ignored (`exhaustMap`, `throttle`), and whether buffers, windows, groups, or executions may overlap. Only for the 60 operators whose work can overlap or be superseded. |
 | `completion` | Completion rule(s) | What happens to pending state and output when the source, an input, an inner Observable, or a notifier **completes**. Where the outcome depends on state (a pending value or none, a retry budget left or exhausted), each case is its own rule. |
 | `error` | Error rule(s) | What is discarded, propagated, recovered, or swallowed when the source, an input, an inner Observable, or a notifier **errors**. |
 | `unsubscription` | Unsubscription rule(s) | What is torn down when the **downstream subscriber unsubscribes**: the source, inner subscriptions, timers, notifiers, and pending state. For multicast operators, what happens when a subscriber detaches from the shared subject. |
@@ -162,6 +164,8 @@ Rule counts in the current catalog:
 | `event` | 116 |
 | `timer` | 16 |
 | `notifier` | 30 |
+| `inner` | 39 |
+| `concurrency` | 84 |
 | `completion` | 190 |
 | `error` | 124 |
 | `unsubscription` | 121 |
@@ -204,6 +208,17 @@ When  the duration observable completes without emitting
 Then  clear the duration without emitting the pending value
       the pending value is replaced by the next source value, which starts a new duration
       complete, dropping the pending value, if the source has already completed
+
+Concurrency rules
+Given a duration is active
+When  a source value arrives
+Then  replace the pending value
+      do not start another duration
+
+Given the operator is idle
+When  a source value arrives
+Then  admit it as the pending value
+      start the duration
 
 Completion rules
 Given no pending value exists or no duration is active
@@ -492,9 +507,9 @@ model. Things worth knowing when working on it:
 - **Specification only, no code.** The parser, semantic analyzer, Mealy generator, RxJS
   generator, and conformance tests described in the docs are design intent. None are
   implemented in this repository.
-- **Every coverage-matrix row now maps to a rule kind.** Inner-next and concurrency-admission
-  transitions remain folded into the `state` and `event` rules rather than carrying a kind of
-  their own.
+- **Every coverage-matrix row now has a dedicated rule kind.** The original `state` and
+  `event` rules remain as each operator's behavioral summary and overlap in places with the
+  more specific kinds added later.
 - **Some existing `event` rules overlap the new lifecycle rules.** Operators such as
   `count`, `toArray`, `last`, and `endWith` already had an event rule whose trigger is
   source completion. Those were left untouched; the dedicated `completion` rule restates the

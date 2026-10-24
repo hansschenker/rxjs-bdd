@@ -48,6 +48,8 @@
                     "event",
                     "timer",
                     "notifier",
+                    "inner",
+                    "concurrency",
                     "completion",
                     "error",
                     "unsubscription",

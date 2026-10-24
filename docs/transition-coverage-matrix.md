@@ -25,7 +25,9 @@ The rule kinds in `spec/operators.json` cover the matrix as follows:
 
 | Coverage item | Catalog rule kind |
 |---|---|
-| Source next, Inner next, Concurrency admission | `state` and `event` |
+| Source next | `state` and `event` |
+| Inner next | `inner` (present only for the 37 operators with inner observables or secondary inputs) |
+| Concurrency admission | `concurrency` (present only for the 60 operators whose work can overlap or be superseded) |
 | Timer/scheduler event | `timer` (present only for the 13 operators that schedule work) |
 | Notifier event | `notifier` (present only for the 20 operators that consume a secondary observable) |
 | Source complete, Inner complete, notifier completion | `completion` |

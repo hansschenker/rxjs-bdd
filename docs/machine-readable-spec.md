@@ -30,12 +30,14 @@ Each operator contains one or more rules:
 - `kind: event` identifies a rule centered on a discrete trigger or boundary.
 - `kind: timer` identifies a rule triggered by a scheduled action firing: an interval tick, a due-time or absolute-date timer, or a scheduler-dispatched delivery or subscription.
 - `kind: notifier` identifies a rule triggered by a secondary notifier observable emitting (or, where that matters, completing): a closing or opening notifier, a window boundary, a duration selector result, a flush, a repeat or retry notifier, or a reset notifier.
+- `kind: inner` identifies a rule describing how a value emitted by an active inner observable or secondary input is handled: forwarded, interleaved, combined, queued, retained, or fed back.
+- `kind: concurrency` identifies an admission rule: when new work arrives while work is active, is it allowed (and up to what limit), queued, replaced, or ignored.
 - `kind: completion` identifies a lifecycle rule triggered by the completion of the source, an input, an inner Observable, or a notifier.
 - `kind: error` identifies a lifecycle rule triggered by an error from the source, an input, an inner Observable, or a notifier.
 - `kind: unsubscription` identifies a teardown rule triggered by the downstream subscriber unsubscribing, or, for multicast operators, by a subscriber detaching from the shared subject.
 - `kind: cancellation` identifies a rule describing which active work the operator itself cancels (inner subscriptions, timers, notifiers, or the source) in response to an event, or stating explicitly that the operator cancels nothing on its own.
 
-Every operator carries at least one rule of each of the `subscription`, `completion`, `error`, `unsubscription`, and `cancellation` kinds. `timer` and `notifier` rules exist only for operators that schedule work (13 operators) or consume a notifier observable (20 operators); their absence means that coverage-matrix row does not apply to the operator. Where the outcome depends on the state at that moment (a pending value or none, a retry budget left or exhausted, one subscriber left or several), each case is a separate rule with its own `given`. This makes the *Subscription*, *Timer/scheduler event*, *Notifier event*, *Source complete*, *Source error*, *Unsubscription*, and *Cancellation* rows of the transition coverage matrix derivable from the catalog by filtering on `kind`.
+Every operator carries at least one rule of each of the `subscription`, `completion`, `error`, `unsubscription`, and `cancellation` kinds. `timer`, `notifier`, `inner`, and `concurrency` rules exist only where they apply: operators that schedule work (13), consume a notifier observable (20), subscribe to inner observables or secondary inputs whose values matter (37), or hold work that can overlap or be superseded (60). The absence of such a rule means that coverage-matrix row does not apply to the operator. Where the outcome depends on the state at that moment (a pending value or none, a retry budget left or exhausted, one subscriber left or several), each case is a separate rule with its own `given`. This makes every row of the transition coverage matrix except *Source next* derivable from the catalog by filtering on `kind`; *Source next* remains the domain of the original `state` and `event` rules.
 
 The schema is in `spec/operator-catalog.schema.json`.
 
@@ -48,7 +50,7 @@ A valid rule must have:
 3. a non-empty `Given`;
 4. a non-empty `When`;
 5. at least one `Then` action;
-6. a rule kind of `subscription`, `state`, `event`, `timer`, `notifier`, `completion`, `error`, `unsubscription`, or `cancellation`.
+6. a rule kind of `subscription`, `state`, `event`, `timer`, `notifier`, `inner`, `concurrency`, `completion`, `error`, `unsubscription`, or `cancellation`.
 
 This structural validation does not by itself prove semantic completeness. Semantic review still asks whether all meaningful source, timer, notifier, inner, completion, error, and teardown transitions are represented.
 

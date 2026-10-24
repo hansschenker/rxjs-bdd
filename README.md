@@ -108,7 +108,7 @@ RxJS implementation and tests
 The complete source catalog has now been converted to Given / When / Then form:
 
 - **116 / 116 operator modules converted**
-- every operator carries explicit subscription, completion, error, unsubscription, and cancellation rules, plus timer and notifier rules where the operator schedules work or consumes a notifier
+- every operator carries explicit subscription, completion, error, unsubscription, and cancellation rules, plus timer, notifier, inner, and concurrency rules where the operator schedules work, consumes a notifier, flattens inner observables, or admits overlapping work
 - see [docs/operators.md](docs/operators.md)
 - source baseline: [rxjs-operators-state-and-policy-patterns](https://github.com/hansschenker/rxjs-operators-state-and-policy-patterns)
 
@@ -146,6 +146,16 @@ Given <notifier active>
 When  <closing / opening / boundary / duration / flush / reset notifier emits>
 Then  <open, close, flush, gate, resubscribe, or reset>
 
+Inner rule (operators with inner observables or secondary inputs)
+Given <inner or input active>
+When  <it emits a value>
+Then  <forward, interleave, combine, queue, retain, or feed back>
+
+Concurrency rule (operators whose work can overlap)
+Given <work active, below or at the limit>
+When  <new work arrives>
+Then  <allow, queue, replace, or ignore>
+
 Completion rule
 Given <state at the moment of completion>
 When  <source / input / inner / notifier completes>
@@ -167,7 +177,7 @@ When  <event that supersedes or ends that work>
 Then  <cancel the superseded work, or cancel nothing>
 ```
 
-In `spec/operators.json` these carry `kind: subscription`, `kind: timer`, `kind: notifier`, `kind: completion`, `kind: error`, `kind: unsubscription`, and `kind: cancellation`, so the *Subscription*, *Timer/scheduler event*, *Notifier event*, *Source complete*, *Source error*, *Unsubscription*, and *Cancellation* rows of the transition coverage matrix can be read directly from the catalog.
+In `spec/operators.json` these carry `kind: subscription`, `kind: timer`, `kind: notifier`, `kind: inner`, `kind: concurrency`, `kind: completion`, `kind: error`, `kind: unsubscription`, and `kind: cancellation`, so every row of the transition coverage matrix except *Source next* can be read directly from the catalog by filtering on `kind`.
 
 ## Canonical example: debounceTime
 
