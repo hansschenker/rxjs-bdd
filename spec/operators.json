@@ -1,5 +1,5 @@
 {
-  "version": "0.1.0",
+  "version": "0.2.0",
   "operators": [
     {
       "operator": "audit",
@@ -18,6 +18,34 @@
           "when": "duration ends",
           "then": [
             "emit the pending latest value and return to idle"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "no pending value exists or no duration is active",
+          "when": "the source completes",
+          "then": [
+            "complete immediately"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "a pending value exists and a duration is active",
+          "when": "the source completes",
+          "then": [
+            "defer completion until the duration ends",
+            "emit the pending latest value when the duration ends",
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the source or the active duration observable errors",
+          "then": [
+            "discard the pending value",
+            "unsubscribe the active duration",
+            "error immediately"
           ]
         }
       ],
@@ -41,6 +69,34 @@
           "then": [
             "emit the pending latest value and return to idle"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "no pending value exists or no interval timer is active",
+          "when": "the source completes",
+          "then": [
+            "complete immediately"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "a pending value exists and an interval timer is active",
+          "when": "the source completes",
+          "then": [
+            "defer completion until the interval ends",
+            "emit the pending latest value when the interval ends",
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the source errors",
+          "then": [
+            "discard the pending value",
+            "cancel the interval timer",
+            "error immediately"
+          ]
         }
       ],
       "note": "Time-based specialization of `audit`."
@@ -62,6 +118,33 @@
           "when": "closing notifier emits",
           "then": [
             "emit the current array and start a fresh buffer"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "a buffer is open",
+          "when": "the source completes",
+          "then": [
+            "emit the current buffer, even if it is empty",
+            "complete"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "a buffer is open",
+          "when": "the closing notifier completes",
+          "then": [
+            "ignore the completion",
+            "keep buffering until the source completes"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the source or the closing notifier errors",
+          "then": [
+            "discard the current buffer",
+            "error immediately"
           ]
         }
       ],
@@ -85,6 +168,32 @@
           "then": [
             "emit that buffer; open later buffers according to `startBufferEvery`"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "one or more partial buffers are open",
+          "when": "the source completes",
+          "then": [
+            "emit every open partial buffer in opening order",
+            "complete"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "no buffer is open",
+          "when": "the source completes",
+          "then": [
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the source errors",
+          "then": [
+            "discard all open buffers",
+            "error immediately"
+          ]
         }
       ],
       "note": null
@@ -106,6 +215,26 @@
           "when": "a buffer times out or reaches `maxBufferSize`",
           "then": [
             "emit it and open replacements according to configuration"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "one or more time-span buffers are open",
+          "when": "the source completes",
+          "then": [
+            "emit every open buffer in opening order, including an empty one",
+            "cancel pending buffer timers",
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the source errors",
+          "then": [
+            "discard all open buffers",
+            "cancel pending buffer timers",
+            "error immediately"
           ]
         }
       ],
@@ -129,6 +258,42 @@
           "then": [
             "open a buffer; its closing notifier fires: emit and close that buffer"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "zero or more toggled buffers are open",
+          "when": "the source completes",
+          "then": [
+            "emit every open buffer in opening order",
+            "complete"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "the operator is active",
+          "when": "the openings observable completes",
+          "then": [
+            "ignore the completion",
+            "already open buffers stay open until their closing notifier emits or the source completes"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "a buffer is open",
+          "when": "its closing notifier completes without emitting",
+          "then": [
+            "ignore the completion",
+            "keep that buffer open until the source completes"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the source, the openings observable, or a closing notifier errors",
+          "then": [
+            "discard all open buffers",
+            "error immediately"
+          ]
         }
       ],
       "note": null
@@ -150,6 +315,33 @@
           "when": "closing selector's notifier emits",
           "then": [
             "emit current buffer and immediately open the next buffer"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "a buffer is open",
+          "when": "the source completes",
+          "then": [
+            "emit the current buffer, even if it is empty",
+            "complete"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "a buffer is open",
+          "when": "the closing observable completes without emitting",
+          "then": [
+            "ignore the completion",
+            "keep the buffer open until the source completes"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the source or the closing observable errors",
+          "then": [
+            "discard the current buffer",
+            "error immediately"
           ]
         }
       ],
@@ -173,6 +365,42 @@
           "then": [
             "invoke selector and subscribe to the replacement Observable instead of forwarding the error"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "the source is active and no error has been caught",
+          "when": "the source completes",
+          "then": [
+            "complete"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "a replacement observable is active",
+          "when": "the replacement observable completes",
+          "then": [
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "the source is active",
+          "when": "the source errors",
+          "then": [
+            "unsubscribe from the source",
+            "invoke the selector with the error and the caught observable",
+            "subscribe to the returned observable and mirror its notifications",
+            "error with the thrown error if the selector throws"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "a replacement observable is active",
+          "when": "the replacement observable errors",
+          "then": [
+            "error immediately",
+            "the selector is not invoked again"
+          ]
         }
       ],
       "note": null
@@ -194,6 +422,34 @@
           "when": "outer completes",
           "then": [
             "subscribe/combine inners and emit whenever all have values and any inner updates"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "inner observables are being collected",
+          "when": "the outer source completes",
+          "then": [
+            "stop collecting",
+            "subscribe to every collected inner with combineLatest semantics",
+            "complete immediately if no inners were collected"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "the combined inners are active",
+          "when": "an inner completes",
+          "then": [
+            "retain its latest value",
+            "complete when every inner has completed"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the outer source or any inner observable errors",
+          "then": [
+            "unsubscribe all inners",
+            "error immediately"
           ]
         }
       ],
@@ -217,6 +473,33 @@
           "then": [
             "emit the tuple/projected latest combination"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "other inputs are still active",
+          "when": "an input completes",
+          "then": [
+            "retain its latest value",
+            "keep combining with the remaining inputs",
+            "no combination is ever emitted if that input never emitted"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "every other input has completed",
+          "when": "the last active input completes",
+          "then": [
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the source or any supplied input errors",
+          "then": [
+            "unsubscribe all inputs",
+            "error immediately"
+          ]
         }
       ],
       "note": "Deprecated pipeable form."
@@ -238,6 +521,34 @@
           "when": "all active inners are ready and any inner emits",
           "then": [
             "emit the latest-value tuple"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "inner observables are being collected",
+          "when": "the outer source completes",
+          "then": [
+            "stop collecting",
+            "subscribe to every collected inner with combineLatest semantics",
+            "complete immediately if no inners were collected"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "the combined inners are active",
+          "when": "an inner completes",
+          "then": [
+            "retain its latest value",
+            "complete when every inner has completed"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the outer source or any inner observable errors",
+          "then": [
+            "unsubscribe all inners",
+            "error immediately"
           ]
         }
       ],
@@ -261,6 +572,33 @@
           "then": [
             "emit the latest-value tuple"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "other inputs are still active",
+          "when": "an input completes",
+          "then": [
+            "retain its latest value",
+            "keep combining with the remaining inputs",
+            "no combination is ever emitted if that input never emitted"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "every other input has completed",
+          "when": "the last active input completes",
+          "then": [
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the source or any supplied input errors",
+          "then": [
+            "unsubscribe all inputs",
+            "error immediately"
+          ]
         }
       ],
       "note": null
@@ -282,6 +620,31 @@
           "when": "current input completes",
           "then": [
             "subscribe to the next; forward values from only the current input"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "an input is active and further inputs remain",
+          "when": "the active input completes",
+          "then": [
+            "subscribe to the next input"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "the last input is active",
+          "when": "the last input completes",
+          "then": [
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any input is active",
+          "when": "the active input errors",
+          "then": [
+            "error immediately",
+            "never subscribe to the remaining inputs"
           ]
         }
       ],
@@ -305,6 +668,34 @@
           "then": [
             "subscribe to the next queued inner; forward inner values in order"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "no inner is active and no inners are queued",
+          "when": "the outer source completes",
+          "then": [
+            "complete immediately"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "a inner is active or inners are queued",
+          "when": "the outer source completes",
+          "then": [
+            "mark the outer as completed",
+            "keep draining queued inners in order, one inner at a time",
+            "complete after the last inner completes"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the outer source or the active inner errors",
+          "then": [
+            "discard queued inners",
+            "unsubscribe the active inner",
+            "error immediately"
+          ]
         }
       ],
       "note": null
@@ -326,6 +717,34 @@
           "when": "current inner completes",
           "then": [
             "project and subscribe to the next queued outer value"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "no projected inner is active and no outer values are queued",
+          "when": "the outer source completes",
+          "then": [
+            "complete immediately"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "a projected inner is active or outer values are queued",
+          "when": "the outer source completes",
+          "then": [
+            "mark the outer as completed",
+            "keep draining queued outer values in order, one projected inner at a time",
+            "complete after the last projected inner completes"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the outer source or the active projected inner errors",
+          "then": [
+            "discard queued outer values",
+            "unsubscribe the active projected inner",
+            "error immediately"
           ]
         }
       ],
@@ -349,6 +768,34 @@
           "then": [
             "subscribe to another instance of the configured inner for the next queued outer value"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "no configured inner is active and no outer values are queued",
+          "when": "the outer source completes",
+          "then": [
+            "complete immediately"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "a configured inner is active or outer values are queued",
+          "when": "the outer source completes",
+          "then": [
+            "mark the outer as completed",
+            "keep draining queued outer values in order, one configured inner at a time",
+            "complete after the last configured inner completes"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the outer source or the active configured inner errors",
+          "then": [
+            "discard queued outer values",
+            "unsubscribe the active configured inner",
+            "error immediately"
+          ]
         }
       ],
       "note": "Deprecated specialization."
@@ -370,6 +817,31 @@
           "when": "current Observable completes",
           "then": [
             "subscribe to the next and continue forwarding"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "an input is active and further inputs remain",
+          "when": "the active input completes",
+          "then": [
+            "subscribe to the next input"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "the last input is active",
+          "when": "the last input completes",
+          "then": [
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any input is active",
+          "when": "the active input errors",
+          "then": [
+            "error immediately",
+            "never subscribe to the remaining inputs"
           ]
         }
       ],
@@ -393,6 +865,24 @@
           "then": [
             "connect the shared source and route it through the selector result"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "the source is connected to the shared subject",
+          "when": "the source completes",
+          "then": [
+            "complete the subject",
+            "the output completes as the selector pipeline propagates the subject's completion"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "the source is connected to the shared subject",
+          "when": "the source errors",
+          "then": [
+            "error the subject",
+            "the output errors as the selector pipeline propagates the subject's error"
+          ]
         }
       ],
       "note": null
@@ -414,6 +904,24 @@
           "when": "source completes",
           "then": [
             "emit the final count and complete"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "a running count exists, possibly zero",
+          "when": "the source completes",
+          "then": [
+            "emit the final count",
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "a running count exists",
+          "when": "the source errors",
+          "then": [
+            "discard the count",
+            "error immediately"
           ]
         }
       ],
@@ -437,6 +945,34 @@
           "then": [
             "emit the pending latest value"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "a pending value exists",
+          "when": "the source completes",
+          "then": [
+            "unsubscribe the active duration",
+            "emit the pending latest value",
+            "complete"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "no pending value exists",
+          "when": "the source completes",
+          "then": [
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the source or the active duration observable errors",
+          "then": [
+            "discard the pending value",
+            "unsubscribe the active duration",
+            "error immediately"
+          ]
         }
       ],
       "note": null
@@ -458,6 +994,34 @@
           "when": "configured silence interval elapses",
           "then": [
             "emit the pending latest value"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "a pending value exists",
+          "when": "the source completes",
+          "then": [
+            "cancel the silence timer",
+            "emit the pending latest value",
+            "complete"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "no pending value exists",
+          "when": "the source completes",
+          "then": [
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the source errors",
+          "then": [
+            "discard the pending value",
+            "cancel the silence timer",
+            "error immediately"
           ]
         }
       ],
@@ -481,6 +1045,32 @@
           "then": [
             "emit the default value, then complete"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "no value has been emitted",
+          "when": "the source completes",
+          "then": [
+            "emit the default value",
+            "complete"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "at least one value has been emitted",
+          "when": "the source completes",
+          "then": [
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the source errors",
+          "then": [
+            "error immediately",
+            "the default value is not emitted"
+          ]
         }
       ],
       "note": "If values were seen, they were forwarded normally."
@@ -502,6 +1092,33 @@
           "when": "its scheduled due time arrives",
           "then": [
             "forward that notification"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "delayed values are pending",
+          "when": "the source completes",
+          "then": [
+            "keep the pending timers running",
+            "emit each pending value when its delay elapses",
+            "complete after the last pending value is emitted"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "no delayed values are pending",
+          "when": "the source completes",
+          "then": [
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the source errors",
+          "then": [
+            "cancel pending timers and discard their values",
+            "error immediately"
           ]
         }
       ],
@@ -525,6 +1142,42 @@
           "then": [
             "release/emit the corresponding source value"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "durations are active for pending values",
+          "when": "the source completes",
+          "then": [
+            "keep waiting on each active duration",
+            "emit each value when its duration first emits",
+            "complete after the last pending duration resolves"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "no values are pending",
+          "when": "the source completes",
+          "then": [
+            "complete"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "a value is pending on its duration",
+          "when": "its duration completes without emitting",
+          "then": [
+            "drop the pending value without emitting it"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the source or any active duration observable errors",
+          "then": [
+            "discard pending values",
+            "unsubscribe active durations",
+            "error immediately"
+          ]
         }
       ],
       "note": "Subscription delay may also defer source subscription."
@@ -546,6 +1199,40 @@
           "when": "a notification object arrives",
           "then": [
             "execute it as next/error/complete on the destination"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "notification objects are being interpreted",
+          "when": "a complete notification arrives as a value",
+          "then": [
+            "complete",
+            "unsubscribe from the source"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "notification objects are being interpreted",
+          "when": "the source completes",
+          "then": [
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "notification objects are being interpreted",
+          "when": "an error notification arrives as a value",
+          "then": [
+            "error with the wrapped error",
+            "unsubscribe from the source"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "notification objects are being interpreted",
+          "when": "the source errors",
+          "then": [
+            "error immediately"
           ]
         }
       ],
@@ -569,6 +1256,33 @@
           "then": [
             "remember the key and emit the value; otherwise emit nothing"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "seen keys are retained",
+          "when": "the source completes",
+          "then": [
+            "clear the set of seen keys",
+            "complete"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "seen keys are retained",
+          "when": "the flushes observable completes",
+          "then": [
+            "ignore the completion",
+            "keep the current set of seen keys"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the source or the flushes observable errors",
+          "then": [
+            "clear the set of seen keys",
+            "error immediately"
+          ]
         }
       ],
       "note": "Optional flush Observable clears remembered keys."
@@ -590,6 +1304,22 @@
           "when": "first value arrives or comparator says current differs from previous",
           "then": [
             "emit and replace remembered value/key"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "a previous value or key is retained",
+          "when": "the source completes",
+          "then": [
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "a previous value or key is retained",
+          "when": "the source errors",
+          "then": [
+            "error immediately"
           ]
         }
       ],
@@ -613,6 +1343,22 @@
           "then": [
             "emit the object and replace remembered key"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "a previous key is retained",
+          "when": "the source completes",
+          "then": [
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "a previous key is retained",
+          "when": "the source errors",
+          "then": [
+            "error immediately"
+          ]
         }
       ],
       "note": null
@@ -634,6 +1380,31 @@
           "when": "configured index arrives",
           "then": [
             "emit that value and complete; source completes too early: emit default or error"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "fewer than index + 1 values have arrived and no default value is configured",
+          "when": "the source completes",
+          "then": [
+            "error with ArgumentOutOfRangeError"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "fewer than index + 1 values have arrived and a default value is configured",
+          "when": "the source completes",
+          "then": [
+            "emit the default value",
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "the configured index has not been reached",
+          "when": "the source errors",
+          "then": [
+            "error immediately"
           ]
         }
       ],
@@ -657,6 +1428,24 @@
           "then": [
             "emit configured trailing values in order, then complete"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "the source subscription is active",
+          "when": "the source completes",
+          "then": [
+            "emit each appended value in order",
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "the source subscription is active",
+          "when": "the source errors",
+          "then": [
+            "error immediately",
+            "the appended values are never emitted"
+          ]
         }
       ],
       "note": null
@@ -678,6 +1467,23 @@
           "when": "a value fails predicate",
           "then": [
             "emit false and complete; source completes without failure: emit true"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "no value has failed the predicate",
+          "when": "the source completes",
+          "then": [
+            "emit true",
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "no value has failed the predicate",
+          "when": "the source errors",
+          "then": [
+            "error immediately"
           ]
         }
       ],
@@ -701,6 +1507,32 @@
           "then": [
             "become idle and allow the next outer inner Observable to be subscribed"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "no inner is active",
+          "when": "the outer source completes",
+          "then": [
+            "complete immediately"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "a inner is active",
+          "when": "the outer source completes",
+          "then": [
+            "mark the outer as completed",
+            "complete when the active inner completes"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the outer source or the active inner errors",
+          "then": [
+            "unsubscribe the active inner",
+            "error immediately"
+          ]
         }
       ],
       "note": null
@@ -722,6 +1554,32 @@
           "when": "current inner completes",
           "then": [
             "become idle and allow the next inner"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "no inner is active",
+          "when": "the outer source completes",
+          "then": [
+            "complete immediately"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "a inner is active",
+          "when": "the outer source completes",
+          "then": [
+            "mark the outer as completed",
+            "complete when the active inner completes"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the outer source or the active inner errors",
+          "then": [
+            "unsubscribe the active inner",
+            "error immediately"
           ]
         }
       ],
@@ -745,6 +1603,32 @@
           "then": [
             "become idle; next outer value may start a new inner"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "no projected inner is active",
+          "when": "the outer source completes",
+          "then": [
+            "complete immediately"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "a projected inner is active",
+          "when": "the outer source completes",
+          "then": [
+            "mark the outer as completed",
+            "complete when the active projected inner completes"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the outer source or the active projected inner errors",
+          "then": [
+            "unsubscribe the active projected inner",
+            "error immediately"
+          ]
         }
       ],
       "note": "Concurrency policy: ignore while busy."
@@ -766,6 +1650,34 @@
           "when": "a value is accepted for expansion",
           "then": [
             "emit it and subscribe to its projected Observable recursively"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "no recursive inner is active and the buffer is empty",
+          "when": "the source completes",
+          "then": [
+            "complete immediately"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "recursive inners are active or values are buffered",
+          "when": "the source completes",
+          "then": [
+            "mark the source as completed",
+            "keep expanding buffered and emitted values",
+            "complete when every recursive inner has completed and the buffer is empty"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the source or any recursive inner errors",
+          "then": [
+            "discard buffered values",
+            "unsubscribe active inners",
+            "error immediately"
           ]
         }
       ],
@@ -789,6 +1701,22 @@
           "then": [
             "emit it only if predicate(value, index) is true"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "the source subscription is active",
+          "when": "the source completes",
+          "then": [
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "the source subscription is active",
+          "when": "the source errors",
+          "then": [
+            "error immediately"
+          ]
         }
       ],
       "note": null
@@ -810,6 +1738,24 @@
           "when": "source terminates or subscriber explicitly unsubscribes",
           "then": [
             "invoke the finalizer exactly as teardown requires"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "the finalizer is registered",
+          "when": "the source completes",
+          "then": [
+            "complete",
+            "invoke the finalizer during teardown"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "the finalizer is registered",
+          "when": "the source errors",
+          "then": [
+            "error immediately",
+            "invoke the finalizer during teardown"
           ]
         }
       ],
@@ -833,6 +1779,23 @@
           "then": [
             "emit it and complete; source completes without match: emit `undefined`"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "no value has matched the predicate",
+          "when": "the source completes",
+          "then": [
+            "emit undefined",
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "no value has matched the predicate",
+          "when": "the source errors",
+          "then": [
+            "error immediately"
+          ]
         }
       ],
       "note": null
@@ -854,6 +1817,23 @@
           "when": "first match arrives",
           "then": [
             "emit its index and complete; source completes without match: emit `-1`"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "no value has matched the predicate",
+          "when": "the source completes",
+          "then": [
+            "emit -1",
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "no value has matched the predicate",
+          "when": "the source errors",
+          "then": [
+            "error immediately"
           ]
         }
       ],
@@ -877,6 +1857,31 @@
           "then": [
             "emit and complete; source completes first: emit default or error"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "no value has matched and no default value is configured",
+          "when": "the source completes",
+          "then": [
+            "error with EmptyError"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "no value has matched and a default value is configured",
+          "when": "the source completes",
+          "then": [
+            "emit the default value",
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "no value has matched",
+          "when": "the source errors",
+          "then": [
+            "error immediately"
+          ]
         }
       ],
       "note": null
@@ -898,6 +1903,34 @@
           "when": "outer value arrives",
           "then": [
             "project and subscribe according to `mergeMap` concurrency policy"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "no projected inner is active and no outer values are queued",
+          "when": "the outer source completes",
+          "then": [
+            "complete immediately"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "projected inners are active or outer values are queued",
+          "when": "the outer source completes",
+          "then": [
+            "mark the outer as completed",
+            "keep running active projected inners and admit queued outer values as concurrency capacity opens",
+            "complete when the last projected inner completes and the queue is empty"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the outer source or any active projected inner errors",
+          "then": [
+            "discard queued outer values",
+            "unsubscribe all active projected inners",
+            "error immediately"
           ]
         }
       ],
@@ -921,6 +1954,24 @@
           "then": [
             "create group if needed and emit value into its group; emit each new group once to downstream"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "groups are active",
+          "when": "the source completes",
+          "then": [
+            "complete every active group",
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "groups are active",
+          "when": "the source or a group duration observable errors",
+          "then": [
+            "error every active group",
+            "error immediately"
+          ]
         }
       ],
       "note": "Duration/connector options can close or customize groups."
@@ -942,6 +1993,22 @@
           "when": "source next arrives",
           "then": [
             "emit nothing; source error/complete arrives: forward the terminal notification"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "values are being ignored",
+          "when": "the source completes",
+          "then": [
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "values are being ignored",
+          "when": "the source errors",
+          "then": [
+            "error immediately"
           ]
         }
       ],
@@ -965,6 +2032,23 @@
           "then": [
             "emit false and complete; source completes first: emit true"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "no value has arrived",
+          "when": "the source completes",
+          "then": [
+            "emit true",
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "no value has arrived",
+          "when": "the source errors",
+          "then": [
+            "error immediately"
+          ]
         }
       ],
       "note": null
@@ -986,6 +2070,25 @@
           "when": "join strategy has enough inner values",
           "then": [
             "emit projected joined result"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "inner observables are being collected",
+          "when": "the outer source completes",
+          "then": [
+            "pass the collected inners to the join function",
+            "subscribe to the joined observable",
+            "apply the optional projection to its values",
+            "complete when the joined observable completes"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the outer source or the joined observable errors",
+          "then": [
+            "error immediately"
           ]
         }
       ],
@@ -1009,6 +2112,41 @@
           "then": [
             "emit retained last value; if none, emit default or error"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "at least one value has matched",
+          "when": "the source completes",
+          "then": [
+            "emit the retained last matching value",
+            "complete"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "no value has matched and no default value is configured",
+          "when": "the source completes",
+          "then": [
+            "error with EmptyError"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "no value has matched and a default value is configured",
+          "when": "the source completes",
+          "then": [
+            "emit the default value",
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the source errors",
+          "then": [
+            "discard the retained value",
+            "error immediately"
+          ]
         }
       ],
       "note": null
@@ -1030,6 +2168,22 @@
           "when": "source value arrives",
           "then": [
             "emit project(value, index)"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "the source subscription is active",
+          "when": "the source completes",
+          "then": [
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "the source subscription is active",
+          "when": "the source errors",
+          "then": [
+            "error immediately"
           ]
         }
       ],
@@ -1053,6 +2207,22 @@
           "then": [
             "emit the configured constant"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "the source subscription is active",
+          "when": "the source completes",
+          "then": [
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "the source subscription is active",
+          "when": "the source errors",
+          "then": [
+            "error immediately"
+          ]
         }
       ],
       "note": "Deprecated specialization of `map`."
@@ -1074,6 +2244,25 @@
           "when": "next/error/complete occurs",
           "then": [
             "emit the corresponding notification object; after terminal notification value, complete normally"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "the source subscription is active",
+          "when": "the source completes",
+          "then": [
+            "emit a complete Notification",
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "the source subscription is active",
+          "when": "the source errors",
+          "then": [
+            "emit an error Notification wrapping the error",
+            "complete",
+            "the error itself is not forwarded"
           ]
         }
       ],
@@ -1097,6 +2286,32 @@
           "then": [
             "emit retained maximum (or follow empty-reduction behavior)"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "at least one value has been compared",
+          "when": "the source completes",
+          "then": [
+            "emit the retained maximum",
+            "complete"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "no value has arrived",
+          "when": "the source completes",
+          "then": [
+            "complete without emitting"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the source errors",
+          "then": [
+            "discard the retained maximum",
+            "error immediately"
+          ]
         }
       ],
       "note": "Implemented via reduction."
@@ -1118,6 +2333,32 @@
           "when": "any active input emits",
           "then": [
             "forward immediately; an input completes: admit pending input if capacity exists"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "other inputs are still active",
+          "when": "an input completes",
+          "then": [
+            "keep mirroring the remaining inputs",
+            "admit a pending input if concurrency capacity opens"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "every other input has completed",
+          "when": "the last active input completes",
+          "then": [
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the source or any supplied input errors",
+          "then": [
+            "unsubscribe all inputs",
+            "error immediately"
           ]
         }
       ],
@@ -1141,6 +2382,34 @@
           "then": [
             "forward immediately; capacity opens: subscribe to queued inner"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "no inner is active and no inners are queued",
+          "when": "the outer source completes",
+          "then": [
+            "complete immediately"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "inners are active or inners are queued",
+          "when": "the outer source completes",
+          "then": [
+            "mark the outer as completed",
+            "keep running active inners and admit queued inners as concurrency capacity opens",
+            "complete when the last inner completes and the queue is empty"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the outer source or any active inner errors",
+          "then": [
+            "discard queued inners",
+            "unsubscribe all active inners",
+            "error immediately"
+          ]
         }
       ],
       "note": null
@@ -1162,6 +2431,32 @@
           "when": "outer/inner events occur",
           "then": [
             "apply merge concurrency admission, forwarding, drain, and completion policy"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "no inner is active and the buffer is empty",
+          "when": "the outer source completes",
+          "then": [
+            "complete immediately"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "inners are active or values are buffered",
+          "when": "the outer source completes",
+          "then": [
+            "set the completed flag",
+            "complete only once the active count reaches zero and the buffer is empty"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the outer source or any inner errors",
+          "then": [
+            "error through the operator subscriber",
+            "release the buffer during teardown"
           ]
         }
       ],
@@ -1185,6 +2480,34 @@
           "then": [
             "start projected inner; inner emits: forward immediately"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "no projected inner is active and no outer values are queued",
+          "when": "the outer source completes",
+          "then": [
+            "complete immediately"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "projected inners are active or outer values are queued",
+          "when": "the outer source completes",
+          "then": [
+            "mark the outer as completed",
+            "keep running active projected inners and admit queued outer values as concurrency capacity opens",
+            "complete when the last projected inner completes and the queue is empty"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the outer source or any active projected inner errors",
+          "then": [
+            "discard queued outer values",
+            "unsubscribe all active projected inners",
+            "error immediately"
+          ]
         }
       ],
       "note": "Concurrency policy: allow overlap."
@@ -1206,6 +2529,34 @@
           "when": "outer value arrives with capacity",
           "then": [
             "subscribe to configured inner and forward its values"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "no configured inner is active and no outer values are queued",
+          "when": "the outer source completes",
+          "then": [
+            "complete immediately"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "configured inners are active or outer values are queued",
+          "when": "the outer source completes",
+          "then": [
+            "mark the outer as completed",
+            "keep running active configured inners and admit queued outer values as concurrency capacity opens",
+            "complete when the last configured inner completes and the queue is empty"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the outer source or any active configured inner errors",
+          "then": [
+            "discard queued outer values",
+            "unsubscribe all active configured inners",
+            "error immediately"
           ]
         }
       ],
@@ -1229,6 +2580,34 @@
           "then": [
             "project `(acc, value)` to inner; inner emits: replace accumulator and emit it"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "no accumulator inner is active and no outer values are queued",
+          "when": "the source completes",
+          "then": [
+            "complete immediately"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "accumulator inners are active or outer values are queued",
+          "when": "the source completes",
+          "then": [
+            "mark the source as completed",
+            "keep running active accumulator inners and admit queued values as capacity opens",
+            "complete when the last inner completes and the queue is empty"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the source or any active accumulator inner errors",
+          "then": [
+            "discard the accumulator and queued values",
+            "unsubscribe all active inners",
+            "error immediately"
+          ]
         }
       ],
       "note": null
@@ -1250,6 +2629,32 @@
           "when": "any input emits",
           "then": [
             "forward immediately; complete after all inputs complete"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "other inputs are still active",
+          "when": "an input completes",
+          "then": [
+            "keep mirroring the remaining inputs",
+            "admit a pending input if concurrency capacity opens"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "every other input has completed",
+          "when": "the last active input completes",
+          "then": [
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the source or any supplied input errors",
+          "then": [
+            "unsubscribe all inputs",
+            "error immediately"
           ]
         }
       ],
@@ -1273,6 +2678,32 @@
           "then": [
             "emit retained minimum (or follow empty-reduction behavior)"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "at least one value has been compared",
+          "when": "the source completes",
+          "then": [
+            "emit the retained minimum",
+            "complete"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "no value has arrived",
+          "when": "the source completes",
+          "then": [
+            "complete without emitting"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the source errors",
+          "then": [
+            "discard the retained minimum",
+            "error immediately"
+          ]
         }
       ],
       "note": "Implemented via reduction."
@@ -1294,6 +2725,26 @@
           "when": "connection is established",
           "then": [
             "subscribe subject to source; subscribers observe the shared subject"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "the source is connected to the subject",
+          "when": "the source completes",
+          "then": [
+            "complete the subject",
+            "complete every current subscriber",
+            "with a selector, the output completes as the selector pipeline propagates completion"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "the source is connected to the subject",
+          "when": "the source errors",
+          "then": [
+            "error the subject",
+            "error every current subscriber",
+            "with a selector, the output errors as the selector pipeline propagates the error"
           ]
         }
       ],
@@ -1317,6 +2768,24 @@
           "then": [
             "deliver the corresponding next/error/complete downstream"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "scheduled notifications may be pending",
+          "when": "the source completes",
+          "then": [
+            "schedule the completion on the scheduler",
+            "complete after previously scheduled notifications have been delivered"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "scheduled notifications may be pending",
+          "when": "the source errors",
+          "then": [
+            "schedule the error on the scheduler",
+            "error after previously scheduled notifications have been delivered"
+          ]
         }
       ],
       "note": "Changes notification delivery context, not source production."
@@ -1338,6 +2807,40 @@
           "when": "current source errors or completes",
           "then": [
             "suppress the distinction and subscribe to the next fallback; complete after all finish"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "further fallback sources remain",
+          "when": "the active source completes",
+          "then": [
+            "subscribe to the next source"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "no further sources remain",
+          "when": "the active source completes",
+          "then": [
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "further fallback sources remain",
+          "when": "the active source errors",
+          "then": [
+            "swallow the error",
+            "subscribe to the next source"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "no further sources remain",
+          "when": "the active source errors",
+          "then": [
+            "swallow the error",
+            "complete"
           ]
         }
       ],
@@ -1361,6 +2864,23 @@
           "then": [
             "emit `[previous, current]`, then remember current"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "a previous value is retained",
+          "when": "the source completes",
+          "then": [
+            "discard the retained value",
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "a previous value is retained",
+          "when": "the source errors",
+          "then": [
+            "error immediately"
+          ]
         }
       ],
       "note": null
@@ -1382,6 +2902,22 @@
           "when": "source value arrives",
           "then": [
             "one output forwards if predicate true, the other if false"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "both partition outputs are subscribed",
+          "when": "the source completes",
+          "then": [
+            "complete both outputs"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "both partition outputs are subscribed",
+          "when": "the source errors",
+          "then": [
+            "error both outputs"
           ]
         }
       ],
@@ -1405,6 +2941,22 @@
           "then": [
             "read configured property path and emit the result"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "the source subscription is active",
+          "when": "the source completes",
+          "then": [
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "the source subscription is active",
+          "when": "the source errors",
+          "then": [
+            "error immediately"
+          ]
         }
       ],
       "note": "Deprecated; equivalent to `map` property access."
@@ -1426,6 +2978,24 @@
           "when": "connection starts",
           "then": [
             "subscribe Subject to source and share that execution"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "the source is connected to the Subject",
+          "when": "the source completes",
+          "then": [
+            "complete every current subscriber",
+            "late subscribers complete immediately"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "the source is connected to the Subject",
+          "when": "the source errors",
+          "then": [
+            "error every current subscriber",
+            "late subscribers error immediately"
           ]
         }
       ],
@@ -1449,6 +3019,24 @@
           "then": [
             "receive current retained value; connection forwards source into shared BehaviorSubject"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "the source is connected to the BehaviorSubject",
+          "when": "the source completes",
+          "then": [
+            "complete every current subscriber",
+            "late subscribers complete immediately without receiving the retained value"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "the source is connected to the BehaviorSubject",
+          "when": "the source errors",
+          "then": [
+            "error every current subscriber",
+            "late subscribers error immediately"
+          ]
         }
       ],
       "note": "Deprecated."
@@ -1470,6 +3058,26 @@
           "when": "source completes",
           "then": [
             "emit retained last value to subscribers and complete"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "the source is connected to the AsyncSubject",
+          "when": "the source completes",
+          "then": [
+            "emit the retained last value, if any, to every current subscriber",
+            "complete every current subscriber",
+            "late subscribers receive the last value and complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "the source is connected to the AsyncSubject",
+          "when": "the source errors",
+          "then": [
+            "error every current subscriber",
+            "late subscribers error immediately",
+            "the retained last value is never emitted"
           ]
         }
       ],
@@ -1493,6 +3101,24 @@
           "then": [
             "replay retained notifications then receive live shared values"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "the source is connected to the ReplaySubject",
+          "when": "the source completes",
+          "then": [
+            "complete every current subscriber",
+            "late subscribers replay the buffered values and then complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "the source is connected to the ReplaySubject",
+          "when": "the source errors",
+          "then": [
+            "error every current subscriber",
+            "late subscribers replay the buffered values and then error"
+          ]
         }
       ],
       "note": "Deprecated."
@@ -1514,6 +3140,40 @@
           "when": "first competitor emits",
           "then": [
             "choose it as winner, unsubscribe losers, and forward only winner thereafter"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "no competitor has emitted yet",
+          "when": "any competitor completes",
+          "then": [
+            "complete",
+            "unsubscribe the other competitors"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "a winner has been selected",
+          "when": "the winner completes",
+          "then": [
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "no competitor has emitted yet",
+          "when": "any competitor errors",
+          "then": [
+            "error immediately",
+            "unsubscribe the other competitors"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "a winner has been selected",
+          "when": "the winner errors",
+          "then": [
+            "error immediately"
           ]
         }
       ],
@@ -1537,6 +3197,40 @@
           "then": [
             "choose it, unsubscribe losers, forward winner only"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "no competitor has emitted yet",
+          "when": "any competitor completes",
+          "then": [
+            "complete",
+            "unsubscribe the other competitors"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "a winner has been selected",
+          "when": "the winner completes",
+          "then": [
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "no competitor has emitted yet",
+          "when": "any competitor errors",
+          "then": [
+            "error immediately",
+            "unsubscribe the other competitors"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "a winner has been selected",
+          "when": "the winner errors",
+          "then": [
+            "error immediately"
+          ]
         }
       ],
       "note": null
@@ -1558,6 +3252,32 @@
           "when": "source completes",
           "then": [
             "emit the final accumulator exactly once, then complete"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "a seed was provided or at least one value has been accumulated",
+          "when": "the source completes",
+          "then": [
+            "emit the accumulated value",
+            "complete"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "no seed was provided and no value has arrived",
+          "when": "the source completes",
+          "then": [
+            "complete without emitting"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the source errors",
+          "then": [
+            "discard the accumulator",
+            "error immediately"
           ]
         }
       ],
@@ -1581,6 +3301,22 @@
           "then": [
             "connect; last subscriber leaves: disconnect shared connection"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "the connection is active with subscribers",
+          "when": "the connectable source completes",
+          "then": [
+            "complete every subscriber through the shared subject"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "the connection is active with subscribers",
+          "when": "the connectable source errors",
+          "then": [
+            "error every subscriber through the shared subject"
+          ]
         }
       ],
       "note": null
@@ -1602,6 +3338,32 @@
           "when": "source completes and repeats remain",
           "then": [
             "resubscribe; otherwise forward completion"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "the repeat count is not exhausted",
+          "when": "the source completes",
+          "then": [
+            "unsubscribe the completed source execution",
+            "resubscribe to the source, after the configured delay if any"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "the repeat count is exhausted",
+          "when": "the source completes",
+          "then": [
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any repetition is active",
+          "when": "the source errors",
+          "then": [
+            "error immediately",
+            "no further repetitions are started"
           ]
         }
       ],
@@ -1625,6 +3387,47 @@
           "then": [
             "resubscribe to source; notifier completes/errors: terminate accordingly"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "the notifier has not completed",
+          "when": "the source completes",
+          "then": [
+            "push a completion signal to the notifications subject",
+            "resubscribe to the source when the notifier emits"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "the source has completed and is waiting on the notifier",
+          "when": "the notifier completes",
+          "then": [
+            "complete"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "the notifier has completed",
+          "when": "the source completes",
+          "then": [
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the source errors",
+          "then": [
+            "error immediately"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the notifier errors",
+          "then": [
+            "error immediately"
+          ]
         }
       ],
       "note": "Deprecated-style notifier API."
@@ -1646,6 +3449,32 @@
           "when": "source errors and retry policy permits",
           "then": [
             "resubscribe; otherwise forward final error"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "any attempt is active",
+          "when": "the source completes",
+          "then": [
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "the retry count is not exhausted",
+          "when": "the source errors",
+          "then": [
+            "unsubscribe the failed source execution",
+            "resubscribe to the source, after the configured delay if any",
+            "reset the attempt counter on the next value if resetOnSuccess is set"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "the retry count is exhausted",
+          "when": "the source errors",
+          "then": [
+            "error immediately"
           ]
         }
       ],
@@ -1669,6 +3498,39 @@
           "then": [
             "resubscribe; notifier completes/errors: terminate accordingly"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "any attempt is active",
+          "when": "the source completes",
+          "then": [
+            "complete"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "the source has errored and is waiting on the notifier",
+          "when": "the notifier completes",
+          "then": [
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "the notifier is active",
+          "when": "the source errors",
+          "then": [
+            "push the error to the errors subject",
+            "resubscribe to the source when the notifier emits"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the notifier errors",
+          "then": [
+            "error immediately"
+          ]
         }
       ],
       "note": "Deprecated-style notifier API."
@@ -1690,6 +3552,33 @@
           "when": "sampler emits",
           "then": [
             "emit remembered latest value if one is pending, then clear pending flag"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "a pending sampled value exists",
+          "when": "the source completes",
+          "then": [
+            "discard the pending value without emitting it",
+            "complete"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "the source subscription is active",
+          "when": "the notifier completes",
+          "then": [
+            "ignore the completion",
+            "keep sampling state until the source completes"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the source or the notifier errors",
+          "then": [
+            "discard the pending value",
+            "error immediately"
           ]
         }
       ],
@@ -1713,6 +3602,26 @@
           "then": [
             "emit remembered latest value if one is pending"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "a pending sampled value exists",
+          "when": "the source completes",
+          "then": [
+            "discard the pending value without emitting it",
+            "cancel the sampling interval",
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the source errors",
+          "then": [
+            "discard the pending value",
+            "cancel the sampling interval",
+            "error immediately"
+          ]
         }
       ],
       "note": null
@@ -1734,6 +3643,23 @@
           "when": "source value arrives",
           "then": [
             "update accumulator with reducer and emit the updated accumulator"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "an accumulator is retained",
+          "when": "the source completes",
+          "then": [
+            "complete without emitting the accumulator again"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "an accumulator is retained",
+          "when": "the source errors",
+          "then": [
+            "discard the accumulator",
+            "error immediately"
           ]
         }
       ],
@@ -1757,6 +3683,32 @@
           "then": [
             "initialize/update accumulator and optionally emit according to helper configuration"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "emitOnComplete is set and accumulated state exists",
+          "when": "the source completes",
+          "then": [
+            "emit the accumulated state",
+            "complete"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "emitOnComplete is not set, or no state has been accumulated",
+          "when": "the source completes",
+          "then": [
+            "complete without emitting"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the source errors",
+          "then": [
+            "discard the accumulator",
+            "error immediately"
+          ]
         }
       ],
       "note": "Internal helper behind `scan`/`reduce`."
@@ -1778,6 +3730,34 @@
           "when": "both sides provide the next pair",
           "then": [
             "compare them; mismatch emits false and completes; matched completion emits true"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "the other sequence is still active",
+          "when": "one sequence completes",
+          "then": [
+            "mark that sequence as completed",
+            "keep comparing arriving values from the other sequence against the completed sequence's queue",
+            "emit false and complete if a value arrives while the completed sequence's queue is empty"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "the other sequence has already completed",
+          "when": "the remaining sequence completes",
+          "then": [
+            "emit true if both queues are empty, otherwise false",
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "either sequence errors",
+          "then": [
+            "discard both queues",
+            "error immediately"
           ]
         }
       ],
@@ -1801,6 +3781,24 @@
           "then": [
             "connect; reset conditions occur: reset connector/connection according to configuration"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "the source is connected",
+          "when": "the source completes",
+          "then": [
+            "complete every current subscriber",
+            "reset the connection and subject when resetOnComplete is set (default true), so later subscribers resubscribe to the source"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "the source is connected",
+          "when": "the source errors",
+          "then": [
+            "error every current subscriber",
+            "reset the connection and subject when resetOnError is set (default true), so later subscribers resubscribe to the source"
+          ]
         }
       ],
       "note": null
@@ -1822,6 +3820,24 @@
           "when": "subscriber arrives",
           "then": [
             "replay buffered values then receive live values; connection/reset follows `refCount` and terminal policy"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "the source is connected",
+          "when": "the source completes",
+          "then": [
+            "complete every current subscriber",
+            "keep the ReplaySubject because resetOnComplete is false; late subscribers replay the buffer and then complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "the source is connected",
+          "when": "the source errors",
+          "then": [
+            "error every current subscriber",
+            "reset the connection because resetOnError is true; the next subscriber resubscribes to the source"
           ]
         }
       ],
@@ -1845,6 +3861,40 @@
           "then": [
             "error; source completes with exactly one match: emit it; otherwise empty/not-found error semantics apply"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "exactly one value has matched",
+          "when": "the source completes",
+          "then": [
+            "emit the matched value",
+            "complete"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "values have arrived but none matched",
+          "when": "the source completes",
+          "then": [
+            "error with NotFoundError"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "no value has arrived",
+          "when": "the source completes",
+          "then": [
+            "error with EmptyError"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the source errors",
+          "then": [
+            "discard the retained match",
+            "error immediately"
+          ]
         }
       ],
       "note": null
@@ -1866,6 +3916,22 @@
           "when": "a value arrives after the first `count` values",
           "then": [
             "emit it; earlier values emit nothing"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "values are being counted",
+          "when": "the source completes",
+          "then": [
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "values are being counted",
+          "when": "the source errors",
+          "then": [
+            "error immediately"
           ]
         }
       ],
@@ -1889,6 +3955,24 @@
           "then": [
             "emit the oldest buffered value"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "the last count values are buffered",
+          "when": "the source completes",
+          "then": [
+            "discard the buffered values without emitting them",
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "the last count values are buffered",
+          "when": "the source errors",
+          "then": [
+            "discard the buffered values",
+            "error immediately"
+          ]
         }
       ],
       "note": "Trailing `count` values are discarded on completion."
@@ -1910,6 +3994,31 @@
           "when": "notifier emits",
           "then": [
             "open gate permanently; subsequent source values are forwarded"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "the gate is open or closed",
+          "when": "the source completes",
+          "then": [
+            "complete, whether or not the notifier has emitted"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "the gate is closed",
+          "when": "the notifier completes without emitting",
+          "then": [
+            "ignore the completion",
+            "keep skipping source values permanently"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the source or the notifier errors",
+          "then": [
+            "error immediately"
           ]
         }
       ],
@@ -1933,6 +4042,22 @@
           "then": [
             "stop skipping permanently and emit that value plus all subsequent values"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "skipping or forwarding state is active",
+          "when": "the source completes",
+          "then": [
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "skipping or forwarding state is active",
+          "when": "the source errors",
+          "then": [
+            "error immediately"
+          ]
         }
       ],
       "note": null
@@ -1954,6 +4079,22 @@
           "when": "output is subscribed",
           "then": [
             "emit prefix values first, then subscribe/forward source"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "the prefix values have been emitted and the source is active",
+          "when": "the source completes",
+          "then": [
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "the prefix values have been emitted and the source is active",
+          "when": "the source errors",
+          "then": [
+            "error immediately"
           ]
         }
       ],
@@ -1977,6 +4118,22 @@
           "then": [
             "subscribe to the source"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "the source subscription has been scheduled or established",
+          "when": "the source completes",
+          "then": [
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "the source subscription has been scheduled or established",
+          "when": "the source errors",
+          "then": [
+            "error immediately"
+          ]
         }
       ],
       "note": "Moves subscription side effect in time/context."
@@ -1998,6 +4155,32 @@
           "when": "new inner Observable arrives",
           "then": [
             "cancel previous inner and subscribe to the new one; forward only current inner"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "no inner is active",
+          "when": "the outer source completes",
+          "then": [
+            "complete immediately"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "a inner is active",
+          "when": "the outer source completes",
+          "then": [
+            "mark the outer as completed",
+            "complete when the active inner completes"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the outer source or the active inner errors",
+          "then": [
+            "unsubscribe the active inner",
+            "error immediately"
           ]
         }
       ],
@@ -2021,6 +4204,32 @@
           "then": [
             "cancel current inner, project, and subscribe to the new inner"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "no projected inner is active",
+          "when": "the outer source completes",
+          "then": [
+            "complete immediately"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "a projected inner is active",
+          "when": "the outer source completes",
+          "then": [
+            "mark the outer as completed",
+            "complete when the active projected inner completes"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the outer source or the active projected inner errors",
+          "then": [
+            "unsubscribe the active projected inner",
+            "error immediately"
+          ]
         }
       ],
       "note": "Concurrency policy: only latest."
@@ -2042,6 +4251,32 @@
           "when": "new outer value arrives",
           "then": [
             "cancel current inner and subscribe to the configured inner again"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "no configured inner is active",
+          "when": "the outer source completes",
+          "then": [
+            "complete immediately"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "a configured inner is active",
+          "when": "the outer source completes",
+          "then": [
+            "mark the outer as completed",
+            "complete when the active configured inner completes"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the outer source or the active configured inner errors",
+          "then": [
+            "unsubscribe the active configured inner",
+            "error immediately"
           ]
         }
       ],
@@ -2065,6 +4300,33 @@
           "then": [
             "cancel current inner and start projection from current accumulator; inner emissions replace and emit accumulator"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "no accumulator inner is active",
+          "when": "the source completes",
+          "then": [
+            "complete immediately"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "an accumulator inner is active",
+          "when": "the source completes",
+          "then": [
+            "mark the source as completed",
+            "complete when the active inner completes"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the source or the active accumulator inner errors",
+          "then": [
+            "discard the accumulator",
+            "unsubscribe the active inner",
+            "error immediately"
+          ]
         }
       ],
       "note": null
@@ -2086,6 +4348,22 @@
           "when": "a value arrives within limit",
           "then": [
             "emit it; configured count is reached: complete and unsubscribe upstream"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "fewer than count values have been taken",
+          "when": "the source completes",
+          "then": [
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "fewer than count values have been taken",
+          "when": "the source errors",
+          "then": [
+            "error immediately"
           ]
         }
       ],
@@ -2109,6 +4387,24 @@
           "then": [
             "emit buffered trailing values in order, then complete"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "up to count trailing values are buffered",
+          "when": "the source completes",
+          "then": [
+            "emit the buffered values in arrival order",
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "up to count trailing values are buffered",
+          "when": "the source errors",
+          "then": [
+            "discard the buffered values",
+            "error immediately"
+          ]
         }
       ],
       "note": null
@@ -2130,6 +4426,32 @@
           "when": "notifier emits",
           "then": [
             "complete output immediately and unsubscribe source"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "the notifier has not emitted",
+          "when": "the source completes",
+          "then": [
+            "complete",
+            "unsubscribe the notifier"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "the notifier has not emitted",
+          "when": "the notifier completes without emitting",
+          "then": [
+            "ignore the completion",
+            "keep mirroring the source"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "the notifier has not emitted",
+          "when": "the source or the notifier errors",
+          "then": [
+            "error immediately"
           ]
         }
       ],
@@ -2153,6 +4475,22 @@
           "then": [
             "optionally emit boundary value if `inclusive`, then complete; otherwise emit qualifying values"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "the predicate has not yet failed",
+          "when": "the source completes",
+          "then": [
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "the predicate has not yet failed",
+          "when": "the source errors",
+          "then": [
+            "error immediately"
+          ]
         }
       ],
       "note": null
@@ -2174,6 +4512,26 @@
           "when": "next/error/complete/subscription/finalize events occur",
           "then": [
             "invoke configured side effect and otherwise mirror source protocol"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "the source subscription is active",
+          "when": "the source completes",
+          "then": [
+            "invoke the complete callback",
+            "complete",
+            "invoke the finalize callback during teardown"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "the source subscription is active",
+          "when": "the source errors",
+          "then": [
+            "invoke the error callback",
+            "error immediately",
+            "invoke the finalize callback during teardown"
           ]
         }
       ],
@@ -2197,6 +4555,35 @@
           "then": [
             "emit according to `{leading, trailing}` policy and manage the duration"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "trailing is enabled, a trailing value is pending, and the duration is active",
+          "when": "the source completes",
+          "then": [
+            "defer completion until the duration ends",
+            "emit the trailing value",
+            "complete"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "no trailing value is pending, or trailing is disabled",
+          "when": "the source completes",
+          "then": [
+            "discard any suppressed value",
+            "complete immediately"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the source or the active duration observable errors",
+          "then": [
+            "discard any pending value",
+            "cancel the duration",
+            "error immediately"
+          ]
         }
       ],
       "note": "Default is leading `true`, trailing `false`."
@@ -2218,6 +4605,35 @@
           "when": "interval boundary occurs",
           "then": [
             "emit according to leading/trailing configuration and reopen as required"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "trailing is enabled, a trailing value is pending, and the interval timer is active",
+          "when": "the source completes",
+          "then": [
+            "defer completion until the interval timer ends",
+            "emit the trailing value",
+            "complete"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "no trailing value is pending, or trailing is disabled",
+          "when": "the source completes",
+          "then": [
+            "discard any suppressed value",
+            "complete immediately"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the source errors",
+          "then": [
+            "discard any pending value",
+            "cancel the interval timer",
+            "error immediately"
           ]
         }
       ],
@@ -2241,6 +4657,31 @@
           "then": [
             "error using configured error factory; otherwise complete normally after forwarding values"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "no value has arrived",
+          "when": "the source completes",
+          "then": [
+            "error with the result of the error factory (EmptyError by default)"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "at least one value has arrived",
+          "when": "the source completes",
+          "then": [
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the source errors",
+          "then": [
+            "error immediately",
+            "the error factory is not invoked"
+          ]
         }
       ],
       "note": null
@@ -2262,6 +4703,22 @@
           "when": "source value arrives",
           "then": [
             "emit `{value, interval}` using elapsed scheduler time and update timestamp"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "a previous timestamp is retained",
+          "when": "the source completes",
+          "then": [
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "a previous timestamp is retained",
+          "when": "the source errors",
+          "then": [
+            "error immediately"
           ]
         }
       ],
@@ -2285,6 +4742,24 @@
           "then": [
             "unsubscribe source and switch to configured fallback or throw TimeoutError"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "a timeout deadline is pending",
+          "when": "the source completes",
+          "then": [
+            "cancel the pending timeout timer",
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "a timeout deadline is pending",
+          "when": "the source errors",
+          "then": [
+            "cancel the pending timeout timer",
+            "error immediately"
+          ]
         }
       ],
       "note": null
@@ -2306,6 +4781,24 @@
           "when": "deadline expires",
           "then": [
             "unsubscribe source and subscribe to configured fallback Observable"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "a timeout deadline is pending",
+          "when": "the source completes",
+          "then": [
+            "cancel the pending timeout timer",
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "a timeout deadline is pending",
+          "when": "the source errors",
+          "then": [
+            "cancel the pending timeout timer",
+            "error immediately"
           ]
         }
       ],
@@ -2329,6 +4822,22 @@
           "then": [
             "emit `{value, timestamp: scheduler.now()}`"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "the source subscription is active",
+          "when": "the source completes",
+          "then": [
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "the source subscription is active",
+          "when": "the source errors",
+          "then": [
+            "error immediately"
+          ]
         }
       ],
       "note": null
@@ -2350,6 +4859,24 @@
           "when": "source completes",
           "then": [
             "emit the accumulated array once, then complete"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "values are being collected",
+          "when": "the source completes",
+          "then": [
+            "emit the collected array, empty if no values arrived",
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "values are being collected",
+          "when": "the source errors",
+          "then": [
+            "discard the collected array",
+            "error immediately"
           ]
         }
       ],
@@ -2373,6 +4900,33 @@
           "then": [
             "close current window, emit/open a new window"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "a window is open",
+          "when": "the source completes",
+          "then": [
+            "complete the current window",
+            "complete"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "a window is open",
+          "when": "the boundary notifier completes",
+          "then": [
+            "ignore the completion",
+            "keep the current window open until the source completes"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "a window is open",
+          "when": "the source or the boundary notifier errors",
+          "then": [
+            "error the current window",
+            "error immediately"
+          ]
         }
       ],
       "note": null
@@ -2394,6 +4948,24 @@
           "when": "start/size boundary is reached",
           "then": [
             "open or close windows according to `windowSize` and `startWindowEvery`"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "one or more windows are open",
+          "when": "the source completes",
+          "then": [
+            "complete every open window",
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "one or more windows are open",
+          "when": "the source errors",
+          "then": [
+            "error every open window",
+            "error immediately"
           ]
         }
       ],
@@ -2417,6 +4989,26 @@
           "then": [
             "close/open windows according to configuration"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "one or more windows are open",
+          "when": "the source completes",
+          "then": [
+            "complete every open window",
+            "cancel pending window timers",
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "one or more windows are open",
+          "when": "the source errors",
+          "then": [
+            "error every open window",
+            "cancel pending window timers",
+            "error immediately"
+          ]
         }
       ],
       "note": null
@@ -2438,6 +5030,33 @@
           "when": "opening emits",
           "then": [
             "create/emit a new window; its closing notifier fires: close that window"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "zero or more windows are open",
+          "when": "the source completes",
+          "then": [
+            "complete every open window",
+            "complete"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "the operator is active",
+          "when": "the openings observable completes",
+          "then": [
+            "ignore the completion",
+            "open windows stay open until their closing notifier emits or the source completes"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the source, the openings observable, or a closing notifier errors",
+          "then": [
+            "error every open window",
+            "error immediately"
           ]
         }
       ],
@@ -2461,6 +5080,24 @@
           "then": [
             "close current window and immediately create/emit the next window"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "a window is open",
+          "when": "the source completes",
+          "then": [
+            "complete the current window",
+            "complete"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "a window is open",
+          "when": "the source or the closing notifier errors",
+          "then": [
+            "error the current window",
+            "error immediately"
+          ]
         }
       ],
       "note": null
@@ -2482,6 +5119,31 @@
           "when": "source emits and every secondary has emitted at least once",
           "then": [
             "emit source value combined with latest secondary values"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "latest values from secondary inputs may be retained",
+          "when": "the source completes",
+          "then": [
+            "complete"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "the source subscription is active",
+          "when": "a secondary input completes",
+          "then": [
+            "ignore the completion",
+            "keep its latest value for later combinations"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the source or any secondary input errors",
+          "then": [
+            "error immediately"
           ]
         }
       ],
@@ -2505,6 +5167,33 @@
           "then": [
             "dequeue one from each and emit the tuple/projected result"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "the completing input's queue is empty",
+          "when": "an input completes",
+          "then": [
+            "complete, because no further tuple is possible"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "the completing input's queue still holds values",
+          "when": "an input completes",
+          "then": [
+            "mark that input as completed",
+            "keep emitting tuples while its queue drains",
+            "complete as soon as its queue is empty"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "any input errors",
+          "then": [
+            "discard all queues",
+            "error immediately"
+          ]
         }
       ],
       "note": "Deprecated pipeable form."
@@ -2527,6 +5216,42 @@
           "then": [
             "dequeue one from each and emit tuple; terminate when further full tuples become impossible"
           ]
+        },
+        {
+          "kind": "completion",
+          "given": "inner observables are being collected",
+          "when": "the outer source completes",
+          "then": [
+            "stop collecting",
+            "subscribe to every collected inner with zip semantics",
+            "complete immediately if no inners were collected"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "the zipped inners are active and the completing inner's queue is empty",
+          "when": "an inner completes",
+          "then": [
+            "complete, because no further tuple is possible"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "the zipped inners are active and the completing inner's queue still holds values",
+          "when": "an inner completes",
+          "then": [
+            "mark that inner as completed",
+            "complete as soon as its queue is empty"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "the outer source or any inner errors",
+          "then": [
+            "discard all queues",
+            "error immediately"
+          ]
         }
       ],
       "note": null
@@ -2548,6 +5273,33 @@
           "when": "every queue has at least one value",
           "then": [
             "dequeue one from each and emit the tuple"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "the completing input's queue is empty",
+          "when": "an input completes",
+          "then": [
+            "complete, because no further tuple is possible"
+          ]
+        },
+        {
+          "kind": "completion",
+          "given": "the completing input's queue still holds values",
+          "when": "an input completes",
+          "then": [
+            "mark that input as completed",
+            "keep emitting tuples while its queue drains",
+            "complete as soon as its queue is empty"
+          ]
+        },
+        {
+          "kind": "error",
+          "given": "any state",
+          "when": "any input errors",
+          "then": [
+            "discard all queues",
+            "error immediately"
           ]
         }
       ],

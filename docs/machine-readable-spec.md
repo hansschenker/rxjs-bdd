@@ -27,6 +27,10 @@ Each operator contains one or more rules:
 - `then` is an ordered list of transition and Action Policy statements.
 - `kind: state` identifies a rule derived from persistent state behavior.
 - `kind: event` identifies a rule centered on a discrete trigger or boundary.
+- `kind: completion` identifies a lifecycle rule triggered by the completion of the source, an input, an inner Observable, or a notifier.
+- `kind: error` identifies a lifecycle rule triggered by an error from the source, an input, an inner Observable, or a notifier.
+
+Every operator carries at least one `completion` and one `error` rule. Where the outcome depends on the state at the moment of completion or error (a pending value or none, a retry budget left or exhausted), each case is a separate rule with its own `given`. This makes the *Source complete* and *Source error* rows of the transition coverage matrix derivable from the catalog by filtering on `kind`.
 
 The schema is in `spec/operator-catalog.schema.json`.
 
@@ -39,7 +43,7 @@ A valid rule must have:
 3. a non-empty `Given`;
 4. a non-empty `When`;
 5. at least one `Then` action;
-6. a rule kind of `state` or `event`.
+6. a rule kind of `state`, `event`, `completion`, or `error`.
 
 This structural validation does not by itself prove semantic completeness. Semantic review still asks whether all meaningful source, timer, notifier, inner, completion, error, and teardown transitions are represented.
 

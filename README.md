@@ -108,6 +108,7 @@ RxJS implementation and tests
 The complete source catalog has now been converted to Given / When / Then form:
 
 - **116 / 116 operator modules converted**
+- every operator carries explicit completion and error rules
 - see [docs/operators.md](docs/operators.md)
 - source baseline: [rxjs-operators-state-and-policy-patterns](https://github.com/hansschenker/rxjs-operators-state-and-policy-patterns)
 
@@ -126,6 +127,22 @@ Then  <Action Policy>
 ```
 
 This separation is important: a persistent state condition and the event that exits that state must not accidentally be collapsed into one invalid transition.
+
+Each operator additionally carries lifecycle rules for the two terminal protocols:
+
+```text
+Completion rule
+Given <state at the moment of completion>
+When  <source / input / inner / notifier completes>
+Then  <flush or drop pending state; complete now or defer completion>
+
+Error rule
+Given <state at the moment of the error>
+When  <source / input / inner / notifier errors>
+Then  <discard pending state; error, recover, or swallow>
+```
+
+In `spec/operators.json` these carry `kind: completion` and `kind: error`, so the *Source complete* and *Source error* rows of the transition coverage matrix can be read directly from the catalog.
 
 ## Canonical example: debounceTime
 

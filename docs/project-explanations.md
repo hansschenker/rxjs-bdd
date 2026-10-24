@@ -111,7 +111,7 @@ RxJS implementation and tests
 | `docs/formal-language.md` | The formal-language architecture: the three language levels, grammar model, BDD-to-Mealy mapping, semantic constraints, round-trip property. |
 | `docs/testing.md` | How a rule becomes a test: marble tests, pure transition-model tests, and conformance tests. |
 | `docs/transition-coverage-matrix.md` | The twelve transition categories a state-complete operator test suite should consider. |
-| `spec/operators.json` | Machine-readable catalog (version `0.1.0`), one entry per operator with `rules[]` and an optional `note`. |
+| `spec/operators.json` | Machine-readable catalog (version `0.2.0`), one entry per operator with `rules[]` and an optional `note`. |
 | `spec/operator-catalog.schema.json` | JSON Schema (draft 2020-12) that structurally validates `operators.json`. |
 | `spec/convertible-bdd.ebnf` | EBNF grammar for **Convertible BDD**, the strict, parser-friendly Given / When / Then syntax. |
 | `spec/mealy.ebnf` | EBNF grammar for the **Mealy DSL**, the machine-oriented target language. |
@@ -137,16 +137,27 @@ modules rather than only the public API, so it includes:
 - internal helper modules that are not user-facing operators (`mergeInternals`,
   `joinAllInternals`, `scanInternals`).
 
-### 4.2 Two kinds of rule per operator
+### 4.2 Four kinds of rule per operator
 
-Every operator in the catalog currently has exactly **two** rules:
+Every operator in the catalog has at least one rule of each of four kinds:
 
-| `kind` | Name in `operators.md` | Meaning |
+| `kind` | Heading in `operators.md` | Meaning |
 |---|---|---|
 | `state` | State-conditioned rule | What happens to a value or event **while** a persistent state condition holds (for example, "buffer open", "duration active", "inner subscription active"). |
 | `event` | Event-triggered rule | What Action Policy fires on a discrete **boundary** event (for example, "closing notifier emits", "duration ends", "every queue has at least one value"). |
+| `completion` | Completion rule(s) | What happens to pending state and output when the source, an input, an inner Observable, or a notifier **completes**. Where the outcome depends on state (a pending value or none, a retry budget left or exhausted), each case is its own rule. |
+| `error` | Error rule(s) | What is discarded, propagated, recovered, or swallowed when the source, an input, an inner Observable, or a notifier **errors**. |
 
-Keeping these two apart is a deliberate design rule. A persistent state such as
+Rule counts in the current catalog:
+
+| Kind | Rules |
+|---|---|
+| `state` | 116 |
+| `event` | 116 |
+| `completion` | 188 |
+| `error` | 124 |
+
+Keeping `state` and `event` rules apart is a deliberate design rule. A persistent state such as
 "duration active" and the event that *ends* that state ("duration ends") are mutually
 exclusive, and collapsing them into one Given/When/Then would produce an invalid
 transition. The separation prevents that mistake.
@@ -163,6 +174,24 @@ Event-triggered rule
 Given the corresponding pending state exists
 When  duration ends
 Then  emit the pending latest value and return to idle
+
+Completion rules
+Given no pending value exists or no duration is active
+When  the source completes
+Then  complete immediately
+
+Given a pending value exists and a duration is active
+When  the source completes
+Then  defer completion until the duration ends
+      emit the pending latest value when the duration ends
+      complete
+
+Error rule
+Given any state
+When  the source or the active duration observable errors
+Then  discard the pending value
+      unsubscribe the active duration
+      error immediately
 
 Note: The first source value starts the duration.
 ```
@@ -416,10 +445,14 @@ model. Things worth knowing when working on it:
 - **Specification only, no code.** The parser, semantic analyzer, Mealy generator, RxJS
   generator, and conformance tests described in the docs are design intent. None are
   implemented in this repository.
-- **The catalog is a two-rule skeleton per operator.** Every operator has exactly one
-  `state` rule and one `event` rule. The README's own `debounceTime` example has four rules
-  (including completion and error). Completion, error, unsubscription, and cancellation
-  transitions from the coverage matrix are therefore mostly not yet in the catalog.
+- **Subscription, unsubscription, and cancellation are not yet rule kinds.** The catalog
+  covers state, event, completion, and error transitions. The remaining rows of the coverage
+  matrix are only implied where a completion or error rule mentions unsubscribing an inner
+  or a notifier.
+- **Some existing `event` rules overlap the new lifecycle rules.** Operators such as
+  `count`, `toArray`, `last`, and `endWith` already had an event rule whose trigger is
+  source completion. Those were left untouched; the dedicated `completion` rule restates the
+  behaviour and splits it by state where the outcome differs.
 - **Catalog rules are Readable BDD, not Convertible BDD.** The `given` / `when` / `then`
   strings in `operators.json` are free prose. Converting them to the strict grammar would
   be the next step toward the formal pipeline.

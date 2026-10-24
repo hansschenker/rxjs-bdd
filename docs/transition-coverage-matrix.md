@@ -18,3 +18,14 @@ This document defines the coverage vocabulary for future operator test analysis.
 | Cancellation | Which active work is cancelled and under what event? |
 
 The matrix is intentionally broader than ordinary value marbles because RxJS operator semantics also include lifecycle, scheduling, subscription, and teardown.
+
+## Mapping to the catalog
+
+The rule kinds in `spec/operators.json` cover the matrix as follows:
+
+| Coverage item | Catalog rule kind |
+|---|---|
+| Source next, Timer/scheduler event, Notifier event, Inner next, Concurrency admission | `state` and `event` |
+| Source complete, Inner complete, notifier completion | `completion` |
+| Source error, Inner error, notifier error | `error` |
+| Subscription, Unsubscription, Cancellation | not yet a dedicated rule kind; partially implied by `completion` and `error` rules that mention unsubscribing inners or notifiers |
