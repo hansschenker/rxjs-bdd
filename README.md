@@ -213,6 +213,49 @@ Then ...
 
 Together, the rules form a readable transition specification rather than a single example.
 
+
+## Formal language layer
+
+The project now has an explicit formal-language boundary.
+
+The two concrete languages are defined as context-free EBNF grammars:
+
+- `spec/convertible-bdd.ebnf` — strict, parser-friendly Given / When / Then syntax;
+- `spec/mealy.ebnf` — machine-oriented Mealy DSL;
+- `spec/machine-semantic-model.schema.json` — syntax-independent semantic model shared by both languages;
+- `docs/formal-language.md` — grammar model, semantic constraints, BDD-to-Mealy mapping, LLM guidance, and round-trip goals.
+
+Formally:
+
+```text
+G_BDD   = (N_BDD,   T_BDD,   P_BDD,   S_BDD)
+G_Mealy = (N_Mealy, T_Mealy, P_Mealy, S_Mealy)
+```
+
+with `N ∩ T = ∅` and each start symbol belonging to its language's non-terminal set.
+
+The architecture is:
+
+```text
+Readable BDD
+    ↓ normalization
+Convertible BDD ∈ L(G_BDD)
+    ↓ parser
+BDD AST
+    ↓ semantic analysis
+Machine Semantic Model
+    ↓ machine analysis
+M = (S, S₀, Σ, Γ, T, G)
+    ↓
+Mealy DSL ∈ L(G_Mealy)
+    ↓
+RxJS generator
+    ↓
+RxJS pipeline
+```
+
+The key design rule is that the converter does **not** perform unconstrained prose-to-code translation. Grammar validation establishes syntactic structure first; semantic validation establishes symbol and machine correctness second; an LLM can then assist with normalization, candidate generation, missing-transition analysis, and explanation inside those constraints.
+
 ## Goals
 
 This repository is intended to support:
@@ -247,7 +290,11 @@ The complete 116-operator catalog is also available as structured data:
 
 - `spec/operators.json` — machine-readable Given / When / Then rules.
 - `spec/operator-catalog.schema.json` — JSON Schema for structural validation.
+- `spec/convertible-bdd.ebnf` — formal Convertible BDD grammar.
+- `spec/mealy.ebnf` — formal Mealy DSL grammar.
+- `spec/machine-semantic-model.schema.json` — shared syntax-independent machine model.
 - `docs/machine-readable-spec.md` — semantics and validation invariants.
+- `docs/formal-language.md` — formal-language architecture and semantic constraints.
 
 ## From specification to testing
 
