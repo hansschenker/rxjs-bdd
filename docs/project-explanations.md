@@ -111,7 +111,7 @@ RxJS implementation and tests
 | `docs/formal-language.md` | The formal-language architecture: the three language levels, grammar model, BDD-to-Mealy mapping, semantic constraints, round-trip property. |
 | `docs/testing.md` | How a rule becomes a test: marble tests, pure transition-model tests, and conformance tests. |
 | `docs/transition-coverage-matrix.md` | The twelve transition categories a state-complete operator test suite should consider. |
-| `spec/operators.json` | Machine-readable catalog (version `0.3.0`), one entry per operator with `rules[]` and an optional `note`. |
+| `spec/operators.json` | Machine-readable catalog (version `0.4.0`), one entry per operator with `rules[]` and an optional `note`. |
 | `spec/operator-catalog.schema.json` | JSON Schema (draft 2020-12) that structurally validates `operators.json`. |
 | `spec/convertible-bdd.ebnf` | EBNF grammar for **Convertible BDD**, the strict, parser-friendly Given / When / Then syntax. |
 | `spec/mealy.ebnf` | EBNF grammar for the **Mealy DSL**, the machine-oriented target language. |
@@ -137,12 +137,13 @@ modules rather than only the public API, so it includes:
 - internal helper modules that are not user-facing operators (`mergeInternals`,
   `joinAllInternals`, `scanInternals`).
 
-### 4.2 Six kinds of rule per operator
+### 4.2 Seven kinds of rule per operator
 
-Every operator in the catalog has at least one rule of each of six kinds:
+Every operator in the catalog has at least one rule of each of seven kinds, listed in lifecycle order:
 
 | `kind` | Heading in `operators.md` | Meaning |
 |---|---|---|
+| `subscription` | Subscription rule(s) | The initial transition when a **downstream subscriber subscribes**: whether the source is subscribed immediately, deferred (`subscribeOn`, `delayWhen` with a subscription delay), or shared (`share`, `refCount`, `publish*`), the order in which notifiers and inputs are subscribed (`takeUntil` and `skipUntil` subscribe the notifier first, `withLatestFrom` subscribes the secondaries first), and the initial state. |
 | `state` | State-conditioned rule | What happens to a value or event **while** a persistent state condition holds (for example, "buffer open", "duration active", "inner subscription active"). |
 | `event` | Event-triggered rule | What Action Policy fires on a discrete **boundary** event (for example, "closing notifier emits", "duration ends", "every queue has at least one value"). |
 | `completion` | Completion rule(s) | What happens to pending state and output when the source, an input, an inner Observable, or a notifier **completes**. Where the outcome depends on state (a pending value or none, a retry budget left or exhausted), each case is its own rule. |
@@ -154,6 +155,7 @@ Rule counts in the current catalog:
 
 | Kind | Rules |
 |---|---|
+| `subscription` | 127 |
 | `state` | 116 |
 | `event` | 116 |
 | `completion` | 190 |
@@ -169,6 +171,12 @@ transition. The separation prevents that mistake.
 Example from the catalog (`audit`):
 
 ```text
+Subscription rule
+Given no subscription is active
+When  a downstream subscriber subscribes
+Then  subscribe to the source immediately
+      start with no pending value and no active duration
+
 State-conditioned rule
 Given duration active
 When  a source value arrives
@@ -466,10 +474,9 @@ model. Things worth knowing when working on it:
 - **Specification only, no code.** The parser, semantic analyzer, Mealy generator, RxJS
   generator, and conformance tests described in the docs are design intent. None are
   implemented in this repository.
-- **Subscription is not yet a rule kind.** The catalog covers state, event, completion,
-  error, unsubscription, and cancellation transitions. The Subscription row of the coverage
-  matrix (immediate, deferred, or shared connection) is only implied by the state and event
-  rules of operators such as `subscribeOn`, `share`, and `refCount`.
+- **Every coverage-matrix row now maps to a rule kind**, but timer, notifier, inner-next,
+  and concurrency-admission transitions are still folded into the `state` and `event` rules
+  rather than carrying a kind of their own.
 - **Some existing `event` rules overlap the new lifecycle rules.** Operators such as
   `count`, `toArray`, `last`, and `endWith` already had an event rule whose trigger is
   source completion. Those were left untouched; the dedicated `completion` rule restates the

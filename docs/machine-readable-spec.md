@@ -25,6 +25,7 @@ Each operator contains one or more rules:
 - `given` is the current state or state predicate.
 - `when` is the input/event.
 - `then` is an ordered list of transition and Action Policy statements.
+- `kind: subscription` identifies the initial transition taken when a downstream subscriber subscribes: whether the source is subscribed immediately, deferred, or shared, the order in which inputs and notifiers are subscribed, and the initial state.
 - `kind: state` identifies a rule derived from persistent state behavior.
 - `kind: event` identifies a rule centered on a discrete trigger or boundary.
 - `kind: completion` identifies a lifecycle rule triggered by the completion of the source, an input, an inner Observable, or a notifier.
@@ -32,7 +33,7 @@ Each operator contains one or more rules:
 - `kind: unsubscription` identifies a teardown rule triggered by the downstream subscriber unsubscribing, or, for multicast operators, by a subscriber detaching from the shared subject.
 - `kind: cancellation` identifies a rule describing which active work the operator itself cancels (inner subscriptions, timers, notifiers, or the source) in response to an event, or stating explicitly that the operator cancels nothing on its own.
 
-Every operator carries at least one rule of each of the `completion`, `error`, `unsubscription`, and `cancellation` kinds. Where the outcome depends on the state at that moment (a pending value or none, a retry budget left or exhausted, one subscriber left or several), each case is a separate rule with its own `given`. This makes the *Source complete*, *Source error*, *Unsubscription*, and *Cancellation* rows of the transition coverage matrix derivable from the catalog by filtering on `kind`.
+Every operator carries at least one rule of each of the `subscription`, `completion`, `error`, `unsubscription`, and `cancellation` kinds. Where the outcome depends on the state at that moment (a pending value or none, a retry budget left or exhausted, one subscriber left or several), each case is a separate rule with its own `given`. This makes the *Subscription*, *Source complete*, *Source error*, *Unsubscription*, and *Cancellation* rows of the transition coverage matrix derivable from the catalog by filtering on `kind`.
 
 The schema is in `spec/operator-catalog.schema.json`.
 
@@ -45,7 +46,7 @@ A valid rule must have:
 3. a non-empty `Given`;
 4. a non-empty `When`;
 5. at least one `Then` action;
-6. a rule kind of `state`, `event`, `completion`, `error`, `unsubscription`, or `cancellation`.
+6. a rule kind of `subscription`, `state`, `event`, `completion`, `error`, `unsubscription`, or `cancellation`.
 
 This structural validation does not by itself prove semantic completeness. Semantic review still asks whether all meaningful source, timer, notifier, inner, completion, error, and teardown transitions are represented.
 

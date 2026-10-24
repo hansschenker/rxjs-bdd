@@ -108,7 +108,7 @@ RxJS implementation and tests
 The complete source catalog has now been converted to Given / When / Then form:
 
 - **116 / 116 operator modules converted**
-- every operator carries explicit completion, error, unsubscription, and cancellation rules
+- every operator carries explicit subscription, completion, error, unsubscription, and cancellation rules
 - see [docs/operators.md](docs/operators.md)
 - source baseline: [rxjs-operators-state-and-policy-patterns](https://github.com/hansschenker/rxjs-operators-state-and-policy-patterns)
 
@@ -128,9 +128,14 @@ Then  <Action Policy>
 
 This separation is important: a persistent state condition and the event that exits that state must not accidentally be collapsed into one invalid transition.
 
-Each operator additionally carries lifecycle rules for the two terminal protocols:
+Each operator additionally carries lifecycle rules, from subscription to teardown:
 
 ```text
+Subscription rule
+Given <no active subscription>
+When  <downstream subscriber subscribes>
+Then  <subscribe source now, later, or share it; subscribe inputs and notifiers in order; set initial state>
+
 Completion rule
 Given <state at the moment of completion>
 When  <source / input / inner / notifier completes>
@@ -152,7 +157,7 @@ When  <event that supersedes or ends that work>
 Then  <cancel the superseded work, or cancel nothing>
 ```
 
-In `spec/operators.json` these carry `kind: completion`, `kind: error`, `kind: unsubscription`, and `kind: cancellation`, so the *Source complete*, *Source error*, *Unsubscription*, and *Cancellation* rows of the transition coverage matrix can be read directly from the catalog.
+In `spec/operators.json` these carry `kind: subscription`, `kind: completion`, `kind: error`, `kind: unsubscription`, and `kind: cancellation`, so the *Subscription*, *Source complete*, *Source error*, *Unsubscription*, and *Cancellation* rows of the transition coverage matrix can be read directly from the catalog.
 
 ## Canonical example: debounceTime
 

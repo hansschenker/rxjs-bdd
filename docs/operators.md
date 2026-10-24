@@ -20,12 +20,21 @@ Formally:
 
 The conversion deliberately keeps state-maintenance rules and event-triggered action rules separate. This prevents a common error: combining a state such as "duration active" with a mutually exclusive event such as "duration ends" in the same transition.
 
-Every operator also carries explicit lifecycle rules. **Completion rules** describe what happens to pending state and output when the source, an input, an inner Observable, or a notifier completes. **Error rules** describe what is discarded, propagated, recovered, or swallowed when one of them errors. **Unsubscription rules** describe what is torn down when the downstream subscriber unsubscribes. **Cancellation rules** describe which active work the operator itself cancels in response to an event, or state explicitly that it cancels nothing on its own. Where the outcome depends on the state at that moment, the alternatives are listed as separate rules.
+Every operator also carries explicit lifecycle rules. **Subscription rules** come first and describe what is established when a downstream subscriber subscribes: whether the source is subscribed immediately, deferred, or shared, the order in which inputs and notifiers are subscribed, and the initial state. **Completion rules** describe what happens to pending state and output when the source, an input, an inner Observable, or a notifier completes. **Error rules** describe what is discarded, propagated, recovered, or swallowed when one of them errors. **Unsubscription rules** describe what is torn down when the downstream subscriber unsubscribes. **Cancellation rules** describe which active work the operator itself cancels in response to an event, or state explicitly that it cancels nothing on its own. Where the outcome depends on the state at that moment, the alternatives are listed as separate rules.
 
 
 ---
 
 ## `audit`
+
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+     start with no pending value and no active duration
+```
 
 ### State-conditioned rule
 
@@ -96,6 +105,15 @@ Then unsubscribe the duration observable after its first emission
 
 ## `auditTime`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+     start with no pending value and no active interval timer
+```
+
 ### State-conditioned rule
 
 ```text
@@ -161,6 +179,16 @@ Then cancel nothing
 
 ## `buffer`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then open an empty buffer
+     subscribe to the source
+     then subscribe to the closing notifier
+```
+
 ### State-conditioned rule
 
 ```text
@@ -223,6 +251,15 @@ Then unsubscribe the closing notifier as part of termination teardown
 
 ## `bufferCount`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+     start with no open buffer; the first buffer opens on the first source value
+```
+
 ### State-conditioned rule
 
 ```text
@@ -284,6 +321,16 @@ Then cancel no active work
 
 ## `bufferTime`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then open the first buffer and schedule its close timer
+     schedule periodic buffer creation when bufferCreationInterval is configured
+     then subscribe to the source
+```
+
 ### State-conditioned rule
 
 ```text
@@ -343,6 +390,16 @@ Then cancel that buffer's close timer
 ---
 
 ## `bufferToggle`
+
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the openings observable first
+     then subscribe to the source
+     start with no open buffer
+```
 
 ### State-conditioned rule
 
@@ -413,6 +470,15 @@ Then unsubscribe that closing notifier
 
 ## `bufferWhen`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then open an empty buffer and subscribe to its closing observable
+     then subscribe to the source
+```
+
 ### State-conditioned rule
 
 ```text
@@ -475,6 +541,15 @@ Then unsubscribe the previous closing observable
 ---
 
 ## `catchError`
+
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+     track the source subscription so a synchronous error can be replaced
+```
 
 ### State-conditioned rule
 
@@ -541,6 +616,15 @@ Then unsubscribe from the errored source before subscribing to the replacement
 
 ## `combineAll`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the outer source immediately and collect inner observables
+     defer subscribing to the inners until the outer completes
+```
+
 ### State-conditioned rule
 
 ```text
@@ -606,6 +690,15 @@ Then cancel no active work
 
 ## `combineLatest`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source and then to each supplied input, in order
+     start with no latest value for any input
+```
+
 ### State-conditioned rule
 
 ```text
@@ -668,6 +761,15 @@ Then cancel no active work
 ---
 
 ## `combineLatestAll`
+
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the outer source immediately and collect inner observables
+     defer subscribing to the inners until the outer completes
+```
 
 ### State-conditioned rule
 
@@ -734,6 +836,15 @@ Then cancel no active work
 
 ## `combineLatestWith`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source and then to each supplied input, in order
+     start with no latest value for any input
+```
+
 ### State-conditioned rule
 
 ```text
@@ -796,6 +907,15 @@ Then cancel no active work
 
 ## `concat`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+     keep the supplied inputs pending until the source completes
+```
+
 ### State-conditioned rule
 
 ```text
@@ -856,6 +976,15 @@ Then cancel no active work
 ---
 
 ## `concatAll`
+
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the outer source immediately
+     start with no active inner and an empty queue
+```
 
 ### State-conditioned rule
 
@@ -920,6 +1049,15 @@ Then cancel no active work
 ---
 
 ## `concatMap`
+
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the outer source immediately
+     start with no active projected inner and an empty queue
+```
 
 ### State-conditioned rule
 
@@ -986,6 +1124,15 @@ Then cancel no active work
 
 ## `concatMapTo`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the outer source immediately
+     start with no active configured inner and an empty queue
+```
+
 ### State-conditioned rule
 
 ```text
@@ -1051,6 +1198,15 @@ Then cancel no active work
 
 ## `concatWith`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+     keep the supplied inputs pending until the source completes
+```
+
 ### State-conditioned rule
 
 ```text
@@ -1111,6 +1267,16 @@ Then cancel no active work
 
 ## `connect`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then create the shared subject with the connector
+     subscribe the downstream subscriber to the selector output
+     then connect the source to the subject
+```
+
 ### State-conditioned rule
 
 ```text
@@ -1168,6 +1334,15 @@ Then cancel no active work
 
 ## `count`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+     start the count at zero
+```
+
 ### State-conditioned rule
 
 ```text
@@ -1224,6 +1399,15 @@ Then cancel no active work
 ---
 
 ## `debounce`
+
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+     start with no pending value and no active duration
+```
 
 ### State-conditioned rule
 
@@ -1294,6 +1478,15 @@ Then unsubscribe the duration after its first emission
 
 ## `debounceTime`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+     start with no pending value and no silence timer
+```
+
 ### State-conditioned rule
 
 ```text
@@ -1358,6 +1551,15 @@ Then cancel the running silence timer
 
 ## `defaultIfEmpty`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+     start with no value seen
+```
+
 ### State-conditioned rule
 
 ```text
@@ -1418,6 +1620,15 @@ Then cancel no active work
 ---
 
 ## `delay`
+
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+     start with no pending delayed values
+```
 
 ### State-conditioned rule
 
@@ -1482,6 +1693,20 @@ Then cancel no active work
 ---
 
 ## `delayWhen`
+
+### Subscription rules
+
+```text
+Given no subscription delay is configured
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+     start with no pending values
+
+Given a subscription delay is configured
+When a downstream subscriber subscribes
+Then subscribe to the subscription delay first
+     subscribe to the source once the subscription delay emits once or completes
+```
 
 ### State-conditioned rule
 
@@ -1558,6 +1783,14 @@ Then unsubscribe the subscription delay
 
 ## `dematerialize`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+```
+
 ### State-conditioned rule
 
 ```text
@@ -1620,6 +1853,16 @@ Then unsubscribe from the source after forwarding the terminal notification
 ---
 
 ## `distinct`
+
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then create an empty set of seen keys
+     subscribe to the source
+     then subscribe to the flushes observable when one is configured
+```
 
 ### State-conditioned rule
 
@@ -1684,6 +1927,15 @@ Then unsubscribe the flushes observable as part of termination teardown
 
 ## `distinctUntilChanged`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+     start with no previous value; the first value always passes
+```
+
 ### State-conditioned rule
 
 ```text
@@ -1739,6 +1991,15 @@ Then cancel no active work
 
 ## `distinctUntilKeyChanged`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+     start with no previous key; the first value always passes
+```
+
 ### State-conditioned rule
 
 ```text
@@ -1793,6 +2054,15 @@ Then cancel no active work
 ---
 
 ## `elementAt`
+
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+     start counting positions at zero
+```
 
 ### State-conditioned rule
 
@@ -1855,6 +2125,15 @@ Then emit it
 
 ## `endWith`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+     keep the appended values pending until the source completes
+```
+
 ### State-conditioned rule
 
 ```text
@@ -1912,6 +2191,15 @@ Then cancel no active work
 
 ## `every`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+     start in the all-passed state
+```
+
 ### State-conditioned rule
 
 ```text
@@ -1967,6 +2255,15 @@ Then emit false
 ---
 
 ## `exhaust`
+
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the outer source immediately
+     start with no active inner
+```
 
 ### State-conditioned rule
 
@@ -2028,6 +2325,15 @@ Then cancel no active work
 ---
 
 ## `exhaustAll`
+
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the outer source immediately
+     start with no active inner
+```
 
 ### State-conditioned rule
 
@@ -2091,6 +2397,15 @@ Then cancel no active work
 
 ## `exhaustMap`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the outer source immediately
+     start with no active projected inner
+```
+
 ### State-conditioned rule
 
 ```text
@@ -2152,6 +2467,15 @@ Then cancel no active work
 ---
 
 ## `expand`
+
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+     start with no active recursive inner and an empty buffer
+```
 
 ### State-conditioned rule
 
@@ -2217,6 +2541,15 @@ Then cancel no active work
 
 ## `filter`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+     start the index at zero
+```
+
 ### State-conditioned rule
 
 ```text
@@ -2270,6 +2603,15 @@ Then cancel no active work
 ---
 
 ## `finalize`
+
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source
+     then register the finalizer on the subscription
+```
 
 ### State-conditioned rule
 
@@ -2328,6 +2670,15 @@ Then cancel no active work
 
 ## `find`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+     start with no match
+```
+
 ### State-conditioned rule
 
 ```text
@@ -2384,6 +2735,15 @@ Then emit it
 
 ## `findIndex`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+     start with no match
+```
+
 ### State-conditioned rule
 
 ```text
@@ -2439,6 +2799,15 @@ Then emit its index
 ---
 
 ## `first`
+
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+     start with no match
+```
 
 ### State-conditioned rule
 
@@ -2499,6 +2868,15 @@ Then emit it
 ---
 
 ## `flatMap`
+
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the outer source immediately
+     start with zero active inners and an empty queue
+```
 
 ### State-conditioned rule
 
@@ -2565,6 +2943,15 @@ Then cancel no active work
 
 ## `groupBy`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+     start with an empty group map
+```
+
 ### State-conditioned rule
 
 ```text
@@ -2629,6 +3016,14 @@ Then complete that group
 
 ## `ignoreElements`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+```
+
 ### State-conditioned rule
 
 ```text
@@ -2682,6 +3077,15 @@ Then cancel no active work
 ---
 
 ## `isEmpty`
+
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+     start in the possibly-empty state
+```
 
 ### State-conditioned rule
 
@@ -2738,6 +3142,15 @@ Then emit false
 ---
 
 ## `joinAllInternals`
+
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the outer source immediately and collect inner observables
+     defer subscribing to the inners until the outer completes
+```
 
 ### State-conditioned rule
 
@@ -2797,6 +3210,15 @@ Then cancel no active work
 ---
 
 ## `last`
+
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+     start with no retained value
+```
 
 ### State-conditioned rule
 
@@ -2864,6 +3286,15 @@ Then cancel no active work
 
 ## `map`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+     start the index at zero
+```
+
 ### State-conditioned rule
 
 ```text
@@ -2917,6 +3348,14 @@ Then cancel no active work
 ---
 
 ## `mapTo`
+
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+```
 
 ### State-conditioned rule
 
@@ -2972,6 +3411,14 @@ Then cancel no active work
 ---
 
 ## `materialize`
+
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+```
 
 ### State-conditioned rule
 
@@ -3029,6 +3476,15 @@ Then cancel no active work
 ---
 
 ## `max`
+
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+     start with no retained value
+```
 
 ### State-conditioned rule
 
@@ -3092,6 +3548,15 @@ Then cancel no active work
 
 ## `merge`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source and then to the supplied inputs in order, up to the concurrency limit
+     queue the remaining inputs
+```
+
 ### State-conditioned rule
 
 ```text
@@ -3153,6 +3618,15 @@ Then cancel no active work
 ---
 
 ## `mergeAll`
+
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the outer source immediately
+     start with zero active inners and an empty queue
+```
 
 ### State-conditioned rule
 
@@ -3218,6 +3692,15 @@ Then cancel no active work
 
 ## `mergeInternals`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the outer source immediately
+     start with zero active inners and an empty buffer
+```
+
 ### State-conditioned rule
 
 ```text
@@ -3280,6 +3763,15 @@ Then cancel no active work
 ---
 
 ## `mergeMap`
+
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the outer source immediately
+     start with zero active inners and an empty queue
+```
 
 ### State-conditioned rule
 
@@ -3346,6 +3838,15 @@ Then cancel no active work
 
 ## `mergeMapTo`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the outer source immediately
+     start with zero active inners and an empty queue
+```
+
 ### State-conditioned rule
 
 ```text
@@ -3411,6 +3912,16 @@ Then cancel no active work
 
 ## `mergeScan`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+     initialise the accumulator with the seed
+     start with zero active inners
+```
+
 ### State-conditioned rule
 
 ```text
@@ -3475,6 +3986,15 @@ Then cancel no active work
 
 ## `mergeWith`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source and then to each supplied input, in order
+     all inputs run concurrently
+```
+
 ### State-conditioned rule
 
 ```text
@@ -3535,6 +4055,15 @@ Then cancel no active work
 ---
 
 ## `min`
+
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+     start with no retained value
+```
 
 ### State-conditioned rule
 
@@ -3598,6 +4127,21 @@ Then cancel no active work
 
 ## `multicast`
 
+### Subscription rules
+
+```text
+Given no selector is configured
+When a downstream subscriber subscribes
+Then attach the subscriber to the subject
+     do not subscribe to the source until connect() is called on the ConnectableObservable
+
+Given a selector is configured
+When a downstream subscriber subscribes
+Then create the subject
+     subscribe the subscriber to the selector output
+     then connect the source to the subject
+```
+
 ### State-conditioned rule
 
 ```text
@@ -3658,6 +4202,15 @@ Then cancel no active work
 
 ## `observeOn`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+     deliveries are scheduled as notifications arrive
+```
+
 ### State-conditioned rule
 
 ```text
@@ -3715,6 +4268,15 @@ Then cancel no active work
 ---
 
 ## `onErrorResumeNextWith`
+
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+     keep the fallback sources pending
+```
 
 ### State-conditioned rule
 
@@ -3781,6 +4343,15 @@ Then cancel no active work
 
 ## `pairwise`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+     start with no previous value
+```
+
 ### State-conditioned rule
 
 ```text
@@ -3836,6 +4407,15 @@ Then cancel no active work
 ---
 
 ## `partition`
+
+### Subscription rule
+
+```text
+Given a partition output is subscribed
+When its subscriber subscribes
+Then subscribe to the source independently for that output
+     each output holds its own source subscription
+```
 
 ### State-conditioned rule
 
@@ -3893,6 +4473,14 @@ Then cancel no active work
 
 ## `pluck`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+```
+
 ### State-conditioned rule
 
 ```text
@@ -3947,6 +4535,20 @@ Then cancel no active work
 ---
 
 ## `publish`
+
+### Subscription rules
+
+```text
+Given no selector is configured
+When a downstream subscriber subscribes
+Then attach the subscriber to the Subject
+     do not subscribe to the source until connect() is called on the ConnectableObservable
+
+Given a selector is configured
+When a downstream subscriber subscribes
+Then subscribe the subscriber to the selector output
+     then connect the source to the Subject
+```
 
 ### State-conditioned rule
 
@@ -4006,6 +4608,16 @@ Then cancel no active work
 
 ## `publishBehavior`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then attach the subscriber to the BehaviorSubject
+     deliver the current value immediately
+     do not subscribe to the source until connect() is called on the ConnectableObservable
+```
+
 ### State-conditioned rule
 
 ```text
@@ -4063,6 +4675,16 @@ Then cancel no active work
 ---
 
 ## `publishLast`
+
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then attach the subscriber to the AsyncSubject
+     deliver nothing until the source completes
+     do not subscribe to the source until connect() is called on the ConnectableObservable
+```
 
 ### State-conditioned rule
 
@@ -4124,6 +4746,21 @@ Then cancel no active work
 
 ## `publishReplay`
 
+### Subscription rules
+
+```text
+Given no selector is configured
+When a downstream subscriber subscribes
+Then attach the subscriber to the ReplaySubject
+     replay buffered values immediately
+     do not subscribe to the source until connect() is called on the ConnectableObservable
+
+Given a selector is configured
+When a downstream subscriber subscribes
+Then subscribe the subscriber to the selector output
+     then connect the source to the ReplaySubject
+```
+
 ### State-conditioned rule
 
 ```text
@@ -4181,6 +4818,15 @@ Then cancel no active work
 ---
 
 ## `race`
+
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source and then to each competitor, in order
+     stop subscribing further competitors if one emits synchronously during subscription
+```
 
 ### State-conditioned rule
 
@@ -4247,6 +4893,15 @@ Then unsubscribe every other competitor
 
 ## `raceWith`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source and then to each competitor, in order
+     stop subscribing further competitors if one emits synchronously during subscription
+```
+
 ### State-conditioned rule
 
 ```text
@@ -4311,6 +4966,15 @@ Then unsubscribe every other competitor
 
 ## `reduce`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+     initialise the accumulator with the seed when one is provided
+```
+
 ### State-conditioned rule
 
 ```text
@@ -4373,6 +5037,22 @@ Then cancel no active work
 
 ## `refCount`
 
+### Subscription rules
+
+```text
+Given the reference count is zero
+When a downstream subscriber subscribes
+Then attach the subscriber to the connectable's subject
+     increment the reference count to one
+     connect the source
+
+Given the reference count is above zero
+When a downstream subscriber subscribes
+Then attach the subscriber to the connectable's subject
+     increment the reference count
+     reuse the existing connection
+```
+
 ### State-conditioned rule
 
 ```text
@@ -4431,6 +5111,18 @@ Then cancel the shared source execution by unsubscribing the connection
 ---
 
 ## `repeat`
+
+### Subscription rules
+
+```text
+Given count is greater than zero
+When a downstream subscriber subscribes
+Then subscribe to the source for the first execution
+
+Given count is zero or less
+When a downstream subscriber subscribes
+Then complete immediately without subscribing to the source
+```
 
 ### State-conditioned rule
 
@@ -4497,6 +5189,15 @@ Then unsubscribe the delay notifier after its first emission
 ---
 
 ## `repeatWhen`
+
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+     create the notifier only on the first completion
+```
 
 ### State-conditioned rule
 
@@ -4567,6 +5268,18 @@ Then cancel no active work
 
 ## `retry`
 
+### Subscription rules
+
+```text
+Given count is greater than zero
+When a downstream subscriber subscribes
+Then subscribe to the source for the first attempt
+
+Given count is zero or less
+When a downstream subscriber subscribes
+Then subscribe to the source as a plain pass-through; errors are never retried
+```
+
 ### State-conditioned rule
 
 ```text
@@ -4633,6 +5346,15 @@ Then unsubscribe the delay notifier after its first emission
 
 ## `retryWhen`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+     create the notifier only on the first error
+```
+
 ### State-conditioned rule
 
 ```text
@@ -4698,6 +5420,16 @@ Then cancel no active work
 
 ## `sample`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source first
+     then subscribe to the notifier
+     start with no pending value
+```
+
 ### State-conditioned rule
 
 ```text
@@ -4760,6 +5492,16 @@ Then unsubscribe the notifier as part of termination teardown
 
 ## `sampleTime`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source first
+     then start the periodic sampling interval
+     start with no pending value
+```
+
 ### State-conditioned rule
 
 ```text
@@ -4819,6 +5561,15 @@ Then unsubscribe the sampling interval as part of termination teardown
 
 ## `scan`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+     initialise the accumulator with the seed when one is provided; otherwise the first value becomes the accumulator
+```
+
 ### State-conditioned rule
 
 ```text
@@ -4875,6 +5626,15 @@ Then cancel no active work
 ---
 
 ## `scanInternals`
+
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+     initialise the accumulator with the seed when one is provided; otherwise the first value becomes the accumulator
+```
 
 ### State-conditioned rule
 
@@ -4937,6 +5697,16 @@ Then cancel no active work
 ---
 
 ## `sequenceEqual`
+
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source first
+     then subscribe to the comparison sequence
+     start with both queues empty
+```
 
 ### State-conditioned rule
 
@@ -5002,6 +5772,23 @@ Then emit false
 
 ## `share`
 
+### Subscription rules
+
+```text
+Given no connection exists
+When a downstream subscriber subscribes
+Then create the subject with the connector
+     set the reference count to one
+     subscribe the subscriber to the subject
+     then connect the source
+
+Given a connection exists
+When a downstream subscriber subscribes
+Then increment the reference count
+     attach the subscriber to the existing subject
+     cancel a pending reset if one is scheduled
+```
+
 ### State-conditioned rule
 
 ```text
@@ -5064,6 +5851,21 @@ Then cancel the pending reset
 
 ## `shareReplay`
 
+### Subscription rules
+
+```text
+Given no connection exists
+When a downstream subscriber subscribes
+Then create the ReplaySubject
+     subscribe the subscriber to it
+     then connect the source
+
+Given a connection exists, or the source completed without a reset
+When a downstream subscriber subscribes
+Then attach the subscriber to the ReplaySubject
+     replay buffered values immediately, then deliver live values
+```
+
 ### State-conditioned rule
 
 ```text
@@ -5125,6 +5927,15 @@ Then cancel no active work
 ---
 
 ## `single`
+
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+     start with no value seen and no match
+```
 
 ### State-conditioned rule
 
@@ -5191,6 +6002,15 @@ Then error with SequenceError
 
 ## `skip`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+     start the skip counter at zero
+```
+
 ### State-conditioned rule
 
 ```text
@@ -5244,6 +6064,15 @@ Then cancel no active work
 ---
 
 ## `skipLast`
+
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+     start with an empty trailing buffer
+```
 
 ### State-conditioned rule
 
@@ -5302,6 +6131,16 @@ Then cancel no active work
 ---
 
 ## `skipUntil`
+
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the notifier first
+     then subscribe to the source
+     start with the gate closed
+```
 
 ### State-conditioned rule
 
@@ -5364,6 +6203,15 @@ Then unsubscribe the notifier after its first emission
 
 ## `skipWhile`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+     start in the skipping state
+```
+
 ### State-conditioned rule
 
 ```text
@@ -5417,6 +6265,15 @@ Then cancel no active work
 ---
 
 ## `startWith`
+
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then emit the prefix values synchronously, or on the scheduler when one is given
+     then subscribe to the source
+```
 
 ### State-conditioned rule
 
@@ -5472,6 +6329,15 @@ Then cancel no active work
 ---
 
 ## `subscribeOn`
+
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then schedule the source subscription on the scheduler
+     the source is not subscribed until the scheduled action runs
+```
 
 ### State-conditioned rule
 
@@ -5533,6 +6399,15 @@ Then cancel no active work
 
 ## `switchAll`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the outer source immediately
+     start with no active inner
+```
+
 ### State-conditioned rule
 
 ```text
@@ -5593,6 +6468,15 @@ Then unsubscribe the active inner
 ---
 
 ## `switchMap`
+
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the outer source immediately
+     start with no active projected inner
+```
 
 ### State-conditioned rule
 
@@ -5656,6 +6540,15 @@ Then unsubscribe the active projected inner
 
 ## `switchMapTo`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the outer source immediately
+     start with no active configured inner
+```
+
 ### State-conditioned rule
 
 ```text
@@ -5717,6 +6610,16 @@ Then unsubscribe the active inner
 ---
 
 ## `switchScan`
+
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+     initialise the accumulator with the seed
+     start with no active inner
+```
 
 ### State-conditioned rule
 
@@ -5781,6 +6684,18 @@ Then unsubscribe the active accumulator inner
 
 ## `take`
 
+### Subscription rules
+
+```text
+Given count is greater than zero
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+
+Given count is zero or less
+When a downstream subscriber subscribes
+Then complete immediately without subscribing to the source
+```
+
 ### State-conditioned rule
 
 ```text
@@ -5835,6 +6750,19 @@ Then emit it
 ---
 
 ## `takeLast`
+
+### Subscription rules
+
+```text
+Given count is greater than zero
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+     start with an empty trailing buffer
+
+Given count is zero or less
+When a downstream subscriber subscribes
+Then complete immediately without subscribing to the source
+```
 
 ### State-conditioned rule
 
@@ -5892,6 +6820,15 @@ Then cancel no active work
 ---
 
 ## `takeUntil`
+
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the notifier first
+     subscribe to the source only if the notifier did not complete the output synchronously
+```
 
 ### State-conditioned rule
 
@@ -5954,6 +6891,15 @@ Then complete
 
 ## `takeWhile`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+     start in the taking state
+```
+
 ### State-conditioned rule
 
 ```text
@@ -6008,6 +6954,15 @@ Then emit it only if inclusive is set
 ---
 
 ## `tap`
+
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then invoke the subscribe callback
+     then subscribe to the source
+```
 
 ### State-conditioned rule
 
@@ -6068,6 +7023,15 @@ Then cancel no active work
 ---
 
 ## `throttle`
+
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+     start with no active duration and no pending value
+```
 
 ### State-conditioned rule
 
@@ -6140,6 +7104,15 @@ Then cancel nothing
 
 ## `throttleTime`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+     start with no running interval and no pending value
+```
+
 ### State-conditioned rule
 
 ```text
@@ -6205,6 +7178,15 @@ Then cancel nothing
 
 ## `throwIfEmpty`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+     start with no value seen
+```
+
 ### State-conditioned rule
 
 ```text
@@ -6264,6 +7246,15 @@ Then cancel no active work
 
 ## `timeInterval`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+     record the scheduler's current time as the baseline
+```
+
 ### State-conditioned rule
 
 ```text
@@ -6317,6 +7308,15 @@ Then cancel no active work
 ---
 
 ## `timeout`
+
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source
+     if no value arrived synchronously, start the first-value timer from the first option (duration or absolute date), or else from each
+```
 
 ### State-conditioned rule
 
@@ -6379,6 +7379,15 @@ Then unsubscribe from the source
 ---
 
 ## `timeoutWith`
+
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source
+     if no value arrived synchronously, start the first-value timer from the first option (duration or absolute date), or else from each
+```
 
 ### State-conditioned rule
 
@@ -6443,6 +7452,14 @@ Then unsubscribe from the source
 
 ## `timestamp`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+```
+
 ### State-conditioned rule
 
 ```text
@@ -6496,6 +7513,15 @@ Then cancel no active work
 ---
 
 ## `toArray`
+
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source immediately
+     start with an empty array
+```
 
 ### State-conditioned rule
 
@@ -6553,6 +7579,16 @@ Then cancel no active work
 ---
 
 ## `window`
+
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then create the first window and emit it downstream
+     subscribe to the source
+     then subscribe to the boundary notifier
+```
 
 ### State-conditioned rule
 
@@ -6616,6 +7652,15 @@ Then unsubscribe the boundary notifier as part of termination teardown
 
 ## `windowCount`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then create the first window and emit it downstream
+     subscribe to the source
+```
+
 ### State-conditioned rule
 
 ```text
@@ -6672,6 +7717,16 @@ Then cancel no active work
 ---
 
 ## `windowTime`
+
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then open the first window, emit it, and schedule its close timer
+     schedule periodic window creation when windowCreationInterval is configured
+     then subscribe to the source
+```
 
 ### State-conditioned rule
 
@@ -6732,6 +7787,16 @@ Then cancel that window's close timer
 ---
 
 ## `windowToggle`
+
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the openings observable first
+     then subscribe to the source
+     start with no open window
+```
 
 ### State-conditioned rule
 
@@ -6802,6 +7867,15 @@ Then unsubscribe that closing notifier
 
 ## `windowWhen`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then open the first window, emit it, and subscribe to its closing notifier
+     then subscribe to the source
+```
+
 ### State-conditioned rule
 
 ```text
@@ -6866,6 +7940,15 @@ Then unsubscribe the previous closing notifier
 
 ## `withLatestFrom`
 
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to every secondary input first, in order
+     then subscribe to the source
+```
+
 ### State-conditioned rule
 
 ```text
@@ -6926,6 +8009,15 @@ Then unsubscribe the secondary inputs as part of termination teardown
 ---
 
 ## `zip`
+
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source and then to each supplied input, in order
+     start with an empty queue per input
+```
 
 ### State-conditioned rule
 
@@ -6989,6 +8081,15 @@ Then complete
 ---
 
 ## `zipAll`
+
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the outer source immediately and collect inner observables
+     defer subscribing to the inners until the outer completes
+```
 
 ### State-conditioned rule
 
@@ -7057,6 +8158,15 @@ Then complete
 ---
 
 ## `zipWith`
+
+### Subscription rule
+
+```text
+Given no subscription is active
+When a downstream subscriber subscribes
+Then subscribe to the source and then to each supplied input, in order
+     start with an empty queue per input
+```
 
 ### State-conditioned rule
 

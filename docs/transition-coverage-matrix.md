@@ -30,4 +30,4 @@ The rule kinds in `spec/operators.json` cover the matrix as follows:
 | Source error, Inner error, notifier error | `error` |
 | Unsubscription | `unsubscription` |
 | Cancellation | `cancellation`, including explicit "cancels nothing" rules for operators that never cancel work on their own |
-| Subscription | not yet a dedicated rule kind; partially covered by the `state` and `event` rules of `subscribeOn`, `startWith`, `share`, `refCount`, and the `publish*` family |
+| Subscription | `subscription` |

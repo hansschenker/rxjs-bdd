@@ -43,6 +43,7 @@
               "properties": {
                 "kind": {
                   "enum": [
+                    "subscription",
                     "state",
                     "event",
                     "completion",

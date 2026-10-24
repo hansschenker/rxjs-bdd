@@ -1,9 +1,18 @@
 {
-  "version": "0.3.0",
+  "version": "0.4.0",
   "operators": [
     {
       "operator": "audit",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately",
+            "start with no pending value and no active duration"
+          ]
+        },
         {
           "kind": "state",
           "given": "duration active",
@@ -82,6 +91,15 @@
       "operator": "auditTime",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately",
+            "start with no pending value and no active interval timer"
+          ]
+        },
+        {
           "kind": "state",
           "given": "fixed audit interval active",
           "when": "a source value arrives",
@@ -151,6 +169,16 @@
       "operator": "buffer",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "open an empty buffer",
+            "subscribe to the source",
+            "then subscribe to the closing notifier"
+          ]
+        },
+        {
           "kind": "state",
           "given": "buffer open",
           "when": "a source value arrives",
@@ -218,6 +246,15 @@
       "operator": "bufferCount",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately",
+            "start with no open buffer; the first buffer opens on the first source value"
+          ]
+        },
+        {
           "kind": "state",
           "given": "buffer(s) open",
           "when": "a source value arrives",
@@ -284,6 +321,16 @@
       "operator": "bufferTime",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "open the first buffer and schedule its close timer",
+            "schedule periodic buffer creation when bufferCreationInterval is configured",
+            "then subscribe to the source"
+          ]
+        },
+        {
           "kind": "state",
           "given": "time-span buffer(s) open",
           "when": "a source value arrives",
@@ -344,6 +391,16 @@
     {
       "operator": "bufferToggle",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the openings observable first",
+            "then subscribe to the source",
+            "start with no open buffer"
+          ]
+        },
         {
           "kind": "state",
           "given": "one or more buffers open",
@@ -423,6 +480,15 @@
       "operator": "bufferWhen",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "open an empty buffer and subscribe to its closing observable",
+            "then subscribe to the source"
+          ]
+        },
+        {
           "kind": "state",
           "given": "current buffer open",
           "when": "a source value arrives",
@@ -490,6 +556,15 @@
     {
       "operator": "catchError",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately",
+            "track the source subscription so a synchronous error can be replaced"
+          ]
+        },
         {
           "kind": "state",
           "given": "source active normally",
@@ -565,6 +640,15 @@
       "operator": "combineAll",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the outer source immediately and collect inner observables",
+            "defer subscribing to the inners until the outer completes"
+          ]
+        },
+        {
           "kind": "state",
           "given": "outer active",
           "when": "an inner event arrives",
@@ -634,6 +718,15 @@
       "operator": "combineLatest",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source and then to each supplied input, in order",
+            "start with no latest value for any input"
+          ]
+        },
+        {
           "kind": "state",
           "given": "source plus supplied inputs active",
           "when": "the next relevant source event occurs",
@@ -700,6 +793,15 @@
     {
       "operator": "combineLatestAll",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the outer source immediately and collect inner observables",
+            "defer subscribing to the inners until the outer completes"
+          ]
+        },
         {
           "kind": "state",
           "given": "combined inners active",
@@ -770,6 +872,15 @@
       "operator": "combineLatestWith",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source and then to each supplied input, in order",
+            "start with no latest value for any input"
+          ]
+        },
+        {
           "kind": "state",
           "given": "inputs active",
           "when": "the next relevant source event occurs",
@@ -837,6 +948,15 @@
       "operator": "concat",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately",
+            "keep the supplied inputs pending until the source completes"
+          ]
+        },
+        {
           "kind": "state",
           "given": "current input Observable active",
           "when": "the next relevant operator event occurs",
@@ -901,6 +1021,15 @@
     {
       "operator": "concatAll",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the outer source immediately",
+            "start with no active inner and an empty queue"
+          ]
+        },
         {
           "kind": "state",
           "given": "one inner active",
@@ -971,6 +1100,15 @@
       "operator": "concatMap",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the outer source immediately",
+            "start with no active projected inner and an empty queue"
+          ]
+        },
+        {
           "kind": "state",
           "given": "one projected inner active",
           "when": "an outer value arrives",
@@ -1039,6 +1177,15 @@
     {
       "operator": "concatMapTo",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the outer source immediately",
+            "start with no active configured inner and an empty queue"
+          ]
+        },
         {
           "kind": "state",
           "given": "one fixed inner active",
@@ -1109,6 +1256,15 @@
       "operator": "concatWith",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately",
+            "keep the supplied inputs pending until the source completes"
+          ]
+        },
+        {
           "kind": "state",
           "given": "current Observable active",
           "when": "the next relevant operator event occurs",
@@ -1174,6 +1330,16 @@
       "operator": "connect",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "create the shared subject with the connector",
+            "subscribe the downstream subscriber to the selector output",
+            "then connect the source to the subject"
+          ]
+        },
+        {
           "kind": "state",
           "given": "shared connector active inside the selector scope",
           "when": "the next relevant operator event occurs",
@@ -1232,6 +1398,15 @@
       "operator": "count",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately",
+            "start the count at zero"
+          ]
+        },
+        {
           "kind": "state",
           "given": "source active",
           "when": "the next relevant source event occurs",
@@ -1289,6 +1464,15 @@
     {
       "operator": "debounce",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately",
+            "start with no pending value and no active duration"
+          ]
+        },
         {
           "kind": "state",
           "given": "duration active for pending value",
@@ -1368,6 +1552,15 @@
       "operator": "debounceTime",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately",
+            "start with no pending value and no silence timer"
+          ]
+        },
+        {
           "kind": "state",
           "given": "silence timer active",
           "when": "a source value arrives",
@@ -1437,6 +1630,15 @@
       "operator": "defaultIfEmpty",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately",
+            "start with no value seen"
+          ]
+        },
+        {
           "kind": "state",
           "given": "source active",
           "when": "the next relevant source event occurs",
@@ -1501,6 +1703,15 @@
     {
       "operator": "delay",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately",
+            "start with no pending delayed values"
+          ]
+        },
         {
           "kind": "state",
           "given": "notifications pending",
@@ -1569,6 +1780,24 @@
     {
       "operator": "delayWhen",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "no subscription delay is configured",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately",
+            "start with no pending values"
+          ]
+        },
+        {
+          "kind": "subscription",
+          "given": "a subscription delay is configured",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the subscription delay first",
+            "subscribe to the source once the subscription delay emits once or completes"
+          ]
+        },
         {
           "kind": "state",
           "given": "source values pending",
@@ -1657,6 +1886,14 @@
       "operator": "dematerialize",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately"
+          ]
+        },
+        {
           "kind": "state",
           "given": "source active",
           "when": "the next relevant operator event occurs",
@@ -1729,6 +1966,16 @@
       "operator": "distinct",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "create an empty set of seen keys",
+            "subscribe to the source",
+            "then subscribe to the flushes observable when one is configured"
+          ]
+        },
+        {
           "kind": "state",
           "given": "source active",
           "when": "the next relevant operator event occurs",
@@ -1796,6 +2043,15 @@
       "operator": "distinctUntilChanged",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately",
+            "start with no previous value; the first value always passes"
+          ]
+        },
+        {
           "kind": "state",
           "given": "source active after first value",
           "when": "the next relevant source event occurs",
@@ -1852,6 +2108,15 @@
       "operator": "distinctUntilKeyChanged",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately",
+            "start with no previous key; the first value always passes"
+          ]
+        },
+        {
           "kind": "state",
           "given": "source active after first value",
           "when": "the next relevant source event occurs",
@@ -1907,6 +2172,15 @@
     {
       "operator": "elementAt",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately",
+            "start counting positions at zero"
+          ]
+        },
         {
           "kind": "state",
           "given": "source active",
@@ -1974,6 +2248,15 @@
       "operator": "endWith",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately",
+            "keep the appended values pending until the source completes"
+          ]
+        },
+        {
           "kind": "state",
           "given": "source active",
           "when": "a source value arrives",
@@ -2032,6 +2315,15 @@
       "operator": "every",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately",
+            "start in the all-passed state"
+          ]
+        },
+        {
           "kind": "state",
           "given": "source active",
           "when": "the next relevant operator event occurs",
@@ -2088,6 +2380,15 @@
     {
       "operator": "exhaust",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the outer source immediately",
+            "start with no active inner"
+          ]
+        },
         {
           "kind": "state",
           "given": "one inner active",
@@ -2155,6 +2456,15 @@
       "operator": "exhaustAll",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the outer source immediately",
+            "start with no active inner"
+          ]
+        },
+        {
           "kind": "state",
           "given": "one inner active",
           "when": "an inner event arrives",
@@ -2221,6 +2531,15 @@
       "operator": "exhaustMap",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the outer source immediately",
+            "start with no active projected inner"
+          ]
+        },
+        {
           "kind": "state",
           "given": "one projected inner active",
           "when": "an outer value arrives",
@@ -2286,6 +2605,15 @@
     {
       "operator": "expand",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately",
+            "start with no active recursive inner and an empty buffer"
+          ]
+        },
         {
           "kind": "state",
           "given": "expansion active",
@@ -2356,6 +2684,15 @@
       "operator": "filter",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately",
+            "start the index at zero"
+          ]
+        },
+        {
           "kind": "state",
           "given": "source active",
           "when": "the next relevant operator event occurs",
@@ -2410,6 +2747,15 @@
     {
       "operator": "finalize",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source",
+            "then register the finalizer on the subscription"
+          ]
+        },
         {
           "kind": "state",
           "given": "subscription active",
@@ -2469,6 +2815,15 @@
       "operator": "find",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately",
+            "start with no match"
+          ]
+        },
+        {
           "kind": "state",
           "given": "source active",
           "when": "the next relevant source event occurs",
@@ -2526,6 +2881,15 @@
       "operator": "findIndex",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately",
+            "start with no match"
+          ]
+        },
+        {
           "kind": "state",
           "given": "source active",
           "when": "the next relevant source event occurs",
@@ -2582,6 +2946,15 @@
     {
       "operator": "first",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately",
+            "start with no match"
+          ]
+        },
         {
           "kind": "state",
           "given": "source active",
@@ -2647,6 +3020,15 @@
     {
       "operator": "flatMap",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the outer source immediately",
+            "start with zero active inners and an empty queue"
+          ]
+        },
         {
           "kind": "state",
           "given": "projected inners active",
@@ -2717,6 +3099,15 @@
       "operator": "groupBy",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately",
+            "start with an empty group map"
+          ]
+        },
+        {
           "kind": "state",
           "given": "source active",
           "when": "the relevant input event occurs",
@@ -2785,6 +3176,14 @@
       "operator": "ignoreElements",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately"
+          ]
+        },
+        {
           "kind": "state",
           "given": "source active",
           "when": "the next relevant operator event occurs",
@@ -2839,6 +3238,15 @@
     {
       "operator": "isEmpty",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately",
+            "start in the possibly-empty state"
+          ]
+        },
         {
           "kind": "state",
           "given": "source active before first value",
@@ -2896,6 +3304,15 @@
     {
       "operator": "joinAllInternals",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the outer source immediately and collect inner observables",
+            "defer subscribing to the inners until the outer completes"
+          ]
+        },
         {
           "kind": "state",
           "given": "inner collection/combine operation active",
@@ -2955,6 +3372,15 @@
     {
       "operator": "last",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately",
+            "start with no retained value"
+          ]
+        },
         {
           "kind": "state",
           "given": "source active",
@@ -3031,6 +3457,15 @@
       "operator": "map",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately",
+            "start the index at zero"
+          ]
+        },
+        {
           "kind": "state",
           "given": "source active",
           "when": "the next relevant operator event occurs",
@@ -3086,6 +3521,14 @@
       "operator": "mapTo",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately"
+          ]
+        },
+        {
           "kind": "state",
           "given": "source active",
           "when": "the next relevant operator event occurs",
@@ -3140,6 +3583,14 @@
     {
       "operator": "materialize",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately"
+          ]
+        },
         {
           "kind": "state",
           "given": "source active",
@@ -3198,6 +3649,15 @@
     {
       "operator": "max",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately",
+            "start with no retained value"
+          ]
+        },
         {
           "kind": "state",
           "given": "source active",
@@ -3265,6 +3725,15 @@
       "operator": "merge",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source and then to the supplied inputs in order, up to the concurrency limit",
+            "queue the remaining inputs"
+          ]
+        },
+        {
           "kind": "state",
           "given": "multiple inputs active",
           "when": "a subscription lifecycle event occurs",
@@ -3330,6 +3799,15 @@
     {
       "operator": "mergeAll",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the outer source immediately",
+            "start with zero active inners and an empty queue"
+          ]
+        },
         {
           "kind": "state",
           "given": "inners active",
@@ -3400,6 +3878,15 @@
       "operator": "mergeInternals",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the outer source immediately",
+            "start with zero active inners and an empty buffer"
+          ]
+        },
+        {
           "kind": "state",
           "given": "inners active",
           "when": "the relevant input event occurs",
@@ -3466,6 +3953,15 @@
     {
       "operator": "mergeMap",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the outer source immediately",
+            "start with zero active inners and an empty queue"
+          ]
+        },
         {
           "kind": "state",
           "given": "projected inners active",
@@ -3536,6 +4032,15 @@
       "operator": "mergeMapTo",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the outer source immediately",
+            "start with zero active inners and an empty queue"
+          ]
+        },
+        {
           "kind": "state",
           "given": "fixed inners active",
           "when": "the next relevant operator event occurs",
@@ -3604,6 +4109,16 @@
     {
       "operator": "mergeScan",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately",
+            "initialise the accumulator with the seed",
+            "start with zero active inners"
+          ]
+        },
         {
           "kind": "state",
           "given": "projected accumulator inners active",
@@ -3674,6 +4189,15 @@
       "operator": "mergeWith",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source and then to each supplied input, in order",
+            "all inputs run concurrently"
+          ]
+        },
+        {
           "kind": "state",
           "given": "source and supplied Observables are active",
           "when": "a subscription lifecycle event occurs",
@@ -3739,6 +4263,15 @@
     {
       "operator": "min",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately",
+            "start with no retained value"
+          ]
+        },
         {
           "kind": "state",
           "given": "source active",
@@ -3806,6 +4339,25 @@
       "operator": "multicast",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no selector is configured",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "attach the subscriber to the subject",
+            "do not subscribe to the source until connect() is called on the ConnectableObservable"
+          ]
+        },
+        {
+          "kind": "subscription",
+          "given": "a selector is configured",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "create the subject",
+            "subscribe the subscriber to the selector output",
+            "then connect the source to the subject"
+          ]
+        },
+        {
           "kind": "state",
           "given": "connectable state active",
           "when": "the next relevant operator event occurs",
@@ -3866,6 +4418,15 @@
       "operator": "observeOn",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately",
+            "deliveries are scheduled as notifications arrive"
+          ]
+        },
+        {
           "kind": "state",
           "given": "notifications pending on a scheduler",
           "when": "the relevant scheduled event occurs",
@@ -3923,6 +4484,15 @@
     {
       "operator": "onErrorResumeNextWith",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately",
+            "keep the fallback sources pending"
+          ]
+        },
         {
           "kind": "state",
           "given": "current Observable active",
@@ -3998,6 +4568,15 @@
       "operator": "pairwise",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately",
+            "start with no previous value"
+          ]
+        },
+        {
           "kind": "state",
           "given": "source active after first value",
           "when": "a source value arrives",
@@ -4055,6 +4634,15 @@
       "operator": "partition",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "a partition output is subscribed",
+          "when": "its subscriber subscribes",
+          "then": [
+            "subscribe to the source independently for that output",
+            "each output holds its own source subscription"
+          ]
+        },
+        {
           "kind": "state",
           "given": "each partition subscription active",
           "when": "the next relevant operator event occurs",
@@ -4111,6 +4699,14 @@
       "operator": "pluck",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately"
+          ]
+        },
+        {
           "kind": "state",
           "given": "source active",
           "when": "the next relevant operator event occurs",
@@ -4165,6 +4761,24 @@
     {
       "operator": "publish",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "no selector is configured",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "attach the subscriber to the Subject",
+            "do not subscribe to the source until connect() is called on the ConnectableObservable"
+          ]
+        },
+        {
+          "kind": "subscription",
+          "given": "a selector is configured",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe the subscriber to the selector output",
+            "then connect the source to the Subject"
+          ]
+        },
         {
           "kind": "state",
           "given": "connectable state active",
@@ -4224,6 +4838,16 @@
       "operator": "publishBehavior",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "attach the subscriber to the BehaviorSubject",
+            "deliver the current value immediately",
+            "do not subscribe to the source until connect() is called on the ConnectableObservable"
+          ]
+        },
+        {
           "kind": "state",
           "given": "connectable state active",
           "when": "the next relevant source event occurs",
@@ -4281,6 +4905,16 @@
     {
       "operator": "publishLast",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "attach the subscriber to the AsyncSubject",
+            "deliver nothing until the source completes",
+            "do not subscribe to the source until connect() is called on the ConnectableObservable"
+          ]
+        },
         {
           "kind": "state",
           "given": "connectable state active",
@@ -4342,6 +4976,25 @@
       "operator": "publishReplay",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no selector is configured",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "attach the subscriber to the ReplaySubject",
+            "replay buffered values immediately",
+            "do not subscribe to the source until connect() is called on the ConnectableObservable"
+          ]
+        },
+        {
+          "kind": "subscription",
+          "given": "a selector is configured",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe the subscriber to the selector output",
+            "then connect the source to the ReplaySubject"
+          ]
+        },
+        {
           "kind": "state",
           "given": "connectable state active",
           "when": "the relevant input event occurs",
@@ -4399,6 +5052,15 @@
     {
       "operator": "race",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source and then to each competitor, in order",
+            "stop subscribing further competitors if one emits synchronously during subscription"
+          ]
+        },
         {
           "kind": "state",
           "given": "competitors pending before winner",
@@ -4473,6 +5135,15 @@
       "operator": "raceWith",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source and then to each competitor, in order",
+            "stop subscribing further competitors if one emits synchronously during subscription"
+          ]
+        },
+        {
           "kind": "state",
           "given": "competitors pending before winner",
           "when": "the next relevant operator event occurs",
@@ -4546,6 +5217,15 @@
       "operator": "reduce",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately",
+            "initialise the accumulator with the seed when one is provided"
+          ]
+        },
+        {
           "kind": "state",
           "given": "source active",
           "when": "the next relevant source event occurs",
@@ -4612,6 +5292,26 @@
       "operator": "refCount",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "the reference count is zero",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "attach the subscriber to the connectable's subject",
+            "increment the reference count to one",
+            "connect the source"
+          ]
+        },
+        {
+          "kind": "subscription",
+          "given": "the reference count is above zero",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "attach the subscriber to the connectable's subject",
+            "increment the reference count",
+            "reuse the existing connection"
+          ]
+        },
+        {
           "kind": "state",
           "given": "shared connectable subscriber count > 0",
           "when": "the next relevant source event occurs",
@@ -4675,6 +5375,22 @@
     {
       "operator": "repeat",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "count is greater than zero",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source for the first execution"
+          ]
+        },
+        {
+          "kind": "subscription",
+          "given": "count is zero or less",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "complete immediately without subscribing to the source"
+          ]
+        },
         {
           "kind": "state",
           "given": "source execution active",
@@ -4749,6 +5465,15 @@
     {
       "operator": "repeatWhen",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately",
+            "create the notifier only on the first completion"
+          ]
+        },
         {
           "kind": "state",
           "given": "source execution active",
@@ -4831,6 +5556,22 @@
       "operator": "retry",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "count is greater than zero",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source for the first attempt"
+          ]
+        },
+        {
+          "kind": "subscription",
+          "given": "count is zero or less",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source as a plain pass-through; errors are never retried"
+          ]
+        },
+        {
           "kind": "state",
           "given": "source execution active",
           "when": "the next relevant source event occurs",
@@ -4905,6 +5646,15 @@
       "operator": "retryWhen",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately",
+            "create the notifier only on the first error"
+          ]
+        },
+        {
           "kind": "state",
           "given": "source execution active",
           "when": "the relevant notifier event occurs",
@@ -4978,6 +5728,16 @@
       "operator": "sample",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source first",
+            "then subscribe to the notifier",
+            "start with no pending value"
+          ]
+        },
+        {
           "kind": "state",
           "given": "source active",
           "when": "a source value arrives",
@@ -5045,6 +5805,16 @@
       "operator": "sampleTime",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source first",
+            "then start the periodic sampling interval",
+            "start with no pending value"
+          ]
+        },
+        {
           "kind": "state",
           "given": "source active",
           "when": "a source value arrives",
@@ -5105,6 +5875,15 @@
       "operator": "scan",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately",
+            "initialise the accumulator with the seed when one is provided; otherwise the first value becomes the accumulator"
+          ]
+        },
+        {
           "kind": "state",
           "given": "source active",
           "when": "the next relevant source event occurs",
@@ -5161,6 +5940,15 @@
     {
       "operator": "scanInternals",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately",
+            "initialise the accumulator with the seed when one is provided; otherwise the first value becomes the accumulator"
+          ]
+        },
         {
           "kind": "state",
           "given": "source active",
@@ -5227,6 +6015,16 @@
     {
       "operator": "sequenceEqual",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source first",
+            "then subscribe to the comparison sequence",
+            "start with both queues empty"
+          ]
+        },
         {
           "kind": "state",
           "given": "two sequences active",
@@ -5297,6 +6095,27 @@
       "operator": "share",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no connection exists",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "create the subject with the connector",
+            "set the reference count to one",
+            "subscribe the subscriber to the subject",
+            "then connect the source"
+          ]
+        },
+        {
+          "kind": "subscription",
+          "given": "a connection exists",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "increment the reference count",
+            "attach the subscriber to the existing subject",
+            "cancel a pending reset if one is scheduled"
+          ]
+        },
+        {
           "kind": "state",
           "given": "shared subscription state active",
           "when": "a subscription lifecycle event occurs",
@@ -5364,6 +6183,25 @@
       "operator": "shareReplay",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no connection exists",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "create the ReplaySubject",
+            "subscribe the subscriber to it",
+            "then connect the source"
+          ]
+        },
+        {
+          "kind": "subscription",
+          "given": "a connection exists, or the source completed without a reset",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "attach the subscriber to the ReplaySubject",
+            "replay buffered values immediately, then deliver live values"
+          ]
+        },
+        {
           "kind": "state",
           "given": "shared replay state active",
           "when": "the relevant input event occurs",
@@ -5430,6 +6268,15 @@
     {
       "operator": "single",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately",
+            "start with no value seen and no match"
+          ]
+        },
         {
           "kind": "state",
           "given": "source active",
@@ -5505,6 +6352,15 @@
       "operator": "skip",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately",
+            "start the skip counter at zero"
+          ]
+        },
+        {
           "kind": "state",
           "given": "source active",
           "when": "the next relevant source event occurs",
@@ -5559,6 +6415,15 @@
     {
       "operator": "skipLast",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately",
+            "start with an empty trailing buffer"
+          ]
+        },
         {
           "kind": "state",
           "given": "source active",
@@ -5617,6 +6482,16 @@
     {
       "operator": "skipUntil",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the notifier first",
+            "then subscribe to the source",
+            "start with the gate closed"
+          ]
+        },
         {
           "kind": "state",
           "given": "gate closed",
@@ -5683,6 +6558,15 @@
       "operator": "skipWhile",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately",
+            "start in the skipping state"
+          ]
+        },
+        {
           "kind": "state",
           "given": "skipping state active",
           "when": "a source value arrives",
@@ -5737,6 +6621,15 @@
     {
       "operator": "startWith",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "emit the prefix values synchronously, or on the scheduler when one is given",
+            "then subscribe to the source"
+          ]
+        },
         {
           "kind": "state",
           "given": "subscription begins",
@@ -5793,6 +6686,15 @@
     {
       "operator": "subscribeOn",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "schedule the source subscription on the scheduler",
+            "the source is not subscribed until the scheduled action runs"
+          ]
+        },
         {
           "kind": "state",
           "given": "source subscription is pending on a scheduler",
@@ -5857,6 +6759,15 @@
     {
       "operator": "switchAll",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the outer source immediately",
+            "start with no active inner"
+          ]
+        },
         {
           "kind": "state",
           "given": "one current inner active",
@@ -5924,6 +6835,15 @@
       "operator": "switchMap",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the outer source immediately",
+            "start with no active projected inner"
+          ]
+        },
+        {
           "kind": "state",
           "given": "one projected inner active",
           "when": "a subscription lifecycle event occurs",
@@ -5990,6 +6910,15 @@
       "operator": "switchMapTo",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the outer source immediately",
+            "start with no active configured inner"
+          ]
+        },
+        {
           "kind": "state",
           "given": "one fixed inner active",
           "when": "a subscription lifecycle event occurs",
@@ -6055,6 +6984,16 @@
     {
       "operator": "switchScan",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately",
+            "initialise the accumulator with the seed",
+            "start with no active inner"
+          ]
+        },
         {
           "kind": "state",
           "given": "one projected accumulator inner active",
@@ -6124,6 +7063,22 @@
       "operator": "take",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "count is greater than zero",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately"
+          ]
+        },
+        {
+          "kind": "subscription",
+          "given": "count is zero or less",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "complete immediately without subscribing to the source"
+          ]
+        },
+        {
           "kind": "state",
           "given": "source active",
           "when": "the next relevant source event occurs",
@@ -6179,6 +7134,23 @@
     {
       "operator": "takeLast",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "count is greater than zero",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately",
+            "start with an empty trailing buffer"
+          ]
+        },
+        {
+          "kind": "subscription",
+          "given": "count is zero or less",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "complete immediately without subscribing to the source"
+          ]
+        },
         {
           "kind": "state",
           "given": "source active",
@@ -6237,6 +7209,15 @@
     {
       "operator": "takeUntil",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the notifier first",
+            "subscribe to the source only if the notifier did not complete the output synchronously"
+          ]
+        },
         {
           "kind": "state",
           "given": "source active",
@@ -6304,6 +7285,15 @@
       "operator": "takeWhile",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately",
+            "start in the taking state"
+          ]
+        },
+        {
           "kind": "state",
           "given": "taking state active",
           "when": "the next relevant operator event occurs",
@@ -6359,6 +7349,15 @@
     {
       "operator": "tap",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "invoke the subscribe callback",
+            "then subscribe to the source"
+          ]
+        },
         {
           "kind": "state",
           "given": "source active",
@@ -6420,6 +7419,15 @@
     {
       "operator": "throttle",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately",
+            "start with no active duration and no pending value"
+          ]
+        },
         {
           "kind": "state",
           "given": "duration active",
@@ -6500,6 +7508,15 @@
       "operator": "throttleTime",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately",
+            "start with no running interval and no pending value"
+          ]
+        },
+        {
           "kind": "state",
           "given": "fixed throttle interval active",
           "when": "a source value arrives",
@@ -6570,6 +7587,15 @@
       "operator": "throwIfEmpty",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately",
+            "start with no value seen"
+          ]
+        },
+        {
           "kind": "state",
           "given": "source active",
           "when": "the next relevant source event occurs",
@@ -6634,6 +7660,15 @@
       "operator": "timeInterval",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately",
+            "record the scheduler's current time as the baseline"
+          ]
+        },
+        {
           "kind": "state",
           "given": "source active",
           "when": "a subscription lifecycle event occurs",
@@ -6688,6 +7723,15 @@
     {
       "operator": "timeout",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source",
+            "if no value arrived synchronously, start the first-value timer from the first option (duration or absolute date), or else from each"
+          ]
+        },
         {
           "kind": "state",
           "given": "waiting state active",
@@ -6756,6 +7800,15 @@
       "operator": "timeoutWith",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source",
+            "if no value arrived synchronously, start the first-value timer from the first option (duration or absolute date), or else from each"
+          ]
+        },
+        {
           "kind": "state",
           "given": "waiting state active",
           "when": "the relevant scheduled event occurs",
@@ -6823,6 +7876,14 @@
       "operator": "timestamp",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately"
+          ]
+        },
+        {
           "kind": "state",
           "given": "source active",
           "when": "the relevant scheduled event occurs",
@@ -6877,6 +7938,15 @@
     {
       "operator": "toArray",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source immediately",
+            "start with an empty array"
+          ]
+        },
         {
           "kind": "state",
           "given": "source active",
@@ -6935,6 +8005,16 @@
     {
       "operator": "window",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "create the first window and emit it downstream",
+            "subscribe to the source",
+            "then subscribe to the boundary notifier"
+          ]
+        },
         {
           "kind": "state",
           "given": "current window open",
@@ -7003,6 +8083,15 @@
       "operator": "windowCount",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "create the first window and emit it downstream",
+            "subscribe to the source"
+          ]
+        },
+        {
           "kind": "state",
           "given": "one or more count-based windows open",
           "when": "a source value arrives",
@@ -7060,6 +8149,16 @@
     {
       "operator": "windowTime",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "open the first window, emit it, and schedule its close timer",
+            "schedule periodic window creation when windowCreationInterval is configured",
+            "then subscribe to the source"
+          ]
+        },
         {
           "kind": "state",
           "given": "time-based windows open",
@@ -7121,6 +8220,16 @@
     {
       "operator": "windowToggle",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the openings observable first",
+            "then subscribe to the source",
+            "start with no open window"
+          ]
+        },
         {
           "kind": "state",
           "given": "one or more windows open",
@@ -7200,6 +8309,15 @@
       "operator": "windowWhen",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "open the first window, emit it, and subscribe to its closing notifier",
+            "then subscribe to the source"
+          ]
+        },
+        {
           "kind": "state",
           "given": "current window open",
           "when": "a source value arrives",
@@ -7269,6 +8387,15 @@
       "operator": "withLatestFrom",
       "rules": [
         {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to every secondary input first, in order",
+            "then subscribe to the source"
+          ]
+        },
+        {
           "kind": "state",
           "given": "source active",
           "when": "the next relevant source event occurs",
@@ -7333,6 +8460,15 @@
     {
       "operator": "zip",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source and then to each supplied input, in order",
+            "start with an empty queue per input"
+          ]
+        },
         {
           "kind": "state",
           "given": "inputs active",
@@ -7400,6 +8536,15 @@
     {
       "operator": "zipAll",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the outer source immediately and collect inner observables",
+            "defer subscribing to the inners until the outer completes"
+          ]
+        },
         {
           "kind": "state",
           "given": "collected inner inputs active",
@@ -7477,6 +8622,15 @@
     {
       "operator": "zipWith",
       "rules": [
+        {
+          "kind": "subscription",
+          "given": "no subscription is active",
+          "when": "a downstream subscriber subscribes",
+          "then": [
+            "subscribe to the source and then to each supplied input, in order",
+            "start with an empty queue per input"
+          ]
+        },
         {
           "kind": "state",
           "given": "source and supplied inputs active",
