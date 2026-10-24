@@ -116,9 +116,11 @@ RxJS implementation and tests
 | `spec/convertible-bdd.ebnf` | EBNF grammar for **Convertible BDD**, the strict, parser-friendly Given / When / Then syntax. |
 | `spec/mealy.ebnf` | EBNF grammar for the **Mealy DSL**, the machine-oriented target language. |
 | `spec/machine-semantic-model.schema.json` | JSON Schema for the syntax-independent **Machine Semantic Model** that both grammars map onto. |
+| `scripts/validate.mjs` | Validator run by `npm run validate`: checks `operators.json` against its schema, enforces the catalog invariants, and confirms `operators.md` mirrors the JSON. |
+| `package.json` | Declares the `validate` script and its single dev dependency, Ajv. |
 
-There is no `package.json`, no source code, and no test runner. Everything is Markdown,
-EBNF, and JSON.
+The only code is the validation script. There is no parser, generator, or test suite yet;
+the specification itself is Markdown, EBNF, and JSON.
 
 ---
 
@@ -283,8 +285,11 @@ Note: The first source value starts the duration.
 
 `spec/operator-catalog.schema.json` enforces the structural invariants listed in
 `docs/machine-readable-spec.md`: non-empty operator name, at least one rule, non-empty
-`given` and `when`, at least one `then` statement, and `kind` restricted to `state` or
-`event`. The docs are explicit that this proves **structure, not semantic completeness**.
+`given` and `when`, at least one `then` statement, and `kind` restricted to the eleven
+known kinds. `npm run validate` applies the schema and additionally checks that operators
+are unique and alphabetical, that every operator carries each lifecycle kind in lifecycle
+order, and that the Markdown catalog mirrors the JSON exactly. The docs are explicit that
+this proves **structure, not semantic completeness**.
 Whether all meaningful source, timer, notifier, inner, completion, error, and teardown
 transitions are present is still a human review question.
 
@@ -504,9 +509,9 @@ commit history shows a clear progression: readable notation → full 116-operato
 JSON mirror and schema → testing bridge and coverage matrix → formal grammars and semantic
 model. Things worth knowing when working on it:
 
-- **Specification only, no code.** The parser, semantic analyzer, Mealy generator, RxJS
-  generator, and conformance tests described in the docs are design intent. None are
-  implemented in this repository.
+- **Almost no code.** Apart from the validation script, the parser, semantic analyzer, Mealy
+  generator, RxJS generator, and conformance tests described in the docs are design intent.
+  None are implemented in this repository.
 - **Every coverage-matrix row now has a dedicated rule kind.** The original `state` and
   `event` rules remain as each operator's behavioral summary and overlap in places with the
   more specific kinds added later.
@@ -517,8 +522,8 @@ model. Things worth knowing when working on it:
 - **Catalog rules are Readable BDD, not Convertible BDD.** The `given` / `when` / `then`
   strings in `operators.json` are free prose. Converting them to the strict grammar would
   be the next step toward the formal pipeline.
-- **No validation has been run in-repo.** `operator-catalog.schema.json` exists, but there
-  is no script or CI step that validates `operators.json` against it.
+- **Validation is local only.** `npm run validate` checks the schema, the catalog invariants,
+  and the Markdown mirror, but no CI step runs it on push.
 - **Some entries are generic placeholders.** 66 rules use the guard "the operator is
   active" and 12 use the event "the relevant input event occurs". These carry little
   operator-specific information and would need refinement before they are useful as test

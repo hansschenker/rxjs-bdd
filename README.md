@@ -348,6 +348,15 @@ The complete 116-operator catalog is also available as structured data:
 - `docs/machine-readable-spec.md` — semantics and validation invariants.
 - `docs/formal-language.md` — formal-language architecture and semantic constraints.
 
+To validate the catalog:
+
+```sh
+npm install
+npm run validate
+```
+
+`scripts/validate.mjs` checks `spec/operators.json` against the JSON Schema, enforces the catalog invariants (unique alphabetical operators, every lifecycle rule kind present, rule kinds in lifecycle order), and confirms that `docs/operators.md` is an exact mirror of the JSON.
+
 ## From specification to testing
 
 The repository now includes a direct testing bridge:

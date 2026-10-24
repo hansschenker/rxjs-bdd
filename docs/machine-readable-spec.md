@@ -39,7 +39,7 @@ Each operator contains one or more rules:
 
 Every operator carries at least one rule of each of the `subscription`, `completion`, `error`, `unsubscription`, and `cancellation` kinds. `timer`, `notifier`, `inner`, and `concurrency` rules exist only where they apply: operators that schedule work (13), consume a notifier observable (20), subscribe to inner observables or secondary inputs whose values matter (37), or hold work that can overlap or be superseded (60). The absence of such a rule means that coverage-matrix row does not apply to the operator. Where the outcome depends on the state at that moment (a pending value or none, a retry budget left or exhausted, one subscriber left or several), each case is a separate rule with its own `given`. This makes every row of the transition coverage matrix except *Source next* derivable from the catalog by filtering on `kind`; *Source next* remains the domain of the original `state` and `event` rules.
 
-The schema is in `spec/operator-catalog.schema.json`.
+The schema is in `spec/operator-catalog.schema.json`. Run `npm run validate` (after `npm install`) to check the catalog against it. The script also enforces the invariants below, checks that operators are unique and alphabetical, that every operator carries each lifecycle rule kind in lifecycle order, and that `docs/operators.md` mirrors the JSON rule for rule.
 
 ## Validation invariants
 

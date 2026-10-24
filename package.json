@@ -1,0 +1,13 @@
+{
+  "name": "rxjs-bdd",
+  "version": "0.6.0",
+  "private": true,
+  "description": "Given / When / Then behavioral specification of RxJS 7.x operators",
+  "type": "module",
+  "scripts": {
+    "validate": "node scripts/validate.mjs"
+  },
+  "devDependencies": {
+    "ajv": "^8.17.1"
+  }
+}
