@@ -6,7 +6,7 @@ on:
 
 jobs:
   validate:
-    name: Validate operator catalog
+    name: Validate operator catalog and samples
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
