@@ -5,9 +5,11 @@
   "description": "Given / When / Then behavioral specification of RxJS 7.x operators",
   "type": "module",
   "scripts": {
-    "validate": "node scripts/validate.mjs"
+    "validate": "node scripts/validate.mjs",
+    "sample:checkout": "node samples/shopping-cart-checkout/verify.mjs"
   },
   "devDependencies": {
-    "ajv": "^8.17.1"
+    "ajv": "^8.17.1",
+    "rxjs": "^7.8.2"
   }
 }

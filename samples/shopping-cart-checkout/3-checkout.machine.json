@@ -1,0 +1,122 @@
+{
+  "version": "0.1",
+  "machine": "ShoppingCartCheckout",
+  "state": [
+    { "path": "stage", "type": "Stage" },
+    { "path": "cart.count", "type": "Int" },
+    { "path": "cart.total", "type": "Money" },
+    { "path": "payment.declines", "type": "Int" },
+    { "path": "maxRetries", "type": "Int" }
+  ],
+  "initial": [
+    { "target": "stage", "expression": "\"shopping\"" },
+    { "target": "cart.count", "expression": "0" },
+    { "target": "cart.total", "expression": "0" },
+    { "target": "payment.declines", "expression": "0" },
+    { "target": "maxRetries", "expression": "3" }
+  ],
+  "inputs": [
+    { "name": "cart.addItem", "parameters": [{ "name": "price", "type": "Money" }] },
+    { "name": "cart.removeItem", "parameters": [{ "name": "price", "type": "Money" }] },
+    { "name": "customer.checkout", "parameters": [] },
+    { "name": "customer.confirm", "parameters": [] },
+    { "name": "customer.cancel", "parameters": [] },
+    { "name": "payment.authorized", "parameters": [{ "name": "reference", "type": "Reference" }] },
+    { "name": "payment.declined", "parameters": [{ "name": "reason", "type": "Reason" }] }
+  ],
+  "outputs": [
+    { "name": "checkout.review", "parameters": [{ "name": "total", "type": "Money" }] },
+    { "name": "checkout.rejected", "parameters": [{ "name": "reason", "type": "Reason" }] },
+    { "name": "payment.request", "parameters": [{ "name": "amount", "type": "Money" }] },
+    { "name": "order.placed", "parameters": [{ "name": "reference", "type": "Reference" }] },
+    { "name": "order.cancelled", "parameters": [{ "name": "reason", "type": "Reason" }] }
+  ],
+  "actions": [],
+  "transitions": [
+    {
+      "name": "AddItem",
+      "guard": "stage == \"shopping\"",
+      "input": { "name": "cart.addItem", "arguments": ["price"] },
+      "updates": [
+        { "target": "cart.count", "expression": "cart.count + 1" },
+        { "target": "cart.total", "expression": "cart.total + price" }
+      ],
+      "actions": [{ "kind": "nothing" }]
+    },
+    {
+      "name": "RemoveItem",
+      "guard": "stage == \"shopping\" and cart.count > 0",
+      "input": { "name": "cart.removeItem", "arguments": ["price"] },
+      "updates": [
+        { "target": "cart.count", "expression": "cart.count - 1" },
+        { "target": "cart.total", "expression": "cart.total - price" }
+      ],
+      "actions": [{ "kind": "nothing" }]
+    },
+    {
+      "name": "CheckoutWithItems",
+      "guard": "stage == \"shopping\" and cart.count > 0",
+      "input": { "name": "customer.checkout", "arguments": [] },
+      "updates": [{ "target": "stage", "expression": "\"review\"" }],
+      "actions": [{ "kind": "emit", "event": { "name": "checkout.review", "arguments": ["cart.total"] } }]
+    },
+    {
+      "name": "CheckoutEmptyCart",
+      "guard": "stage == \"shopping\" and cart.count == 0",
+      "input": { "name": "customer.checkout", "arguments": [] },
+      "updates": [],
+      "actions": [{ "kind": "emit", "event": { "name": "checkout.rejected", "arguments": ["\"EmptyCart\""] } }]
+    },
+    {
+      "name": "ConfirmOrder",
+      "guard": "stage == \"review\"",
+      "input": { "name": "customer.confirm", "arguments": [] },
+      "updates": [{ "target": "stage", "expression": "\"awaitingPayment\"" }],
+      "actions": [{ "kind": "emit", "event": { "name": "payment.request", "arguments": ["cart.total"] } }]
+    },
+    {
+      "name": "CancelFromReview",
+      "guard": "stage == \"review\"",
+      "input": { "name": "customer.cancel", "arguments": [] },
+      "updates": [{ "target": "stage", "expression": "\"cancelled\"" }],
+      "actions": [
+        { "kind": "emit", "event": { "name": "order.cancelled", "arguments": ["\"CustomerCancelled\""] } },
+        { "kind": "complete" }
+      ]
+    },
+    {
+      "name": "PaymentAuthorized",
+      "guard": "stage == \"awaitingPayment\"",
+      "input": { "name": "payment.authorized", "arguments": ["reference"] },
+      "updates": [{ "target": "stage", "expression": "\"confirmed\"" }],
+      "actions": [
+        { "kind": "emit", "event": { "name": "order.placed", "arguments": ["reference"] } },
+        { "kind": "complete" }
+      ]
+    },
+    {
+      "name": "PaymentDeclinedRetry",
+      "guard": "stage == \"awaitingPayment\" and payment.declines + 1 < maxRetries",
+      "input": { "name": "payment.declined", "arguments": ["reason"] },
+      "updates": [{ "target": "payment.declines", "expression": "payment.declines + 1" }],
+      "actions": [{ "kind": "emit", "event": { "name": "payment.request", "arguments": ["cart.total"] } }]
+    },
+    {
+      "name": "PaymentDeclinedFinal",
+      "guard": "stage == \"awaitingPayment\" and payment.declines + 1 >= maxRetries",
+      "input": { "name": "payment.declined", "arguments": ["reason"] },
+      "updates": [],
+      "actions": [{ "kind": "error", "expression": "PaymentFailed" }]
+    },
+    {
+      "name": "CancelFromPayment",
+      "guard": "stage == \"awaitingPayment\"",
+      "input": { "name": "customer.cancel", "arguments": [] },
+      "updates": [{ "target": "stage", "expression": "\"cancelled\"" }],
+      "actions": [
+        { "kind": "emit", "event": { "name": "order.cancelled", "arguments": ["\"CustomerCancelled\""] } },
+        { "kind": "complete" }
+      ]
+    }
+  ]
+}

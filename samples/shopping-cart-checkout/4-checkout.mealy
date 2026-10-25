@@ -1,0 +1,108 @@
+machine ShoppingCartCheckout {
+  state {
+    stage: Stage;
+    cart.count: Int;
+    cart.total: Money;
+    payment.declines: Int;
+    maxRetries: Int;
+  }
+
+  initial {
+    stage = "shopping";
+    cart.count = 0;
+    cart.total = 0;
+    payment.declines = 0;
+    maxRetries = 3;
+  }
+
+  input {
+    cart.addItem(price: Money);
+    cart.removeItem(price: Money);
+    customer.checkout();
+    customer.confirm();
+    customer.cancel();
+    payment.authorized(reference: Reference);
+    payment.declined(reason: Reason);
+  }
+
+  output {
+    checkout.review(total: Money);
+    checkout.rejected(reason: Reason);
+    payment.request(amount: Money);
+    order.placed(reference: Reference);
+    order.cancelled(reason: Reason);
+  }
+
+  transition AddItem {
+    given stage == "shopping";
+    when cart.addItem(price);
+    then cart.count = cart.count + 1;
+    then cart.total = cart.total + price;
+    emit nothing;
+  }
+
+  transition RemoveItem {
+    given stage == "shopping" and cart.count > 0;
+    when cart.removeItem(price);
+    then cart.count = cart.count - 1;
+    then cart.total = cart.total - price;
+    emit nothing;
+  }
+
+  transition CheckoutWithItems {
+    given stage == "shopping" and cart.count > 0;
+    when customer.checkout();
+    then stage = "review";
+    emit checkout.review(cart.total);
+  }
+
+  transition CheckoutEmptyCart {
+    given stage == "shopping" and cart.count == 0;
+    when customer.checkout();
+    emit checkout.rejected("EmptyCart");
+  }
+
+  transition ConfirmOrder {
+    given stage == "review";
+    when customer.confirm();
+    then stage = "awaitingPayment";
+    emit payment.request(cart.total);
+  }
+
+  transition CancelFromReview {
+    given stage == "review";
+    when customer.cancel();
+    then stage = "cancelled";
+    emit order.cancelled("CustomerCancelled");
+    complete;
+  }
+
+  transition PaymentAuthorized {
+    given stage == "awaitingPayment";
+    when payment.authorized(reference);
+    then stage = "confirmed";
+    emit order.placed(reference);
+    complete;
+  }
+
+  transition PaymentDeclinedRetry {
+    given stage == "awaitingPayment" and payment.declines + 1 < maxRetries;
+    when payment.declined(reason);
+    then payment.declines = payment.declines + 1;
+    emit payment.request(cart.total);
+  }
+
+  transition PaymentDeclinedFinal {
+    given stage == "awaitingPayment" and payment.declines + 1 >= maxRetries;
+    when payment.declined(reason);
+    error PaymentFailed;
+  }
+
+  transition CancelFromPayment {
+    given stage == "awaitingPayment";
+    when customer.cancel();
+    then stage = "cancelled";
+    emit order.cancelled("CustomerCancelled");
+    complete;
+  }
+}
