@@ -26,7 +26,7 @@ const BINARY_OPS = new Set(["+", "-", "*", "/", "%"]);
 // ---------------------------------------------------------------------------
 // Clause-body parser
 // ---------------------------------------------------------------------------
-class BodyParser {
+export class BodyParser {
   constructor(text, line) {
     this.text = text;
     this.line = line;
@@ -249,9 +249,21 @@ class BodyParser {
     this.optionalSpace();
     return { type: "assign", target: name, value: this.parseExpression() };
   }
+
+  // Assignment = StatePath Space? "=" Space? Expression. Used by the Mealy parser for the
+  // `initial` block and transition `then` statements, where the target is always an assignment.
+  parseAssignment() {
+    const target = this.parseQualifiedIdentifier();
+    if (RESERVED.has(target)) this.fail(`"${target}" is reserved`);
+    this.optionalSpace();
+    if (this.startsWith("==")) this.fail('an assignment uses a single "="');
+    this.consume("=");
+    this.optionalSpace();
+    return { type: "assign", target, value: this.parseExpression() };
+  }
 }
 
-function parseBody(text, line, method) {
+export function parseBody(text, line, method) {
   const parser = new BodyParser(text, line);
   const node = parser[method]();
   parser.expectEnd();

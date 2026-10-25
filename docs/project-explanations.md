@@ -121,13 +121,16 @@ RxJS implementation and tests
 | `spec/convertible/trace.json` | Maps every scenario to the catalog rules it realises. |
 | `docs/convertible-catalog.md` | Vocabulary conventions, scenario naming, trace format, semantic checks, and limitations of the converted catalog. |
 | `scripts/convertible-bdd.mjs` | Recursive-descent parser for `convertible-bdd.ebnf` plus the declaration-free semantic checks. |
+| `scripts/mealy.mjs` | Recursive-descent parser for `mealy.ebnf` plus declaration-aware semantic checks and a projection onto the Machine Semantic Model. Reuses the shared expression grammar from `convertible-bdd.mjs`. |
 | `scripts/validate.mjs` | Validator run by `npm run validate`: checks `operators.json` against its schema, enforces the catalog invariants, and confirms the `operators/*.md` files mirror the JSON and are all indexed in `docs/operators.md`. |
-| `package.json` | Declares the `validate` script and its single dev dependency, Ajv. |
-| `.github/workflows/validate.yml` | GitHub Actions workflow that runs `npm ci` and `npm run validate` on every push and pull request. |
+| `samples/<use-case>/` | Worked end-to-end examples that run the whole pipeline on a business use case, each with its own `verify.mjs`. See `samples/shopping-cart-checkout/`. |
+| `package.json` | Declares the `validate` and `sample:checkout` scripts and the dev dependencies Ajv and RxJS. |
+| `.github/workflows/validate.yml` | GitHub Actions workflow that runs `npm ci`, `npm run validate`, and the samples on every push and pull request. |
 
-The only code is the validation script and the Convertible BDD parser it uses. There is no
-machine-model generator or test suite yet; the specification itself is Markdown, EBNF, JSON,
-and Convertible BDD feature files.
+The code is the operator validator, the two grammar parsers it and the samples use, and the
+sample pipelines. The operator catalog itself is still Markdown, EBNF, JSON, and Convertible BDD
+feature files; there is no operator-level machine-model generator yet. The Mealy parser and a
+first full-pipeline example (`samples/shopping-cart-checkout/`) now exist for a business use case.
 
 ---
 

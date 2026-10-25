@@ -12,7 +12,7 @@ Convertible BDD         2-checkout.feature       parses under spec/convertible-b
       |  parse (scripts/convertible-bdd.mjs)
 Machine Semantic Model  3-checkout.machine.json  validates against spec/machine-semantic-model.schema.json
       |
-Mealy DSL               4-checkout.mealy         conforms to spec/mealy.ebnf
+Mealy DSL               4-checkout.mealy         parses under spec/mealy.ebnf (scripts/mealy.mjs)
       |  generate
 RxJS pipeline           pipeline.mjs             a pipeable operator, events in -> outputs out
 ```
@@ -78,18 +78,21 @@ It checks, in order:
 2. **Machine Semantic Model** — `3-checkout.machine.json` validates against
    `spec/machine-semantic-model.schema.json`.
 3. **Feature ↔ model** — every transition matches its scenario name, event, arguments, and guard.
-4. **RxJS pipeline** — the generated operator reproduces hand-computed golden outputs for six
+4. **Mealy DSL** — `4-checkout.mealy` parses under `spec/mealy.ebnf` (via `scripts/mealy.mjs`),
+   passes the declaration-aware semantic checks, and projects back to the same Machine Semantic
+   Model as `3-checkout.machine.json`, which is the round-trip property from `docs/formal-language.md`.
+5. **RxJS pipeline** — the generated operator reproduces hand-computed golden outputs for six
    event traces, and those traces fire all ten transitions.
 
 ## Notes and limitations
 
-- The Mealy file `4-checkout.mealy` is the DSL artifact for the machine. The repository ships
-  the Mealy grammar but no Mealy parser yet, so this file is verified by eye against
-  `spec/mealy.ebnf`, not mechanically. Generating it from the machine model, and parsing it
-  back, is future work.
+- `4-checkout.mealy` is parsed and checked by `scripts/mealy.mjs`, which has the declarations the
+  Convertible BDD layer lacks and so checks symbol resolution and arity (constraints 1 to 4 of
+  `docs/formal-language.md`). Generating the Mealy text from the machine model, rather than
+  writing it by hand, is still future work.
 - The executable path runs through the parsed Convertible BDD feature, with the machine model
   used for the initial state and as the agreement oracle in step 3. The machine model and the
-  Mealy DSL are the same machine in two other notations.
+  Mealy DSL are the same machine in two other notations, and step 4 proves they agree.
 - `emit nothing` in the feature is modelled as a `nothing` action in the machine JSON: a
   transition that deliberately produces no output.
 - An event with no matching transition in the current state is ignored, which is the usual

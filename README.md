@@ -274,8 +274,8 @@ The project now has an explicit formal-language boundary.
 
 The two concrete languages are defined as context-free EBNF grammars:
 
-- `spec/convertible-bdd.ebnf` — strict, parser-friendly Given / When / Then syntax;
-- `spec/mealy.ebnf` — machine-oriented Mealy DSL;
+- `spec/convertible-bdd.ebnf` — strict, parser-friendly Given / When / Then syntax (parsed by `scripts/convertible-bdd.mjs`);
+- `spec/mealy.ebnf` — machine-oriented Mealy DSL (parsed and checked by `scripts/mealy.mjs`);
 - `spec/machine-semantic-model.schema.json` — syntax-independent semantic model shared by both languages;
 - `docs/formal-language.md` — grammar model, semantic constraints, BDD-to-Mealy mapping, LLM guidance, and round-trip goals;
 - `spec/convertible/` — the complete catalog converted to Convertible BDD: one `.feature` per operator plus `trace.json` mapping every scenario back to the catalog rules it realises (see `docs/convertible-catalog.md`);
@@ -382,3 +382,7 @@ transition coverage matrix
       ↓
 RxJS conformance tests
 ```
+
+## Worked example: a full pipeline
+
+`samples/shopping-cart-checkout/` runs the whole workflow on a business use case rather than an operator: Readable BDD, a Convertible BDD feature, the Machine Semantic Model, the Mealy DSL, and a pipeable RxJS operator, one artifact per stage. Its `verify.mjs` (run with `npm run sample:checkout`) parses the feature, validates the machine model, checks that the feature and the Mealy DSL both agree with the model, and runs the generated operator against golden event traces. The Mealy DSL is parsed and checked by `scripts/mealy.mjs`, whose declarations let it enforce the symbol-resolution and arity constraints the Convertible BDD layer cannot.

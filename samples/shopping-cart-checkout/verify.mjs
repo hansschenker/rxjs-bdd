@@ -6,7 +6,8 @@
 //   1. the Convertible BDD feature parses under the grammar and passes the semantic checks;
 //   2. the Machine Semantic Model validates against spec/machine-semantic-model.schema.json;
 //   3. the feature and the machine model agree transition for transition;
-//   4. the generated RxJS pipeline reproduces hand-computed golden outputs for four event traces.
+//   4. the Mealy DSL parses, passes its declaration-aware checks, and round-trips to the model;
+//   5. the generated RxJS pipeline reproduces hand-computed golden outputs for six event traces.
 //
 // Exit code 0 when everything passes, 1 otherwise.
 
@@ -16,7 +17,23 @@ import { fileURLToPath } from "node:url";
 import Ajv2020 from "ajv/dist/2020.js";
 import { from } from "rxjs";
 import { parseFeature, checkFeature } from "../../scripts/convertible-bdd.mjs";
+import { parseMachine, checkMachine, toSemanticModel } from "../../scripts/mealy.mjs";
 import { loadCheckout } from "./pipeline.mjs";
+
+function deepEqual(a, b) {
+  if (a === b) return true;
+  if (typeof a !== typeof b || a === null || b === null) return false;
+  if (Array.isArray(a) || Array.isArray(b)) {
+    if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false;
+    return a.every((value, index) => deepEqual(value, b[index]));
+  }
+  if (typeof a === "object") {
+    const keys = Object.keys(a);
+    if (keys.length !== Object.keys(b).length) return false;
+    return keys.every((key) => Object.prototype.hasOwnProperty.call(b, key) && deepEqual(a[key], b[key]));
+  }
+  return false;
+}
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, "..", "..");
@@ -75,9 +92,24 @@ if (!problems.some((p) => p.includes("transition") || p.includes("guard") || p.i
 }
 
 // ---------------------------------------------------------------------------
-// 4. Generated RxJS pipeline vs golden outputs
+// 4. Mealy DSL: parse, check, and round-trip to the machine model
 // ---------------------------------------------------------------------------
-section("4. RxJS pipeline conformance");
+section("4. Mealy DSL");
+const mealy = parseMachine(read("samples/shopping-cart-checkout/4-checkout.mealy"));
+console.log(`   machine ${mealy.name}: parses, ${mealy.transitions.length} transitions`);
+for (const problem of checkMachine(mealy)) fail(`mealy: ${problem}`);
+const mealyModel = toSemanticModel(mealy);
+if (!validate(mealyModel)) for (const error of validate.errors ?? []) fail(`mealy schema: ${error.instancePath || "/"} ${error.message}`);
+if (!deepEqual(mealyModel, machine)) {
+  fail("mealy: 4-checkout.mealy does not round-trip to 3-checkout.machine.json");
+} else {
+  console.log("   declaration-aware checks pass; round-trips to the Machine Semantic Model");
+}
+
+// ---------------------------------------------------------------------------
+// 5. Generated RxJS pipeline vs golden outputs
+// ---------------------------------------------------------------------------
+section("5. RxJS pipeline conformance");
 const { operator, step, initialState } = loadCheckout();
 
 const ev = (name, ...args) => ({ name, args });
@@ -176,4 +208,4 @@ if (problems.length) {
   for (const problem of problems) console.error(`- ${problem}`);
   process.exit(1);
 }
-console.log("\nOK: Convertible BDD, machine model, feature/model agreement, and RxJS pipeline all pass.");
+console.log("\nOK: Convertible BDD, machine model, feature/model agreement, Mealy DSL, and RxJS pipeline all pass.");

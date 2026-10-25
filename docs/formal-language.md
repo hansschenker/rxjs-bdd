@@ -35,6 +35,8 @@ Both are intended to remain context-free. Context-sensitive constraints belong t
 
 The complete operator catalog has been converted into Convertible BDD: `spec/convertible/<operator>.feature`, with `spec/convertible/trace.json` linking every scenario to the readable rules it realises. `scripts/convertible-bdd.mjs` parses the language and applies the declaration-free subset of the semantic constraints listed below. The vocabulary conventions are documented in `docs/convertible-catalog.md`.
 
+`scripts/mealy.mjs` parses the Mealy DSL and, because that language has a declaration section, applies the declaration-aware constraints (symbol resolution and arity, constraints 1 to 4) that the Convertible BDD layer cannot. It also projects a parsed machine onto the Machine Semantic Model. The sample in `samples/shopping-cart-checkout/` runs the whole pipeline on a business use case and checks that its Mealy DSL round-trips to its machine model.
+
 ## Formal pipeline
 
 ```text
