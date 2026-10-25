@@ -13,8 +13,11 @@
 //   parseMachine(text)    -> machine AST (throws MealyError on a syntax error)
 //   checkMachine(ast)     -> string[] of semantic problems
 //   toSemanticModel(ast)  -> object matching spec/machine-semantic-model.schema.json
+//   generateMealy(model)  -> Mealy DSL text for a Machine Semantic Model (inverse of parse + project)
 //   serializeExpr / serializePredicate -> canonical source text for an expression / predicate
 
+import { readFileSync } from "node:fs";
+import { pathToFileURL } from "node:url";
 import { BodyParser, ConvertibleBddError } from "./convertible-bdd.mjs";
 
 export class MealyError extends Error {
@@ -25,7 +28,6 @@ export class MealyError extends Error {
   }
 }
 
-const IDENTIFIER = /^[A-Za-z][A-Za-z0-9_]*$/;
 const PATH = /^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)*$/;
 const TYPE_REF = /^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)*(<.+>)?$/;
 const MACHINE_OPEN = /^machine\s+([A-Za-z][A-Za-z0-9_]*)\s*\{$/;
@@ -362,6 +364,50 @@ function actionToModel(action) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Generation: Machine Semantic Model -> Mealy DSL text
+// ---------------------------------------------------------------------------
+// The inverse of parseMachine + toSemanticModel. The model already stores guards and expressions
+// as canonical source strings (as produced by serializePredicate / serializeExpr), so generation
+// is layout assembly. For a canonical model the round-trip holds both ways:
+//   parseMachine(generateMealy(M))  projects back to  M        (parse . generate = id)
+//   generateMealy(toSemanticModel(parseMachine(text)))  ==  text  (for canonical text)
+export function generateMealy(model) {
+  const blocks = [];
+
+  if (model.state.length) {
+    blocks.push(["  state {", ...model.state.map((f) => `    ${f.path}: ${f.type};`), "  }"].join("\n"));
+  }
+  if (model.initial.length) {
+    blocks.push(["  initial {", ...model.initial.map((a) => `    ${a.target} = ${a.expression};`), "  }"].join("\n"));
+  }
+  const signatureBlock = (keyword, list) =>
+    [`  ${keyword} {`, ...list.map((s) => `    ${s.name}(${s.parameters.map((p) => `${p.name}: ${p.type}`).join(", ")});`), "  }"].join("\n");
+  if (model.inputs.length) blocks.push(signatureBlock("input", model.inputs));
+  if (model.outputs.length) blocks.push(signatureBlock("output", model.outputs));
+  if (model.actions.length) blocks.push(signatureBlock("action", model.actions));
+
+  for (const transition of model.transitions) {
+    const lines = [
+      `  transition ${transition.name} {`,
+      `    given ${transition.guard};`,
+      `    when ${transition.input.name}(${transition.input.arguments.join(", ")});`,
+    ];
+    for (const update of transition.updates) lines.push(`    then ${update.target} = ${update.expression};`);
+    for (const action of transition.actions) {
+      if (action.kind === "nothing") lines.push("    emit nothing;");
+      else if (action.kind === "complete") lines.push("    complete;");
+      else if (action.kind === "error") lines.push(`    error ${action.expression};`);
+      else if (action.kind === "emit") lines.push(`    emit ${action.event.name}(${action.event.arguments.join(", ")});`);
+      else if (action.kind === "do") lines.push(`    do ${action.call.name}(${action.call.arguments.join(", ")});`);
+    }
+    lines.push("  }");
+    blocks.push(lines.join("\n"));
+  }
+
+  return `machine ${model.machine} {\n${blocks.join("\n\n")}\n}\n`;
+}
+
 // Project a parsed Mealy machine onto the syntax-independent Machine Semantic Model, so it can be
 // compared against (or validated like) spec/machine-semantic-model.schema.json.
 export function toSemanticModel(machine) {
@@ -382,4 +428,16 @@ export function toSemanticModel(machine) {
       actions: transition.actions.map(actionToModel),
     })),
   };
+}
+
+// ---------------------------------------------------------------------------
+// CLI: node scripts/mealy.mjs <machine-model.json>  ->  prints the Mealy DSL text
+// ---------------------------------------------------------------------------
+if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
+  const path = process.argv[2];
+  if (!path) {
+    console.error("usage: node scripts/mealy.mjs <machine-model.json>");
+    process.exit(2);
+  }
+  process.stdout.write(generateMealy(JSON.parse(readFileSync(path, "utf8"))));
 }

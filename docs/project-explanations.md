@@ -121,7 +121,7 @@ RxJS implementation and tests
 | `spec/convertible/trace.json` | Maps every scenario to the catalog rules it realises. |
 | `docs/convertible-catalog.md` | Vocabulary conventions, scenario naming, trace format, semantic checks, and limitations of the converted catalog. |
 | `scripts/convertible-bdd.mjs` | Recursive-descent parser for `convertible-bdd.ebnf` plus the declaration-free semantic checks. |
-| `scripts/mealy.mjs` | Recursive-descent parser for `mealy.ebnf` plus declaration-aware semantic checks and a projection onto the Machine Semantic Model. Reuses the shared expression grammar from `convertible-bdd.mjs`. |
+| `scripts/mealy.mjs` | Recursive-descent parser for `mealy.ebnf` plus declaration-aware semantic checks, a projection onto the Machine Semantic Model, and a generator from the model back to Mealy text (run as `node scripts/mealy.mjs <model.json>`). Reuses the shared expression grammar from `convertible-bdd.mjs`. |
 | `scripts/validate.mjs` | Validator run by `npm run validate`: checks `operators.json` against its schema, enforces the catalog invariants, and confirms the `operators/*.md` files mirror the JSON and are all indexed in `docs/operators.md`. |
 | `samples/<use-case>/` | Worked end-to-end examples that run the whole pipeline on a business use case, each with its own `verify.mjs`. See `samples/shopping-cart-checkout/`. |
 | `package.json` | Declares the `validate` and `sample:checkout` scripts and the dev dependencies Ajv and RxJS. |

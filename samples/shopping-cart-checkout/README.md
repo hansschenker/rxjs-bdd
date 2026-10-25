@@ -11,8 +11,8 @@ Readable BDD            1-readable-bdd.md        prose Given / When / Then
 Convertible BDD         2-checkout.feature       parses under spec/convertible-bdd.ebnf
       |  parse (scripts/convertible-bdd.mjs)
 Machine Semantic Model  3-checkout.machine.json  validates against spec/machine-semantic-model.schema.json
-      |
-Mealy DSL               4-checkout.mealy         parses under spec/mealy.ebnf (scripts/mealy.mjs)
+      |  generate (scripts/mealy.mjs)
+Mealy DSL               4-checkout.mealy         generated from the model; parses back under spec/mealy.ebnf
       |  generate
 RxJS pipeline           pipeline.mjs             a pipeable operator, events in -> outputs out
 ```
@@ -88,8 +88,9 @@ It checks, in order:
 
 - `4-checkout.mealy` is parsed and checked by `scripts/mealy.mjs`, which has the declarations the
   Convertible BDD layer lacks and so checks symbol resolution and arity (constraints 1 to 4 of
-  `docs/formal-language.md`). Generating the Mealy text from the machine model, rather than
-  writing it by hand, is still future work.
+  `docs/formal-language.md`). The file is also generated from the machine model, not hand-written:
+  `node scripts/mealy.mjs 3-checkout.machine.json` prints it, and step 4 fails if the committed
+  file differs from that output.
 - The executable path runs through the parsed Convertible BDD feature, with the machine model
   used for the initial state and as the agreement oracle in step 3. The machine model and the
   Mealy DSL are the same machine in two other notations, and step 4 proves they agree.

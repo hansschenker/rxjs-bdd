@@ -17,7 +17,7 @@ import { fileURLToPath } from "node:url";
 import Ajv2020 from "ajv/dist/2020.js";
 import { from } from "rxjs";
 import { parseFeature, checkFeature } from "../../scripts/convertible-bdd.mjs";
-import { parseMachine, checkMachine, toSemanticModel } from "../../scripts/mealy.mjs";
+import { parseMachine, checkMachine, toSemanticModel, generateMealy } from "../../scripts/mealy.mjs";
 import { loadCheckout } from "./pipeline.mjs";
 
 function deepEqual(a, b) {
@@ -95,7 +95,8 @@ if (!problems.some((p) => p.includes("transition") || p.includes("guard") || p.i
 // 4. Mealy DSL: parse, check, and round-trip to the machine model
 // ---------------------------------------------------------------------------
 section("4. Mealy DSL");
-const mealy = parseMachine(read("samples/shopping-cart-checkout/4-checkout.mealy"));
+const mealyText = read("samples/shopping-cart-checkout/4-checkout.mealy");
+const mealy = parseMachine(mealyText);
 console.log(`   machine ${mealy.name}: parses, ${mealy.transitions.length} transitions`);
 for (const problem of checkMachine(mealy)) fail(`mealy: ${problem}`);
 const mealyModel = toSemanticModel(mealy);
@@ -104,6 +105,14 @@ if (!deepEqual(mealyModel, machine)) {
   fail("mealy: 4-checkout.mealy does not round-trip to 3-checkout.machine.json");
 } else {
   console.log("   declaration-aware checks pass; round-trips to the Machine Semantic Model");
+}
+// Generation is the inverse: the machine model regenerates 4-checkout.mealy exactly, so the
+// file is never hand-drifted from the model. (Compare on LF to ignore the local line ending.)
+const generated = generateMealy(machine);
+if (generated !== mealyText.replace(/\r\n/g, "\n")) {
+  fail("mealy: generate(machine model) does not reproduce 4-checkout.mealy; regenerate with scripts/mealy.mjs");
+} else {
+  console.log("   generated from the machine model, byte for byte (parse(generate(M)) == M)");
 }
 
 // ---------------------------------------------------------------------------
