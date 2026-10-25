@@ -148,7 +148,7 @@ modules rather than only the public API, so it includes:
 
 ### 4.2 Eleven kinds of rule
 
-Every operator has at least one rule of each of the seven lifecycle kinds. The `timer`, `notifier`, `inner`, and `concurrency` kinds appear only where they apply. In lifecycle order:
+Every operator has at least one rule of each of the seven **required** kinds: the `state` / `event` pair inherited from the source catalog (exactly one of each today) and the five lifecycle kinds `subscription`, `completion`, `error`, `unsubscription`, and `cancellation`. The `timer`, `notifier`, `inner`, and `concurrency` kinds appear only where they apply. In lifecycle order:
 
 | `kind` | Heading in `operators/<operator>.md` | Meaning |
 |---|---|---|
@@ -297,7 +297,7 @@ the JSON, the file, and the index agree.
 `docs/machine-readable-spec.md`: non-empty operator name and summary, at least one rule, non-empty
 `given` and `when`, at least one `then` statement, and `kind` restricted to the eleven
 known kinds. `npm run validate` applies the schema and additionally checks that operators
-are unique and alphabetical, that every operator carries each lifecycle kind in lifecycle
+are unique and alphabetical, that every operator carries each required kind, with kinds in lifecycle
 order, and that the Markdown catalog mirrors the JSON exactly. The docs are explicit that
 this proves **structure, not semantic completeness**.
 Whether all meaningful source, timer, notifier, inner, completion, error, and teardown

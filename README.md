@@ -360,7 +360,7 @@ npm install
 npm run validate
 ```
 
-`scripts/validate.mjs` checks `spec/operators.json` against the JSON Schema, enforces the catalog invariants (unique alphabetical operators, every lifecycle rule kind present, rule kinds in lifecycle order), and confirms that the per-operator files in `operators/` are an exact mirror of the JSON and that `docs/operators.md` indexes every one of them with its summary. It also parses every `spec/convertible/*.feature` file with `scripts/convertible-bdd.mjs`, applies the declaration-free semantic checks, and confirms that `trace.json` realises every catalog rule. The same check runs in GitHub Actions on every push (`.github/workflows/validate.yml`).
+`scripts/validate.mjs` checks `spec/operators.json` against the JSON Schema, enforces the catalog invariants (unique alphabetical operators, every required rule kind present, rule kinds in lifecycle order), and confirms that the per-operator files in `operators/` are an exact mirror of the JSON and that `docs/operators.md` indexes every one of them with its summary. It also parses every `spec/convertible/*.feature` file with `scripts/convertible-bdd.mjs`, applies the declaration-free semantic checks, and confirms that `trace.json` realises every catalog rule. The same check runs in GitHub Actions on every push (`.github/workflows/validate.yml`).
 
 ## From specification to testing
 

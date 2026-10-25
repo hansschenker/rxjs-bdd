@@ -7,8 +7,8 @@
 //   1. spec/operators.json conforms to spec/operator-catalog.schema.json (JSON Schema 2020-12 via Ajv),
 //      and spec/machine-semantic-model.schema.json compiles as a schema.
 //   2. Catalog invariants documented in docs/machine-readable-spec.md: operators are unique and
-//      alphabetical, every operator carries each lifecycle rule kind, and rule kinds appear in
-//      lifecycle order.
+//      alphabetical, every operator carries each required rule kind (the state / event pair plus
+//      the five lifecycle kinds), and rule kinds appear in lifecycle order.
 //   3. operators/<operator>.md is an exact mirror of the JSON: one file per operator, same rules
 //      in the same order, same summary paragraph and note; and docs/operators.md indexes every
 //      operator in order with that summary and a matching operator count in its footer.
@@ -34,8 +34,13 @@ const MACHINE_SCHEMA_PATH = "spec/machine-semantic-model.schema.json";
 const OPERATORS_DIR = "operators";
 const INDEX_PATH = "docs/operators.md";
 
-/** Rule kinds every operator must carry at least once. */
-const LIFECYCLE_KINDS = ["subscription", "state", "event", "completion", "error", "unsubscription", "cancellation"];
+/**
+ * Rule kinds every operator must carry at least once: the state / event pair inherited from the
+ * source catalog (one While–Then and one When–Then rule per operator) and the five lifecycle kinds
+ * subscription, completion, error, unsubscription, and cancellation. The remaining kinds (timer,
+ * notifier, inner, concurrency) exist only where they apply.
+ */
+const REQUIRED_KINDS = ["subscription", "state", "event", "completion", "error", "unsubscription", "cancellation"];
 
 /** All rule kinds in the order they must appear within an operator. */
 const KIND_ORDER = [
@@ -102,7 +107,7 @@ for (let i = 1; i < names.length; i++) {
 
 for (const operator of operators) {
   const kinds = (operator.rules ?? []).map((rule) => rule.kind);
-  for (const kind of LIFECYCLE_KINDS) {
+  for (const kind of REQUIRED_KINDS) {
     if (!kinds.includes(kind)) fail(`invariant: ${operator.operator} has no "${kind}" rule`);
   }
   for (let i = 1; i < kinds.length; i++) {
