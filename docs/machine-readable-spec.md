@@ -2,11 +2,12 @@
 
 The human-readable catalog in `operators/<operator>.md` (indexed by `docs/operators.md`) is mirrored by `spec/operators.json`.
 
-Each operator contains one or more rules:
+Each operator carries a one-paragraph `summary` of its behaviour, one or more rules, and an optional `note`. The summary is the same text that opens the operator's `operators/<operator>.md` file and appears in the `docs/operators.md` index:
 
 ```json
 {
   "operator": "debounceTime",
+  "summary": "Emits a source value only after a quiet period of `dueTime` with no newer value; each new value replaces the pending value and restarts the silence window. A pending value is still emitted when the source completes.",
   "rules": [
     {
       "kind": "state",
@@ -39,18 +40,19 @@ Each operator contains one or more rules:
 
 Every operator carries at least one rule of each of the `subscription`, `completion`, `error`, `unsubscription`, and `cancellation` kinds. `timer`, `notifier`, `inner`, and `concurrency` rules exist only where they apply: operators that schedule work (13), consume a notifier observable (20), subscribe to inner observables or secondary inputs whose values matter (37), or hold work that can overlap or be superseded (60). The absence of such a rule means that coverage-matrix row does not apply to the operator. Where the outcome depends on the state at that moment (a pending value or none, a retry budget left or exhausted, one subscriber left or several), each case is a separate rule with its own `given`. This makes every row of the transition coverage matrix except *Source next* derivable from the catalog by filtering on `kind`; *Source next* remains the domain of the original `state` and `event` rules.
 
-The schema is in `spec/operator-catalog.schema.json`. Run `npm run validate` (after `npm install`) to check the catalog against it. The script also enforces the invariants below, checks that operators are unique and alphabetical, that every operator carries each lifecycle rule kind in lifecycle order, and that the `operators/<operator>.md` files mirror the JSON rule for rule and are all listed, with their summaries, in `docs/operators.md`. GitHub Actions runs the same script on every push.
+The schema is in `spec/operator-catalog.schema.json`. Run `npm run validate` (after `npm install`) to check the catalog against it. The script also enforces the invariants below, checks that operators are unique and alphabetical, that every operator carries each lifecycle rule kind in lifecycle order, and that the `operators/<operator>.md` files mirror the JSON rule for rule and summary for summary and are all listed, with their summaries, in `docs/operators.md`. GitHub Actions runs the same script on every push.
 
 ## Validation invariants
 
 A valid rule must have:
 
 1. a non-empty operator name;
-2. at least one rule;
-3. a non-empty `Given`;
-4. a non-empty `When`;
-5. at least one `Then` action;
-6. a rule kind of `subscription`, `state`, `event`, `timer`, `notifier`, `inner`, `concurrency`, `completion`, `error`, `unsubscription`, or `cancellation`.
+2. a non-empty single-line `summary` without `|` characters, so it fits the index table;
+3. at least one rule;
+4. a non-empty `Given`;
+5. a non-empty `When`;
+6. at least one `Then` action;
+7. a rule kind of `subscription`, `state`, `event`, `timer`, `notifier`, `inner`, `concurrency`, `completion`, `error`, `unsubscription`, or `cancellation`.
 
 This structural validation does not by itself prove semantic completeness. Semantic review still asks whether all meaningful source, timer, notifier, inner, completion, error, and teardown transitions are represented.
 

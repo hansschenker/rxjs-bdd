@@ -16,12 +16,18 @@
         "type": "object",
         "required": [
           "operator",
+          "summary",
           "rules"
         ],
         "properties": {
           "operator": {
             "type": "string",
             "minLength": 1
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[^|\\r\\n]+$"
           },
           "note": {
             "type": [

@@ -10,8 +10,8 @@
 //      alphabetical, every operator carries each lifecycle rule kind, and rule kinds appear in
 //      lifecycle order.
 //   3. operators/<operator>.md is an exact mirror of the JSON: one file per operator, same rules
-//      in the same order, same notes, each opening with a summary paragraph; and docs/operators.md
-//      indexes every operator in order with that summary and a matching operator count in its footer.
+//      in the same order, same summary paragraph and note; and docs/operators.md indexes every
+//      operator in order with that summary and a matching operator count in its footer.
 //   4. Every spec/convertible/<operator>.feature parses under spec/convertible-bdd.ebnf, passes the
 //      declaration-free semantic checks, and spec/convertible/trace.json maps every scenario to
 //      catalog rules such that every rule of every operator is realised by at least one scenario.
@@ -246,6 +246,10 @@ for (const operator of operators) {
   const jsonNote = operator.note ?? null;
   if (jsonNote !== mirrored.note) {
     fail(`markdown: ${operator.operator} note differs\n    JSON:     ${JSON.stringify(jsonNote)}\n    Markdown: ${JSON.stringify(mirrored.note)}`);
+  }
+  const jsonSummary = operator.summary ?? null;
+  if (jsonSummary !== mirrored.summary) {
+    fail(`markdown: ${operator.operator} summary differs\n    JSON:     ${JSON.stringify(jsonSummary)}\n    Markdown: ${JSON.stringify(mirrored.summary)}`);
   }
 }
 

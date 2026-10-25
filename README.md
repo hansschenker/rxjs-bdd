@@ -344,7 +344,7 @@ RxJS is maintained by the ReactiveX/RxJS project. This repository is an independ
 
 The complete 116-operator catalog is also available as structured data:
 
-- `spec/operators.json` — machine-readable Given / When / Then rules.
+- `spec/operators.json` — machine-readable Given / When / Then rules, with each operator's summary.
 - `spec/operator-catalog.schema.json` — JSON Schema for structural validation.
 - `spec/convertible-bdd.ebnf` — formal Convertible BDD grammar.
 - `spec/convertible/*.feature` — the catalog in Convertible BDD, with `spec/convertible/trace.json`.

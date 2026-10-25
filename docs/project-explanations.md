@@ -112,7 +112,7 @@ RxJS implementation and tests
 | `docs/formal-language.md` | The formal-language architecture: the three language levels, grammar model, BDD-to-Mealy mapping, semantic constraints, round-trip property. |
 | `docs/testing.md` | How a rule becomes a test: marble tests, pure transition-model tests, and conformance tests. |
 | `docs/transition-coverage-matrix.md` | The twelve transition categories a state-complete operator test suite should consider. |
-| `spec/operators.json` | Machine-readable catalog (version `0.6.0`), one entry per operator with `rules[]` and an optional `note`. |
+| `spec/operators.json` | Machine-readable catalog (version `0.6.0`), one entry per operator with a `summary`, `rules[]`, and an optional `note`. |
 | `spec/operator-catalog.schema.json` | JSON Schema (draft 2020-12) that structurally validates `operators.json`. |
 | `spec/convertible-bdd.ebnf` | EBNF grammar for **Convertible BDD**, the strict, parser-friendly Given / When / Then syntax. |
 | `spec/mealy.ebnf` | EBNF grammar for the **Mealy DSL**, the machine-oriented target language. |
@@ -274,6 +274,7 @@ Note: The first source value starts the duration.
 ```json
 {
   "operator": "audit",
+  "summary": "Holds the latest source value while a duration observable, started by the value that arrives when idle, is active; when the duration emits, the pending latest value is emitted and the operator returns to idle. Values arriving during the duration only replace the pending value.",
   "rules": [
     { "kind": "state", "given": "duration active",
       "when": "a source value arrives",
@@ -288,10 +289,12 @@ Note: The first source value starts the duration.
 
 `then` is an **ordered list**, because one transition may perform several steps
 (replace pending value, restart timer, emit nothing). 49 of the 116 operators carry a
-`note`; the rest have `note: null`.
+`note`; the rest have `note: null`. `summary` is the paragraph that opens
+`operators/<operator>.md` and fills the `docs/operators.md` index; the validator checks that
+the JSON, the file, and the index agree.
 
 `spec/operator-catalog.schema.json` enforces the structural invariants listed in
-`docs/machine-readable-spec.md`: non-empty operator name, at least one rule, non-empty
+`docs/machine-readable-spec.md`: non-empty operator name and summary, at least one rule, non-empty
 `given` and `when`, at least one `then` statement, and `kind` restricted to the eleven
 known kinds. `npm run validate` applies the schema and additionally checks that operators
 are unique and alphabetical, that every operator carries each lifecycle kind in lifecycle
