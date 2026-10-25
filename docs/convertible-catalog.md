@@ -1,6 +1,6 @@
 # The Convertible BDD catalog
 
-The readable Given / When / Then catalog in `docs/operators.md` has been converted into the
+The readable Given / When / Then catalog in `operators/<operator>.md` has been converted into the
 strict **Convertible BDD** language defined by `spec/convertible-bdd.ebnf`. The result lives in
 `spec/convertible/`:
 

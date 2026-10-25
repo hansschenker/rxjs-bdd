@@ -106,7 +106,8 @@ RxJS implementation and tests
 | `README.md` | Overview, motivation, the `debounceTime` worked example, goals, attribution. |
 | `CONTRIBUTORS.md` | Credits the author and the AI model that assisted with the initial formalization. |
 | `docs/given-when-then-pattern.md` | Short reference for the canonical rule form, compound predicates, and the testing interpretation. |
-| `docs/operators.md` | The human-readable **catalog**: Given / When / Then rules for all 116 RxJS 7.x operator modules. |
+| `operators/<operator>.md` | The human-readable **catalog**: one file per RxJS 7.x operator module (116 files), each opening with a short summary of the operator's behaviour followed by its Given / When / Then rules. |
+| `docs/operators.md` | Index of the catalog: the shared introduction plus a table linking every operator file with its summary. |
 | `docs/machine-readable-spec.md` | Explains the JSON mirror of the catalog, its validation invariants, and the contract for LLM-assisted conversion. |
 | `docs/formal-language.md` | The formal-language architecture: the three language levels, grammar model, BDD-to-Mealy mapping, semantic constraints, round-trip property. |
 | `docs/testing.md` | How a rule becomes a test: marble tests, pure transition-model tests, and conformance tests. |
@@ -120,7 +121,7 @@ RxJS implementation and tests
 | `spec/convertible/trace.json` | Maps every scenario to the catalog rules it realises. |
 | `docs/convertible-catalog.md` | Vocabulary conventions, scenario naming, trace format, semantic checks, and limitations of the converted catalog. |
 | `scripts/convertible-bdd.mjs` | Recursive-descent parser for `convertible-bdd.ebnf` plus the declaration-free semantic checks. |
-| `scripts/validate.mjs` | Validator run by `npm run validate`: checks `operators.json` against its schema, enforces the catalog invariants, and confirms `operators.md` mirrors the JSON. |
+| `scripts/validate.mjs` | Validator run by `npm run validate`: checks `operators.json` against its schema, enforces the catalog invariants, and confirms the `operators/*.md` files mirror the JSON and are all indexed in `docs/operators.md`. |
 | `package.json` | Declares the `validate` script and its single dev dependency, Ajv. |
 | `.github/workflows/validate.yml` | GitHub Actions workflow that runs `npm ci` and `npm run validate` on every push and pull request. |
 
@@ -134,7 +135,7 @@ and Convertible BDD feature files.
 
 ### 4.1 Scope and shape
 
-`docs/operators.md` and `spec/operators.json` cover the same **116 operator modules**,
+`operators/*.md` (indexed by `docs/operators.md`) and `spec/operators.json` cover the same **116 operator modules**,
 matching the source catalog in the companion repository. The list follows RxJS 7.x source
 modules rather than only the public API, so it includes:
 
@@ -149,7 +150,7 @@ modules rather than only the public API, so it includes:
 
 Every operator has at least one rule of each of the seven lifecycle kinds. The `timer`, `notifier`, `inner`, and `concurrency` kinds appear only where they apply. In lifecycle order:
 
-| `kind` | Heading in `operators.md` | Meaning |
+| `kind` | Heading in `operators/<operator>.md` | Meaning |
 |---|---|---|
 | `subscription` | Subscription rule(s) | The initial transition when a **downstream subscriber subscribes**: whether the source is subscribed immediately, deferred (`subscribeOn`, `delayWhen` with a subscription delay), or shared (`share`, `refCount`, `publish*`), the order in which notifiers and inputs are subscribed (`takeUntil` and `skipUntil` subscribe the notifier first, `withLatestFrom` subscribes the secondaries first), and the initial state. |
 | `state` | State-conditioned rule | What happens to a value or event **while** a persistent state condition holds (for example, "buffer open", "duration active", "inner subscription active"). |
@@ -308,7 +309,7 @@ between prose and machines. It introduces **three levels of language**:
 
 | Level | Nature | Audience | Where |
 |---|---|---|---|
-| Readable BDD | Unrestricted English in Given / When / Then shape | People | `docs/operators.md`, README |
+| Readable BDD | Unrestricted English in Given / When / Then shape | People | `operators/*.md`, README |
 | Convertible BDD | Small context-free language; every clause has an unambiguous syntactic role | Parser (and people) | `spec/convertible-bdd.ebnf` |
 | Mealy DSL | Machine-oriented context-free language with explicit `state`, `input`, `output`, `action`, and `transition` blocks | Generators / analysis | `spec/mealy.ebnf` |
 
@@ -572,8 +573,9 @@ model. Things worth knowing when working on it:
  rxjs-operators-state-and-policy-patterns      (companion repo: While–Then / When–Then)
                     │
                     ▼  converted
- docs/operators.md ◄──────────────► spec/operators.json ── validated by ── spec/operator-catalog.schema.json
- (Readable BDD, 116 operators)      (same content as data)
+ operators/*.md ◄─────────────────► spec/operators.json ── validated by ── spec/operator-catalog.schema.json
+ (Readable BDD, 116 files,          (same content as data)
+  indexed by docs/operators.md)
                     │
                     │  conversion (done): spec/convertible/*.feature + trace.json
                     ▼

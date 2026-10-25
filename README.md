@@ -111,7 +111,7 @@ The complete source catalog has now been converted to Given / When / Then form:
 
 - **116 / 116 operator modules converted**
 - every operator carries explicit subscription, completion, error, unsubscription, and cancellation rules, plus timer, notifier, inner, and concurrency rules where the operator schedules work, consumes a notifier, flattens inner observables, or admits overlapping work
-- see [docs/operators.md](docs/operators.md)
+- see [docs/operators.md](docs/operators.md) for the index and [operators/](operators/) for one file per operator, each opening with a short summary of its behaviour
 - source baseline: [rxjs-operators-state-and-policy-patterns](https://github.com/hansschenker/rxjs-operators-state-and-policy-patterns)
 
 The catalog keeps two kinds of rules separate:
@@ -360,7 +360,7 @@ npm install
 npm run validate
 ```
 
-`scripts/validate.mjs` checks `spec/operators.json` against the JSON Schema, enforces the catalog invariants (unique alphabetical operators, every lifecycle rule kind present, rule kinds in lifecycle order), and confirms that `docs/operators.md` is an exact mirror of the JSON. It also parses every `spec/convertible/*.feature` file with `scripts/convertible-bdd.mjs`, applies the declaration-free semantic checks, and confirms that `trace.json` realises every catalog rule. The same check runs in GitHub Actions on every push (`.github/workflows/validate.yml`).
+`scripts/validate.mjs` checks `spec/operators.json` against the JSON Schema, enforces the catalog invariants (unique alphabetical operators, every lifecycle rule kind present, rule kinds in lifecycle order), and confirms that the per-operator files in `operators/` are an exact mirror of the JSON and that `docs/operators.md` indexes every one of them with its summary. It also parses every `spec/convertible/*.feature` file with `scripts/convertible-bdd.mjs`, applies the declaration-free semantic checks, and confirms that `trace.json` realises every catalog rule. The same check runs in GitHub Actions on every push (`.github/workflows/validate.yml`).
 
 ## From specification to testing
 

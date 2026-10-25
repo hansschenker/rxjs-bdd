@@ -9,8 +9,9 @@
 //   2. Catalog invariants documented in docs/machine-readable-spec.md: operators are unique and
 //      alphabetical, every operator carries each lifecycle rule kind, and rule kinds appear in
 //      lifecycle order.
-//   3. docs/operators.md is an exact mirror of the JSON: same operators, same rules in the same
-//      order, same notes, and a matching operator count in its footer.
+//   3. operators/<operator>.md is an exact mirror of the JSON: one file per operator, same rules
+//      in the same order, same notes, each opening with a summary paragraph; and docs/operators.md
+//      indexes every operator in order with that summary and a matching operator count in its footer.
 //   4. Every spec/convertible/<operator>.feature parses under spec/convertible-bdd.ebnf, passes the
 //      declaration-free semantic checks, and spec/convertible/trace.json maps every scenario to
 //      catalog rules such that every rule of every operator is realised by at least one scenario.
@@ -30,7 +31,8 @@ const readJson = (relativePath) => JSON.parse(read(relativePath));
 const CATALOG_PATH = "spec/operators.json";
 const CATALOG_SCHEMA_PATH = "spec/operator-catalog.schema.json";
 const MACHINE_SCHEMA_PATH = "spec/machine-semantic-model.schema.json";
-const MARKDOWN_PATH = "docs/operators.md";
+const OPERATORS_DIR = "operators";
+const INDEX_PATH = "docs/operators.md";
 
 /** Rule kinds every operator must carry at least once. */
 const LIFECYCLE_KINDS = ["subscription", "state", "event", "completion", "error", "unsubscription", "cancellation"];
@@ -112,19 +114,29 @@ for (const operator of operators) {
 }
 
 // ---------------------------------------------------------------------------
-// 3. Markdown mirror
+// 3. Markdown mirror: operators/<operator>.md files and the docs/operators.md index
 // ---------------------------------------------------------------------------
-function parseMarkdown(text) {
+/**
+ * Parses one operators/<operator>.md file. The file starts with a "# `operator`" title, then a
+ * summary paragraph (and an optional "*Note:*" line), then one "## <Kind> rule(s)" section per
+ * rule kind, each holding a ```text block of Given / When / Then rules.
+ */
+function parseOperatorFile(name, text) {
+  const path = `${OPERATORS_DIR}/${name}.md`;
   const lines = text.split(/\r?\n/);
-  const parsed = new Map();
-  let current = null;
+  const parsed = { operator: name, summary: "", rules: [], note: null };
+  const summaryLines = [];
   let kind = null;
   let inBlock = false;
   let block = [];
-  let footerCount = null;
+  let seenSection = false;
+
+  const title = /^# `([^`]+)`$/.exec(lines[0] ?? "");
+  if (!title) fail(`markdown: ${path} must start with the title "# \`${name}\`"`);
+  else if (title[1] !== name) fail(`markdown: ${path} is titled "${title[1]}", expected "${name}"`);
 
   const flushBlock = () => {
-    if (!current || !kind) return;
+    if (!kind) return;
     const groups = block.join("\n").split(/\n\s*\n/).filter((group) => group.trim() !== "");
     for (const group of groups) {
       const ruleLines = group.split("\n");
@@ -132,42 +144,32 @@ function parseMarkdown(text) {
       const when = /^When (.+)$/.exec(ruleLines[1] ?? "");
       const then = /^Then (.+)$/.exec(ruleLines[2] ?? "");
       if (!given || !when || !then) {
-        fail(`markdown: malformed rule under ${current.operator} / ${kind}:\n${group}`);
+        fail(`markdown: malformed rule under ${name} / ${kind}:\n${group}`);
         continue;
       }
       const steps = [then[1]];
       for (const continuation of ruleLines.slice(3)) {
         const step = /^ {5}(.+)$/.exec(continuation);
         if (!step) {
-          fail(`markdown: bad continuation line under ${current.operator} / ${kind}: "${continuation}"`);
+          fail(`markdown: bad continuation line under ${name} / ${kind}: "${continuation}"`);
           continue;
         }
         steps.push(step[1]);
       }
-      current.rules.push({ kind, given: given[1], when: when[1], then: steps });
+      parsed.rules.push({ kind, given: given[1], when: when[1], then: steps });
     }
     block = [];
   };
 
-  for (const line of lines) {
-    const operatorHeading = /^## `([^`]+)`$/.exec(line);
-    if (operatorHeading) {
-      current = { operator: operatorHeading[1], rules: [], note: null };
-      parsed.set(current.operator, current);
-      kind = null;
-      continue;
-    }
-    if (!current) {
-      continue;
-    }
-    if (/^## /.test(line)) {
-      current = null;
-      kind = null;
-      continue;
-    }
-    const sectionHeading = /^### (.+?)s?$/.exec(line);
-    if (sectionHeading && HEADING_KINDS.has(sectionHeading[1])) {
-      kind = HEADING_KINDS.get(sectionHeading[1]);
+  for (const line of lines.slice(1)) {
+    if (inBlock) {
+      if (line === "```") {
+        inBlock = false;
+        flushBlock();
+        kind = null;
+      } else {
+        block.push(line);
+      }
       continue;
     }
     if (line === "```text" && kind) {
@@ -175,34 +177,54 @@ function parseMarkdown(text) {
       block = [];
       continue;
     }
-    if (line === "```" && inBlock) {
-      inBlock = false;
-      flushBlock();
-      kind = null;
+    const sectionHeading = /^## (.+?)s?$/.exec(line);
+    if (sectionHeading) {
+      seenSection = true;
+      kind = HEADING_KINDS.get(sectionHeading[1]) ?? null;
+      if (kind === null) fail(`markdown: ${path} has an unknown section heading "${line}"`);
       continue;
     }
-    if (inBlock) {
-      block.push(line);
+    if (/^#/.test(line)) {
+      fail(`markdown: ${path} has an unexpected heading "${line}"`);
       continue;
     }
     const note = /^\*Note:\* (.+)$/.exec(line);
-    if (note) current.note = note[1];
+    if (note) {
+      parsed.note = note[1];
+      continue;
+    }
+    if (!seenSection && line.trim() !== "") summaryLines.push(line.trim());
   }
 
-  const footer = /This document contains \*\*(\d+) operator modules\*\*/.exec(text);
-  if (footer) footerCount = Number(footer[1]);
-  return { parsed, footerCount };
+  parsed.summary = summaryLines.join(" ");
+  if (!parsed.summary) fail(`markdown: ${path} has no summary paragraph between its title and its first rule section`);
+  return parsed;
 }
 
-const { parsed: markdownOperators, footerCount } = parseMarkdown(read(MARKDOWN_PATH));
+/** Parses the docs/operators.md index: one table row per operator linking to its file. */
+function parseIndex(text) {
+  const rows = [];
+  for (const line of text.split(/\r?\n/)) {
+    const row = /^\| \[`([^`]+)`\]\(\.\.\/operators\/([^)]+)\.md\) \| (.+) \|$/.exec(line);
+    if (row) rows.push({ operator: row[1], file: row[2], summary: row[3] });
+  }
+  const footer = /\*\*(\d+) operator modules\*\*/.exec(text);
+  return { rows, footerCount: footer ? Number(footer[1]) : null };
+}
 
-const markdownNames = [...markdownOperators.keys()];
-if (JSON.stringify(markdownNames) !== JSON.stringify(names)) {
-  const missingInMd = names.filter((name) => !markdownOperators.has(name));
-  const missingInJson = markdownNames.filter((name) => !names.includes(name));
-  if (missingInMd.length) fail(`markdown: operators missing from ${MARKDOWN_PATH}: ${missingInMd.join(", ")}`);
-  if (missingInJson.length) fail(`markdown: operators missing from ${CATALOG_PATH}: ${missingInJson.join(", ")}`);
-  if (!missingInMd.length && !missingInJson.length) fail("markdown: operator order differs between the Markdown and the JSON");
+const operatorFiles = readdirSync(resolve(root, OPERATORS_DIR))
+  .filter((file) => file.endsWith(".md"))
+  .map((file) => file.slice(0, -".md".length))
+  .sort();
+
+const missingFiles = names.filter((name) => !operatorFiles.includes(name));
+const extraFiles = operatorFiles.filter((name) => !names.includes(name));
+if (missingFiles.length) fail(`markdown: no ${OPERATORS_DIR}/<operator>.md file for ${missingFiles.join(", ")}`);
+if (extraFiles.length) fail(`markdown: ${OPERATORS_DIR}/ has files without a catalog operator: ${extraFiles.join(", ")}`);
+
+const markdownOperators = new Map();
+for (const name of names) {
+  if (operatorFiles.includes(name)) markdownOperators.set(name, parseOperatorFile(name, read(`${OPERATORS_DIR}/${name}.md`)));
 }
 
 for (const operator of operators) {
@@ -227,8 +249,26 @@ for (const operator of operators) {
   }
 }
 
-if (footerCount === null) fail(`markdown: no operator count found in the ${MARKDOWN_PATH} footer`);
-else if (footerCount !== operators.length) fail(`markdown: footer says ${footerCount} operators, JSON has ${operators.length}`);
+const { rows: indexRows, footerCount } = parseIndex(read(INDEX_PATH));
+const indexNames = indexRows.map((row) => row.operator);
+if (JSON.stringify(indexNames) !== JSON.stringify(names)) {
+  const missingInIndex = names.filter((name) => !indexNames.includes(name));
+  const missingInJson = indexNames.filter((name) => !names.includes(name));
+  if (missingInIndex.length) fail(`markdown: operators missing from the ${INDEX_PATH} table: ${missingInIndex.join(", ")}`);
+  if (missingInJson.length) fail(`markdown: ${INDEX_PATH} lists operators missing from ${CATALOG_PATH}: ${missingInJson.join(", ")}`);
+  if (!missingInIndex.length && !missingInJson.length) fail(`markdown: operator order differs between ${INDEX_PATH} and the JSON`);
+}
+
+for (const row of indexRows) {
+  if (row.file !== row.operator) fail(`markdown: ${INDEX_PATH} links ${row.operator} to ${OPERATORS_DIR}/${row.file}.md`);
+  const mirrored = markdownOperators.get(row.operator);
+  if (mirrored && mirrored.summary !== row.summary) {
+    fail(`markdown: ${INDEX_PATH} summary for ${row.operator} differs from ${OPERATORS_DIR}/${row.operator}.md\n    index: ${row.summary}\n    file:  ${mirrored.summary}`);
+  }
+}
+
+if (footerCount === null) fail(`markdown: no operator count found in the ${INDEX_PATH} footer`);
+else if (footerCount !== operators.length) fail(`markdown: ${INDEX_PATH} footer says ${footerCount} operators, JSON has ${operators.length}`);
 
 // ---------------------------------------------------------------------------
 // 4. Convertible BDD features and trace
