@@ -23,3 +23,6 @@ jobs:
 
       - name: Validate spec/operators.json against the schema and the Markdown mirror
         run: npm run validate
+
+      - name: Verify the shopping-cart checkout sample pipeline
+        run: npm run sample:checkout
